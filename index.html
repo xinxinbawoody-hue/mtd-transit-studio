@@ -90,6 +90,20 @@
     @keyframes pulse-ring {
       to { box-shadow: 0 0 0 12px rgba(232, 74, 39, 0); }
     }
+
+    /* Map Crosshair Cursor when in Add Stop Mode */
+    .map-crosshair {
+      cursor: crosshair !important;
+    }
+
+    /* Toast Notification Animation */
+    .toast-slide-in {
+      animation: toastIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+    }
+    @keyframes toastIn {
+      from { transform: translateY(20px); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
   </style>
 </head>
 <body class="bg-slate-950 text-slate-100 flex flex-col h-screen overflow-hidden">
@@ -310,6 +324,9 @@
         <button onclick="toggleMapClickMode()" class="bg-black/30 hover:bg-black/50 text-white rounded-full w-5 h-5 flex items-center justify-center text-[11px] transition">✕</button>
       </div>
 
+      <!-- TOAST NOTIFICATION CONTAINER -->
+      <div id="toast-container" class="absolute top-16 right-4 z-[1001] flex flex-col gap-2 pointer-events-none"></div>
+
       <!-- BOTTOM DASHBOARD STATS OVERLAY -->
       <div class="absolute bottom-4 left-4 right-4 md:left-6 md:right-6 z-[1000] glass-panel p-3.5 rounded-2xl shadow-2xl border border-slate-700/70">
         <div class="grid grid-cols-2 md:grid-cols-5 gap-3 text-center">
@@ -354,20 +371,21 @@
   <script>
     // --- 1. HIGH-PRECISION PRESET STOPS & INITIAL ROUTES ---
 
+    // Corrected lat/lng coordinates directly on main road centerlines (Green St, Springfield Ave, Florida Ave, etc.)
     const PRESET_STOPS = [
-      { id: 'IT', name: 'Illinois Terminal (Downtown Champaign)', lat: 40.1165, lng: -88.2435, category: 'City Transit Hub', icon: 'building-columns' },
-      { id: 'UNION', name: 'Illini Union (Main Quad)', lat: 40.1093, lng: -88.2272, category: 'Core Campus', icon: 'graduation-cap' },
-      { id: 'ISR', name: 'ISR - Illinois Street Residence', lat: 40.1110, lng: -88.2250, category: 'Campus Housing', icon: 'bed' },
-      { id: 'PAR_FAR', name: 'PAR / FAR Residence Halls', lat: 40.0995, lng: -88.2215, category: 'Campus Housing', icon: 'bed' },
-      { id: 'IKENBERRY', name: 'Ikenberry Commons (SDRP)', lat: 40.1035, lng: -88.2355, category: 'Campus Housing', icon: 'utensils' },
-      { id: 'SIEBEL', name: 'Siebel Center for Computer Science', lat: 40.1138, lng: -88.2249, category: 'Engineering Quad', icon: 'laptop-code' },
-      { id: 'ECE', name: 'ECE Building / Beckman Inst.', lat: 40.1150, lng: -88.2280, category: 'Engineering Quad', icon: 'microchip' },
-      { id: 'ARC', name: 'ARC - Activities & Recreation Center', lat: 40.1010, lng: -88.2360, category: 'Campus Sports', icon: 'dumbbell' },
-      { id: 'URBANA_SQ', name: 'Downtown Urbana / Lincoln Square', lat: 40.1105, lng: -88.2072, category: 'City Hub', icon: 'city' },
+      { id: 'IT', name: 'Illinois Terminal (Downtown Champaign)', lat: 40.1163, lng: -88.2432, category: 'City Transit Hub', icon: 'building-columns' },
+      { id: 'UNION', name: 'Illini Union (Green St Centerline)', lat: 40.11032, lng: -88.22720, category: 'Core Campus', icon: 'graduation-cap' },
+      { id: 'ISR', name: 'ISR - Illinois Street Residence (Green St)', lat: 40.11032, lng: -88.22500, category: 'Campus Housing', icon: 'bed' },
+      { id: 'PAR_FAR', name: 'PAR / FAR Residence Halls (Florida Ave)', lat: 40.0998, lng: -88.2210, category: 'Campus Housing', icon: 'bed' },
+      { id: 'IKENBERRY', name: 'Ikenberry Commons (Gregory Dr)', lat: 40.1038, lng: -88.2355, category: 'Campus Housing', icon: 'utensils' },
+      { id: 'SIEBEL', name: 'Siebel Center for CS (Goodwin Ave)', lat: 40.1132, lng: -88.2249, category: 'Engineering Quad', icon: 'laptop-code' },
+      { id: 'ECE', name: 'ECE Building / Beckman Inst. (Wright St)', lat: 40.1150, lng: -88.2280, category: 'Engineering Quad', icon: 'microchip' },
+      { id: 'ARC', name: 'ARC - Activities & Recreation Center (Peabody Dr)', lat: 40.1012, lng: -88.2360, category: 'Campus Sports', icon: 'dumbbell' },
+      { id: 'URBANA_SQ', name: 'Downtown Urbana (Main St)', lat: 40.1110, lng: -88.2072, category: 'City Hub', icon: 'city' },
       { id: 'MARKETPLACE', name: 'Market Place Mall', lat: 40.1410, lng: -88.2430, category: 'Retail Hub', icon: 'bag-shopping' },
-      { id: 'RESEARCH_PARK', name: 'UIUC Research Park', lat: 40.0930, lng: -88.2410, category: 'Tech Park', icon: 'flask' },
-      { id: 'CARLE', name: 'Carle Foundation Hospital', lat: 40.1190, lng: -88.2120, category: 'Medical Hub', icon: 'hospital' },
-      { id: 'KRANNERT', name: 'Krannert Center for Performing Arts', lat: 40.1080, lng: -88.2225, category: 'Core Campus', icon: 'masks-theater' }
+      { id: 'RESEARCH_PARK', name: 'UIUC Research Park (First St)', lat: 40.0932, lng: -88.2410, category: 'Tech Park', icon: 'flask' },
+      { id: 'CARLE', name: 'Carle Foundation Hospital (University Ave)', lat: 40.1182, lng: -88.2120, category: 'Medical Hub', icon: 'hospital' },
+      { id: 'KRANNERT', name: 'Krannert Center (Goodwin Ave)', lat: 40.1080, lng: -88.2225, category: 'Core Campus', icon: 'masks-theater' }
     ];
 
     const DEFAULT_ROUTES = [
@@ -647,6 +665,7 @@
           renderRoutesOnMap();
           renderSidebarUI();
           updateStatsDashboard();
+          showToast(`Moved ${stop.name} - Route re-snapped to road!`, 'info');
         });
 
         marker.bindPopup(`
@@ -753,20 +772,25 @@
       const btn = document.getElementById('map-stop-tool-btn');
       const textSpan = document.getElementById('map-tool-btn-text');
       const banner = document.getElementById('map-click-mode-banner');
+      const mapEl = document.getElementById('map');
 
       if (isClickToAddMode) {
         btn.classList.add('bg-illini-orange', 'text-white', 'border-illini-orange');
         textSpan.innerText = 'Exit Map Click Mode';
         banner.classList.remove('hidden');
+        if (mapEl) mapEl.classList.add('map-crosshair');
+        showToast("Map click mode active: Click anywhere on roads to add stops!", 'warning');
       } else {
         btn.classList.remove('bg-illini-orange', 'text-white', 'border-illini-orange');
         textSpan.innerText = 'Click Map to Add Stop';
         banner.classList.add('hidden');
+        if (mapEl) mapEl.classList.remove('map-crosshair');
       }
     }
 
     function handleMapClickAddStop(lat, lng) {
-      const stopName = prompt("Enter Transit Stop Name for this Location:", "Custom Campus Stop");
+      const defaultName = `Custom Stop (${lat.toFixed(4)}, ${lng.toFixed(4)})`;
+      const stopName = prompt("Enter Transit Stop Name for this Location:", defaultName);
       if (!stopName) return;
 
       const newStop = {
@@ -774,14 +798,28 @@
         name: stopName,
         lat: Number(lat.toFixed(5)),
         lng: Number(lng.toFixed(5)),
-        category: 'Custom Stop',
+        category: 'Custom User Stop',
         icon: 'map-pin'
       };
 
       stops.push(newStop);
       addStopToActiveRoute(newStop.id);
       renderAllStopsOnMap();
-      toggleMapClickMode();
+      renderLandmarksTab();
+      showToast(`Added stop "${stopName}" & snapped line to street!`, 'success');
+    }
+
+    function renameStop(stopId) {
+      const stop = stops.find(s => s.id === stopId);
+      if (!stop) return;
+      const newName = prompt("Rename Stop:", stop.name);
+      if (newName && newName.trim()) {
+        stop.name = newName.trim();
+        renderAllStopsOnMap();
+        renderSidebarUI();
+        renderLandmarksTab();
+        showToast(`Renamed stop to "${stop.name}"`, 'info');
+      }
     }
 
     function setActiveRoute(routeId) {
@@ -1003,7 +1041,12 @@
                 ${idx + 1}
               </span>
               <div class="truncate">
-                <div class="font-bold text-slate-100 truncate">${stop.name}</div>
+                <div class="font-bold text-slate-100 truncate flex items-center gap-1.5">
+                  <span>${stop.name}</span>
+                  <button onclick="renameStop('${stop.id}')" title="Rename Stop" class="text-slate-400 hover:text-illini-orange text-[10px]">
+                    <i class="fa-solid fa-pen"></i>
+                  </button>
+                </div>
                 <div class="text-[10px] text-slate-400 font-mono">${stop.lat.toFixed(4)}, ${stop.lng.toFixed(4)}</div>
               </div>
             </div>
@@ -1291,6 +1334,25 @@
       }
 
       output.textContent = JSON.stringify(res, null, 2);
+    }
+
+    function showToast(message, type = 'info') {
+      const container = document.getElementById('toast-container');
+      if (!container) return;
+
+      const toast = document.createElement('div');
+      const bgClass = type === 'success' ? 'bg-emerald-600 border-emerald-400' :
+                      type === 'warning' ? 'bg-amber-600 border-amber-400' : 'bg-slate-800 border-slate-600';
+      
+      toast.className = `${bgClass} text-white text-xs font-semibold px-4 py-2.5 rounded-xl border shadow-2xl pointer-events-auto toast-slide-in flex items-center gap-2`;
+      toast.innerHTML = `<i class="fa-solid fa-circle-info"></i> <span>${message}</span>`;
+
+      container.appendChild(toast);
+      setTimeout(() => {
+        toast.style.opacity = '0';
+        toast.style.transition = 'opacity 0.3s ease';
+        setTimeout(() => toast.remove(), 300);
+      }, 3200);
     }
 
     function resetSystemToDefault() {
