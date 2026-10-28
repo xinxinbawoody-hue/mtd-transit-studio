@@ -24,7 +24,7 @@
               teal: '#00A3A6',
               gold: '#FFC72C',
               silver: '#808080',
-              lavender: '#8B85C1',
+              lavender: '#967ADC',
               red: '#D9381E'
             }
           }
@@ -40,14 +40,14 @@
   <!-- Font Awesome Icons -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"/>
 
-  <!-- Google Fonts: Inter -->
+  <!-- Google Fonts: Inter & JetBrains Mono -->
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
 
   <style>
     body { font-family: 'Inter', sans-serif; }
     #map { height: 100%; width: 100%; z-index: 1; }
     
-    /* Glassmorphism overlays */
+    /* Glassmorphism panel style */
     .glass-panel {
       background: rgba(15, 23, 42, 0.88);
       backdrop-filter: blur(12px);
@@ -55,25 +55,29 @@
       border: 1px solid rgba(255, 255, 255, 0.1);
     }
     
-    /* Scrollbar Styling */
+    /* Custom Scrollbar Styling */
     ::-webkit-scrollbar { width: 6px; height: 6px; }
     ::-webkit-scrollbar-track { background: #090d16; }
     ::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
     ::-webkit-scrollbar-thumb:hover { background: #475569; }
 
-    /* Custom Map Marker Badges */
+    /* Custom Interactive Map Marker Badges */
     .stop-marker-badge {
       display: flex;
       align-items: center;
       justify-content: center;
-      background-color: #13294B;
       color: #ffffff;
       font-weight: 800;
       font-size: 11px;
       border-radius: 50%;
       border: 2px solid #ffffff;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.4);
-      transition: transform 0.2s ease;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.45);
+      transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      cursor: grab;
+    }
+    .stop-marker-badge:active {
+      cursor: grabbing;
+      transform: scale(1.3);
     }
     .stop-marker-badge:hover {
       transform: scale(1.2);
@@ -101,16 +105,16 @@
           MTD ROUTE STUDIO <span class="bg-illini-orange/20 text-illini-orange text-[11px] font-bold px-2 py-0.5 rounded border border-illini-orange/40">Urbana-Champaign</span>
         </h1>
         <p class="text-[11px] text-slate-300 mt-0.5 flex items-center gap-1.5">
-          <span class="w-2 h-2 rounded-full bg-emerald-400 inline-block animate-pulse"></span>
-          <span>API-Free Esri / OSM Map Engine Active</span>
+          <span id="osrm-status-dot" class="w-2 h-2 rounded-full bg-emerald-400 inline-block animate-pulse"></span>
+          <span id="osrm-status-text">OSRM Real-Road Routing Active</span>
         </p>
       </div>
     </div>
 
-    <!-- Header Actions & Map Base Switcher -->
+    <!-- Header Actions & Base Map Switcher -->
     <div class="flex items-center space-x-3">
       <div class="hidden lg:flex items-center bg-slate-900/90 border border-slate-800 rounded-xl p-1 text-xs">
-        <span class="text-slate-400 px-2 text-[11px] font-semibold"><i class="fa-solid fa-layer-group text-slate-400 mr-1"></i> Base Style:</span>
+        <span class="text-slate-400 px-2 text-[11px] font-semibold"><i class="fa-solid fa-layer-group text-slate-400 mr-1"></i> Base Layer:</span>
         <select id="header-map-style-select" onchange="changeMapBaseLayer(this.value)" class="bg-slate-800 text-slate-200 rounded-lg px-2 py-1 text-xs font-medium focus:outline-none focus:ring-1 focus:ring-illini-orange border border-slate-700">
           <option value="esriStreet">Esri World Street Map (Default)</option>
           <option value="osmStandard">OpenStreetMap Standard</option>
@@ -167,7 +171,7 @@
 
           <!-- Dynamic Route Selector Pills -->
           <div id="route-pills-list" class="flex items-center gap-2 overflow-x-auto pb-1">
-            <!-- Rendered by JS -->
+            <!-- Rendered dynamically by JS -->
           </div>
         </div>
 
@@ -181,24 +185,23 @@
       <div id="tab-content-landmarks" class="hidden flex-1 overflow-y-auto p-4 space-y-4">
         <div>
           <h2 class="text-sm font-bold text-white flex items-center gap-2">
-            <i class="fa-solid fa-location-dot text-illini-orange"></i> Urbana-Champaign Key Hubs
+            <i class="fa-solid fa-location-dot text-illini-orange"></i> Precise Urbana-Champaign Hubs
           </h2>
           <p class="text-xs text-slate-400 mt-1 leading-relaxed">
-            Click any campus landmark or transit node below to instantly attach it as a stop on your active route.
+            Click any campus landmark below to attach it as a stop. You can also drag stop markers directly on the map to fine-tune their location.
           </p>
         </div>
 
-        <!-- Campus Landmarks Grouped -->
         <div class="space-y-3">
           <div>
-            <div class="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-2">Core UIUC Campus</div>
+            <div class="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-2">Core UIUC Campus & Housing</div>
             <div id="landmarks-campus-grid" class="grid grid-cols-1 gap-2">
               <!-- JS Populated -->
             </div>
           </div>
 
           <div>
-            <div class="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-2">Transit & Medical Hubs</div>
+            <div class="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-2">Transit & Medical Destinations</div>
             <div id="landmarks-city-grid" class="grid grid-cols-1 gap-2">
               <!-- JS Populated -->
             </div>
@@ -210,10 +213,10 @@
       <div id="tab-content-mtd" class="hidden flex-1 overflow-y-auto p-4 space-y-4">
         <div>
           <h2 class="text-sm font-bold text-white flex items-center gap-2">
-            <i class="fa-solid fa-layer-group text-mtd-teal"></i> Official CUMTD Network Lines
+            <i class="fa-solid fa-layer-group text-mtd-teal"></i> Official CUMTD Reference Corridors
           </h2>
           <p class="text-xs text-slate-400 mt-1 leading-relaxed">
-            Toggle existing Champaign-Urbana Mass Transit corridors on the map as a reference layer to identify service gaps.
+            Overlay standard Champaign-Urbana Mass Transit routes to analyze transit coverage and identify service gaps.
           </p>
         </div>
 
@@ -229,7 +232,7 @@
             <i class="fa-solid fa-laptop-code text-sky-400"></i> API Sandbox & Exporter
           </h2>
           <p class="text-xs text-slate-400 mt-1 leading-relaxed">
-            Test simulated CUMTD API endpoints or export your custom transit routes into standardized GIS & GTFS CSV formats.
+            Simulate CUMTD REST API endpoints or export your custom transit routes into standardized GeoJSON & GTFS CSV formats.
           </p>
         </div>
 
@@ -262,14 +265,14 @@
 
         <!-- Live Code Response Output -->
         <div class="bg-slate-950 border border-slate-800 rounded-xl p-3 font-mono text-[11px] text-emerald-400 overflow-x-auto max-h-[220px]">
-          <div class="text-slate-500 mb-1">// API Sandbox Output (JSON)</div>
+          <div class="text-slate-500 mb-1">// API Response Payload (JSON)</div>
           <pre id="api-output-code">Click "Run Query" or export data above.</pre>
         </div>
       </div>
 
       <!-- FOOTER STATUS -->
       <div class="p-3 bg-slate-950 border-t border-slate-800 text-center text-[11px] text-slate-400 flex items-center justify-between shrink-0">
-        <span>MTD Route Studio v3.0</span>
+        <span>MTD Route Studio v3.5 (OSRM)</span>
         <button onclick="resetSystemToDefault()" class="text-illini-orange hover:underline font-medium">
           Reset Network
         </button>
@@ -279,10 +282,10 @@
     <!-- RIGHT MAIN MAP VIEW -->
     <main class="flex-1 relative bg-slate-950">
       
-      <!-- LEAFLET MAP ELEMENT -->
+      <!-- LEAFLET MAP CONTAINER -->
       <div id="map"></div>
 
-      <!-- FLOATING TOOLBAR (TOP RIGHT OF MAP) -->
+      <!-- FLOATING MAP TOOLBAR -->
       <div class="absolute top-4 right-4 z-[1000] flex flex-col space-y-2">
         <button onclick="toggleMapClickMode()" id="map-stop-tool-btn" class="glass-panel text-slate-100 hover:text-white px-3.5 py-2.5 rounded-xl border border-slate-700/80 text-xs font-bold flex items-center gap-2.5 shadow-2xl transition hover:scale-105">
           <i class="fa-solid fa-map-pin text-illini-orange text-sm"></i>
@@ -294,16 +297,16 @@
           <span>Fit Campus Network</span>
         </button>
 
-        <button onclick="clearActiveRouteStops()" class="glass-panel text-slate-200 hover:text-rose-300 px-3 py-2 rounded-xl border border-slate-700/80 text-xs font-semibold flex items-center gap-2 shadow-xl transition">
-          <i class="fa-solid fa-trash-arrow-up text-rose-400"></i>
-          <span>Clear Active Stops</span>
-        </button>
+        <div id="osrm-indicator-badge" class="glass-panel text-slate-300 px-3 py-1.5 rounded-xl border border-slate-700/80 text-[11px] font-semibold flex items-center gap-2 shadow-xl">
+          <i class="fa-solid fa-road text-emerald-400"></i>
+          <span id="osrm-badge-text">Road Snapping Active</span>
+        </div>
       </div>
 
       <!-- ACTIVE MAP-CLICKING MODE BANNER -->
       <div id="map-click-mode-banner" class="hidden absolute top-4 left-1/2 -translate-x-1/2 z-[1000] bg-illini-orange text-white text-xs font-extrabold px-5 py-2.5 rounded-full shadow-2xl flex items-center gap-3 animate-bounce border-2 border-white/20">
         <span class="w-2.5 h-2.5 rounded-full bg-white animate-ping"></span>
-        <span>CLICK ANYWHERE ON MAP STREETS TO PLACE A BUS STOP</span>
+        <span>CLICK ANYWHERE ON URBANA-CHAMPAIGN STREETS TO PLACE A STOP</span>
         <button onclick="toggleMapClickMode()" class="bg-black/30 hover:bg-black/50 text-white rounded-full w-5 h-5 flex items-center justify-center text-[11px] transition">✕</button>
       </div>
 
@@ -312,7 +315,7 @@
         <div class="grid grid-cols-2 md:grid-cols-5 gap-3 text-center">
           
           <div class="bg-slate-900/60 p-2.5 rounded-xl border border-slate-800">
-            <div class="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Active Route Dist.</div>
+            <div class="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Street Distance</div>
             <div id="stat-dist" class="text-base sm:text-lg font-black text-white mt-0.5">0.00 mi</div>
             <div id="stat-dist-km" class="text-[10px] text-slate-400">0.00 km</div>
           </div>
@@ -330,7 +333,7 @@
           </div>
 
           <div class="bg-slate-900/60 p-2.5 rounded-xl border border-slate-800">
-            <div class="text-[10px] uppercase font-bold text-slate-400 tracking-wider">5-Min Walk Service Area</div>
+            <div class="text-[10px] uppercase font-bold text-slate-400 tracking-wider">5-Min Walk Area</div>
             <div id="stat-coverage" class="text-base sm:text-lg font-black text-emerald-400 mt-0.5">0.00 km²</div>
             <div class="text-[10px] text-slate-400">400m stop catchment</div>
           </div>
@@ -349,21 +352,21 @@
 
   <!-- JAVASCRIPT APPLICATION LOGIC -->
   <script>
-    // --- 1. DATA MODELS & URBANA-CHAMPAIGN LANDMARKS ---
+    // --- 1. HIGH-PRECISION PRESET STOPS & INITIAL ROUTES ---
 
     const PRESET_STOPS = [
-      { id: 'IT', name: 'Illinois Terminal (Downtown Champaign)', lat: 40.1164, lng: -88.2435, category: 'City Transit Hub', icon: 'building-columns' },
-      { id: 'UNION', name: 'Illini Union (Main Quad)', lat: 40.1098, lng: -88.2272, category: 'Core Campus', icon: 'graduation-cap' },
-      { id: 'ISR', name: 'ISR - Illinois Street Residence', lat: 40.1111, lng: -88.2250, category: 'Campus Housing', icon: 'bed' },
-      { id: 'PAR_FAR', name: 'PAR / FAR Residence Halls', lat: 40.0998, lng: -88.2212, category: 'Campus Housing', icon: 'bed' },
-      { id: 'IKENBERRY', name: 'Ikenberry Commons (SDRP)', lat: 40.1035, lng: -88.2352, category: 'Campus Housing', icon: 'utensils' },
+      { id: 'IT', name: 'Illinois Terminal (Downtown Champaign)', lat: 40.1165, lng: -88.2435, category: 'City Transit Hub', icon: 'building-columns' },
+      { id: 'UNION', name: 'Illini Union (Main Quad)', lat: 40.1093, lng: -88.2272, category: 'Core Campus', icon: 'graduation-cap' },
+      { id: 'ISR', name: 'ISR - Illinois Street Residence', lat: 40.1110, lng: -88.2250, category: 'Campus Housing', icon: 'bed' },
+      { id: 'PAR_FAR', name: 'PAR / FAR Residence Halls', lat: 40.0995, lng: -88.2215, category: 'Campus Housing', icon: 'bed' },
+      { id: 'IKENBERRY', name: 'Ikenberry Commons (SDRP)', lat: 40.1035, lng: -88.2355, category: 'Campus Housing', icon: 'utensils' },
       { id: 'SIEBEL', name: 'Siebel Center for Computer Science', lat: 40.1138, lng: -88.2249, category: 'Engineering Quad', icon: 'laptop-code' },
-      { id: 'ECE', name: 'ECE Building / Beckman Inst.', lat: 40.1153, lng: -88.2272, category: 'Engineering Quad', icon: 'microchip' },
-      { id: 'ARC', name: 'ARC - Activities & Recreation Center', lat: 40.1011, lng: -88.2361, category: 'Campus Sports', icon: 'dumbbell' },
-      { id: 'URBANA_SQ', name: 'Downtown Urbana / Lincoln Square', lat: 40.1106, lng: -88.2073, category: 'City Hub', icon: 'city' },
-      { id: 'MARKETPLACE', name: 'Market Place Mall', lat: 40.1381, lng: -88.2258, category: 'Retail Hub', icon: 'bag-shopping' },
-      { id: 'RESEARCH_PARK', name: 'UIUC Research Park', lat: 40.0915, lng: -88.2410, category: 'Tech Park', icon: 'flask' },
-      { id: 'CARLE', name: 'Carle Foundation Hospital', lat: 40.1182, lng: -88.2162, category: 'Medical Hub', icon: 'hospital' },
+      { id: 'ECE', name: 'ECE Building / Beckman Inst.', lat: 40.1150, lng: -88.2280, category: 'Engineering Quad', icon: 'microchip' },
+      { id: 'ARC', name: 'ARC - Activities & Recreation Center', lat: 40.1010, lng: -88.2360, category: 'Campus Sports', icon: 'dumbbell' },
+      { id: 'URBANA_SQ', name: 'Downtown Urbana / Lincoln Square', lat: 40.1105, lng: -88.2072, category: 'City Hub', icon: 'city' },
+      { id: 'MARKETPLACE', name: 'Market Place Mall', lat: 40.1410, lng: -88.2430, category: 'Retail Hub', icon: 'bag-shopping' },
+      { id: 'RESEARCH_PARK', name: 'UIUC Research Park', lat: 40.0930, lng: -88.2410, category: 'Tech Park', icon: 'flask' },
+      { id: 'CARLE', name: 'Carle Foundation Hospital', lat: 40.1190, lng: -88.2120, category: 'Medical Hub', icon: 'hospital' },
       { id: 'KRANNERT', name: 'Krannert Center for Performing Arts', lat: 40.1080, lng: -88.2225, category: 'Core Campus', icon: 'masks-theater' }
     ];
 
@@ -373,18 +376,22 @@
         code: '23X',
         name: 'Illini Quad Express',
         color: '#E84A27', // UIUC Orange
-        headway: 10, // minutes
+        headway: 10,
         speedMph: 12.5,
-        stopIds: ['IT', 'ECE', 'SIEBEL', 'ISR', 'UNION', 'IKENBERRY', 'ARC', 'RESEARCH_PARK']
+        stopIds: ['IT', 'ECE', 'SIEBEL', 'ISR', 'UNION', 'IKENBERRY', 'ARC', 'RESEARCH_PARK'],
+        routeGeometry: null, // Populated via OSRM
+        roadDistanceMeters: 0
       },
       {
         id: 'route-99',
         code: '99',
         name: 'Urbana Health & Campus Loop',
         color: '#13294B', // UIUC Navy
-        headway: 15, // minutes
-        speedMph: 14,
-        stopIds: ['MARKETPLACE', 'CARLE', 'URBANA_SQ', 'KRANNERT', 'UNION', 'PAR_FAR']
+        headway: 15,
+        speedMph: 14.0,
+        stopIds: ['MARKETPLACE', 'CARLE', 'URBANA_SQ', 'KRANNERT', 'UNION', 'PAR_FAR'],
+        routeGeometry: null,
+        roadDistanceMeters: 0
       }
     ];
 
@@ -395,11 +402,11 @@
         color: '#00875A',
         enabled: false,
         coords: [
-          [40.0998, -88.2212], // PAR/FAR
+          [40.0995, -88.2215], // PAR/FAR
           [40.1080, -88.2225], // Krannert
-          [40.1098, -88.2272], // Illini Union
+          [40.1093, -88.2272], // Illini Union
           [40.1138, -88.2249], // Siebel CS
-          [40.1164, -88.2435]  // Illinois Terminal
+          [40.1165, -88.2435]  // Illinois Terminal
         ]
       },
       {
@@ -408,10 +415,10 @@
         color: '#808080',
         enabled: false,
         coords: [
-          [40.0998, -88.2212], // PAR/FAR
+          [40.0995, -88.2215], // PAR/FAR
           [40.1080, -88.2225], // Krannert
-          [40.1111, -88.2250], // ISR
-          [40.1182, -88.2162]  // Carle Hospital
+          [40.1110, -88.2250], // ISR
+          [40.1190, -88.2120]  // Carle Hospital
         ]
       },
       {
@@ -420,9 +427,9 @@
         color: '#00A3A6',
         enabled: false,
         coords: [
-          [40.1164, -88.2435], // IT
-          [40.1098, -88.2272], // Union
-          [40.1106, -88.2073]  // Urbana Square
+          [40.1165, -88.2435], // IT
+          [40.1093, -88.2272], // Union
+          [40.1105, -88.2072]  // Urbana Square
         ]
       },
       {
@@ -431,26 +438,26 @@
         color: '#FFC72C',
         enabled: false,
         coords: [
-          [40.1381, -88.2258], // Market Place
-          [40.1164, -88.2435], // IT
-          [40.1011, -88.2361], // ARC
-          [40.0915, -88.2410]  // Research Park
+          [40.1410, -88.2430], // Market Place
+          [40.1165, -88.2435], // IT
+          [40.1010, -88.2360], // ARC
+          [40.0930, -88.2410]  // Research Park
         ]
       },
       {
         code: '5/50',
         name: 'Green Line',
-        color: '#8B85C1',
+        color: '#967ADC',
         enabled: false,
         coords: [
-          [40.1164, -88.2435], // IT
-          [40.1111, -88.2250], // ISR
-          [40.1106, -88.2073]  // Downtown Urbana
+          [40.1165, -88.2435], // IT
+          [40.1110, -88.2250], // ISR
+          [40.1105, -88.2072]  // Downtown Urbana
         ]
       }
     ];
 
-    // App State Variables
+    // State
     let stops = [...PRESET_STOPS];
     let routes = JSON.parse(JSON.stringify(DEFAULT_ROUTES));
     let activeRouteId = 'route-23x';
@@ -467,7 +474,7 @@
     let showBuffers = false;
     let isClickToAddMode = false;
 
-    // --- 2. INITIALIZATION & TILE TILE ERROR FALLBACK ---
+    // --- 2. INITIALIZATION & TILE MAP ENGINE ---
 
     window.onload = function() {
       initMapEngine();
@@ -484,7 +491,7 @@
       map = L.map('map', {
         zoomControl: true,
         attributionControl: false
-      }).setView([40.1080, -88.2272], 14);
+      }).setView([40.1097, -88.2272], 14);
 
       // --- GUARANTEED API-FREE TILE LAYERS ---
       baseMapLayers = {
@@ -506,17 +513,6 @@
         })
       };
 
-      // Set tile error fallback handler to ensure user always sees a map
-      Object.values(baseMapLayers).forEach(layer => {
-        layer.on('tileerror', function(error) {
-          console.warn('Map layer tile error encountered, falling back to OSM standard:', error);
-          if (!map.hasLayer(baseMapLayers.osmStandard)) {
-            baseMapLayers.osmStandard.addTo(map);
-          }
-        });
-      });
-
-      // Default to Esri Street Map
       activeBaseLayer = baseMapLayers.esriStreet;
       activeBaseLayer.addTo(map);
 
@@ -536,10 +532,81 @@
       }
     }
 
-    // --- 3. MAP RENDERING FUNCTIONS ---
+    // --- 3. OSRM REAL-ROAD ROUTING ENGINE ---
+
+    /**
+     * Fetches real road routing geometry from OSRM for a list of coordinates
+     */
+    async function fetchOsrmRoute(stopCoords) {
+      if (!stopCoords || stopCoords.length < 2) return null;
+
+      // Format: lng,lat;lng,lat;...
+      const coordString = stopCoords.map(c => `${c[1]},${c[0]}`).join(';');
+      const url = `https://router.project-osrm.org/route/v1/driving/${coordString}?overview=full&geometries=geojson`;
+
+      updateOsrmStatus('processing', 'Fetching Street Geometry...');
+
+      try {
+        const response = await fetch(url);
+        if (!response.ok) throw new Error('OSRM API response not OK');
+        const data = await response.json();
+
+        if (data.routes && data.routes.length > 0) {
+          const route = data.routes[0];
+          // GeoJSON coords are [lng, lat], Leaflet requires [lat, lng]
+          const latLngs = route.geometry.coordinates.map(c => [c[1], c[0]]);
+          updateOsrmStatus('active', 'OSRM Real-Road Routing Active');
+          return {
+            latLngs: latLngs,
+            distanceMeters: route.distance,
+            durationSeconds: route.duration
+          };
+        }
+      } catch (err) {
+        console.warn('OSRM Road Routing API failed or timed out. Falling back to straight lines:', err);
+        updateOsrmStatus('fallback', 'Straight Line Fallback Mode');
+      }
+
+      // Fallback: Straight line coordinates
+      return {
+        latLngs: stopCoords,
+        distanceMeters: calculateStraightDistanceMeters(stopCoords),
+        durationSeconds: 0
+      };
+    }
+
+    function updateOsrmStatus(state, message) {
+      const dot = document.getElementById('osrm-status-dot');
+      const text = document.getElementById('osrm-status-text');
+      const badgeText = document.getElementById('osrm-badge-text');
+
+      if (state === 'active') {
+        dot.className = 'w-2 h-2 rounded-full bg-emerald-400 inline-block animate-pulse';
+        text.innerText = message;
+        if (badgeText) badgeText.innerText = 'Road Snapping Active';
+      } else if (state === 'processing') {
+        dot.className = 'w-2 h-2 rounded-full bg-amber-400 inline-block animate-ping';
+        text.innerText = message;
+        if (badgeText) badgeText.innerText = 'Snapping to Streets...';
+      } else {
+        dot.className = 'w-2 h-2 rounded-full bg-rose-400 inline-block';
+        text.innerText = message;
+        if (badgeText) badgeText.innerText = 'Straight Line Mode';
+      }
+    }
+
+    function calculateStraightDistanceMeters(coords) {
+      let dist = 0;
+      for (let i = 0; i < coords.length - 1; i++) {
+        dist += calcDistanceMiles(coords[i][0], coords[i][1], coords[i+1][0], coords[i+1][1]) * 1609.34;
+      }
+      return dist;
+    }
+
+    // --- 4. MAP RENDERING & DRAGGABLE MARKERS ---
 
     function renderAllStopsOnMap() {
-      // Clear existing markers & buffers
+      // Remove existing markers & buffers
       Object.values(markersMap).forEach(m => map.removeLayer(m));
       Object.values(bufferCirclesMap).forEach(c => map.removeLayer(c));
       markersMap = {};
@@ -552,7 +619,6 @@
         const seqIdx = activeStopSequence.indexOf(stop.id);
         const isInActiveRoute = seqIdx !== -1;
         
-        // Custom badge HTML
         const badgeBg = isInActiveRoute ? (activeRoute ? activeRoute.color : '#13294B') : '#475569';
         const labelText = isInActiveRoute ? (seqIdx + 1) : '';
 
@@ -565,12 +631,29 @@
           iconAnchor: [13, 13]
         });
 
-        const marker = L.marker([stop.lat, stop.lng], { icon: customIcon }).addTo(map);
+        // Make stop marker DRAGGABLE
+        const marker = L.marker([stop.lat, stop.lng], { 
+          icon: customIcon,
+          draggable: true 
+        }).addTo(map);
+
+        // Handle Stop Dragging to Auto-Reroute
+        marker.on('dragend', function(e) {
+          const newPos = e.target.getLatLng();
+          stop.lat = Number(newPos.lat.toFixed(5));
+          stop.lng = Number(newPos.lng.toFixed(5));
+          
+          // Re-render routes with updated road alignment
+          renderRoutesOnMap();
+          renderSidebarUI();
+          updateStatsDashboard();
+        });
 
         marker.bindPopup(`
           <div class="p-2 text-slate-900 font-sans">
             <div class="font-extrabold text-sm text-illini-navy">${stop.name}</div>
-            <div class="text-xs text-slate-500 mb-2">${stop.category || 'Transit Node'}</div>
+            <div class="text-xs text-slate-500 mb-1">${stop.category || 'Transit Node'}</div>
+            <div class="text-[10px] text-slate-400 mb-2 font-mono">${stop.lat.toFixed(4)}, ${stop.lng.toFixed(4)} (Drag to move)</div>
             <div class="flex gap-1">
               <button onclick="addStopToActiveRoute('${stop.id}')" class="bg-illini-orange hover:bg-orange-600 text-white text-xs px-2.5 py-1 rounded font-bold transition flex-1">
                 + Add to Line
@@ -599,33 +682,43 @@
       });
     }
 
-    function renderRoutesOnMap() {
-      // Clear existing polyline layers
+    async function renderRoutesOnMap() {
+      // Remove existing route polylines
       Object.values(routePolylinesMap).forEach(p => map.removeLayer(p));
       routePolylinesMap = {};
 
-      routes.forEach(route => {
-        const coords = route.stopIds
+      for (const route of routes) {
+        const stopCoords = route.stopIds
           .map(sid => stops.find(s => s.id === sid))
           .filter(Boolean)
           .map(s => [s.lat, s.lng]);
 
-        if (coords.length > 1) {
+        if (stopCoords.length >= 2) {
+          // Fetch OSRM Road Geometry
+          const osrmResult = await fetchOsrmRoute(stopCoords);
           const isSelected = route.id === activeRouteId;
-          const polyline = L.polyline(coords, {
-            color: route.color,
-            weight: isSelected ? 6 : 3.5,
-            opacity: isSelected ? 0.95 : 0.55,
-            lineCap: 'round',
-            lineJoin: 'round'
-          }).addTo(map);
 
-          polyline.bindTooltip(`<b>${route.code}</b> - ${route.name}`, { sticky: true });
-          polyline.on('click', () => setActiveRoute(route.id));
+          if (osrmResult) {
+            route.routeGeometry = osrmResult.latLngs;
+            route.roadDistanceMeters = osrmResult.distanceMeters;
 
-          routePolylinesMap[route.id] = polyline;
+            const polyline = L.polyline(osrmResult.latLngs, {
+              color: route.color,
+              weight: isSelected ? 6 : 3.5,
+              opacity: isSelected ? 0.95 : 0.55,
+              lineCap: 'round',
+              lineJoin: 'round'
+            }).addTo(map);
+
+            polyline.bindTooltip(`<b>Line ${route.code}</b> - ${route.name}`, { sticky: true });
+            polyline.on('click', () => setActiveRoute(route.id));
+
+            routePolylinesMap[route.id] = polyline;
+          }
         }
-      });
+      }
+
+      updateStatsDashboard();
     }
 
     function toggleBuffers() {
@@ -653,7 +746,7 @@
       }
     }
 
-    // --- 4. INTERACTIVE ROUTE STUDIO & MAP CLICKING LOGIC ---
+    // --- 5. INTERACTIVE ROUTE STUDIO LOGIC ---
 
     function toggleMapClickMode() {
       isClickToAddMode = !isClickToAddMode;
@@ -673,7 +766,7 @@
     }
 
     function handleMapClickAddStop(lat, lng) {
-      const stopName = prompt("Enter Transit Stop Name for this Urbana-Champaign Location:", "Custom Street Stop");
+      const stopName = prompt("Enter Transit Stop Name for this Location:", "Custom Campus Stop");
       if (!stopName) return;
 
       const newStop = {
@@ -701,17 +794,19 @@
 
     function addNewRoute() {
       const newId = 'route-' + Date.now();
-      const palette = ['#E84A27', '#13294B', '#00875A', '#00A3A6', '#FFC72C', '#8B85C1'];
+      const palette = ['#E84A27', '#13294B', '#00875A', '#00A3A6', '#FFC72C', '#967ADC'];
       const pickedColor = palette[Math.floor(Math.random() * palette.length)];
 
       const newRoute = {
         id: newId,
         code: `${Math.floor(Math.random() * 80 + 10)}`,
-        name: 'New Custom Campus Route',
+        name: 'New Custom Campus Line',
         color: pickedColor,
         headway: 15,
         speedMph: 12.5,
-        stopIds: ['UNION', 'ISR', 'SIEBEL']
+        stopIds: ['UNION', 'ISR', 'SIEBEL'],
+        routeGeometry: null,
+        roadDistanceMeters: 0
       };
 
       routes.push(newRoute);
@@ -798,10 +893,10 @@
       updateStatsDashboard();
     }
 
-    // --- 5. CALCULATIONS & STATS ANALYTICS ---
+    // --- 6. CALCULATIONS & STATS DASHBOARD ---
 
     function calcDistanceMiles(lat1, lon1, lat2, lon2) {
-      const R = 3958.8; // Earth radius in miles
+      const R = 3958.8;
       const dLat = (lat2 - lat1) * Math.PI / 180;
       const dLon = (lon2 - lon1) * Math.PI / 180;
       const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
@@ -814,27 +909,32 @@
     function calculateRouteMetrics(route) {
       if (!route) return { totalDistMiles: 0, totalDistKm: 0, oneWayMins: 0, roundTripMins: 0, busesNeeded: 0, coverageKm2: 0 };
       
-      let totalDist = 0;
-      const routeStops = route.stopIds.map(sid => stops.find(s => s.id === sid)).filter(Boolean);
+      let totalDistMiles = 0;
 
-      for (let i = 0; i < routeStops.length - 1; i++) {
-        totalDist += calcDistanceMiles(routeStops[i].lat, routeStops[i].lng, routeStops[i+1].lat, routeStops[i+1].lng);
+      if (route.roadDistanceMeters && route.roadDistanceMeters > 0) {
+        // Use exact OSRM street distance
+        totalDistMiles = route.roadDistanceMeters * 0.000621371;
+      } else {
+        // Fallback straight line distance
+        const routeStops = route.stopIds.map(sid => stops.find(s => s.id === sid)).filter(Boolean);
+        for (let i = 0; i < routeStops.length - 1; i++) {
+          totalDistMiles += calcDistanceMiles(routeStops[i].lat, routeStops[i].lng, routeStops[i+1].lat, routeStops[i+1].lng);
+        }
       }
 
-      const numStops = routeStops.length;
-      const dwellMinutes = numStops * (20 / 60); // 20 seconds dwell per stop
-      const travelHours = totalDist / (route.speedMph || 12.5);
+      const numStops = route.stopIds.length;
+      const dwellMinutes = numStops * (20 / 60); // 20 sec dwell per stop
+      const travelHours = totalDistMiles / (route.speedMph || 12.5);
       const oneWayMins = (travelHours * 60) + dwellMinutes;
       const roundTripMins = (oneWayMins * 2) * 1.10; // 10% terminal buffer
       const busesNeeded = Math.max(1, Math.ceil(roundTripMins / (route.headway || 15)));
 
-      // Approximate 5-minute walk coverage area with overlap correction
-      const baseStopAreaKm2 = Math.PI * (0.4 * 0.4); // 0.5026 km2 per stop
+      const baseStopAreaKm2 = Math.PI * (0.4 * 0.4); // 400m radius
       const coverageKm2 = numStops > 0 ? (numStops * baseStopAreaKm2 * Math.pow(0.82, Math.min(numStops - 1, 6))) : 0;
 
       return {
-        totalDistMiles: totalDist,
-        totalDistKm: totalDist * 1.60934,
+        totalDistMiles: totalDistMiles,
+        totalDistKm: totalDistMiles * 1.60934,
         oneWayMins: Math.round(oneWayMins),
         roundTripMins: Math.round(roundTripMins),
         busesNeeded: busesNeeded,
@@ -856,7 +956,7 @@
       document.getElementById('stat-speed-display').innerText = `${activeRoute ? activeRoute.speedMph : 12.5} mph`;
     }
 
-    // --- 6. UI RENDER FUNCTIONS & TABS ---
+    // --- 7. UI SIDEBAR & TAB RENDERERS ---
 
     function switchTab(tabKey) {
       const tabs = ['studio', 'landmarks', 'mtd', 'api'];
@@ -874,7 +974,7 @@
     }
 
     function renderSidebarUI() {
-      // 1. Render Route Pills
+      // 1. Render Route Switcher Pills
       const pillsContainer = document.getElementById('route-pills-list');
       pillsContainer.innerHTML = routes.map(r => {
         const isSelected = r.id === activeRouteId;
@@ -888,12 +988,10 @@
         `;
       }).join('');
 
-      // 2. Render Active Editor
+      // 2. Render Active Editor View
       const activeRoute = routes.find(r => r.id === activeRouteId) || routes[0];
       const panel = document.getElementById('route-editor-panel');
       if (!activeRoute) return;
-
-      const metrics = calculateRouteMetrics(activeRoute);
 
       const stopSeqUI = activeRoute.stopIds.map((sid, idx) => {
         const stop = stops.find(s => s.id === sid);
@@ -906,7 +1004,7 @@
               </span>
               <div class="truncate">
                 <div class="font-bold text-slate-100 truncate">${stop.name}</div>
-                <div class="text-[10px] text-slate-400">${stop.category}</div>
+                <div class="text-[10px] text-slate-400 font-mono">${stop.lat.toFixed(4)}, ${stop.lng.toFixed(4)}</div>
               </div>
             </div>
             <div class="flex items-center space-x-1 shrink-0">
@@ -977,6 +1075,7 @@
         <div class="space-y-2">
           <div class="flex items-center justify-between">
             <span class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Stop Sequence Path (${activeRoute.stopIds.length})</span>
+            <span class="text-[10px] text-slate-500">Drag markers on map to move</span>
           </div>
 
           <div class="space-y-1.5">
@@ -1057,12 +1156,16 @@
       `).join('');
     }
 
-    function toggleOfficialRefRoute(idx) {
+    async function toggleOfficialRefRoute(idx) {
       const refRoute = OFFICIAL_MTD_REF_ROUTES[idx];
       refRoute.enabled = !refRoute.enabled;
 
       if (refRoute.enabled) {
-        const polyline = L.polyline(refRoute.coords, {
+        // Fetch OSRM geometry for reference route
+        const osrmData = await fetchOsrmRoute(refRoute.coords);
+        const polyCoords = osrmData ? osrmData.latLngs : refRoute.coords;
+
+        const polyline = L.polyline(polyCoords, {
           color: refRoute.color,
           weight: 4,
           dashArray: '8, 8',
@@ -1081,13 +1184,14 @@
       renderOfficialMTDTab();
     }
 
-    // --- 7. EXPORT DATA & SIMULATED API SANDBOX ---
+    // --- 8. EXPORT DATA & SIMULATED API SANDBOX ---
 
     function generateGeoJSONData() {
       const geojson = {
         type: "FeatureCollection",
         metadata: {
           app: "MTD Route Studio - Urbana-Champaign",
+          engine: "OSRM Street Snapped",
           generated: new Date().toISOString()
         },
         features: []
@@ -1102,10 +1206,9 @@
       });
 
       routes.forEach(r => {
-        const coords = r.stopIds
-          .map(sid => stops.find(s => s.id === sid))
-          .filter(Boolean)
-          .map(s => [s.lng, s.lat]);
+        const coords = r.routeGeometry 
+          ? r.routeGeometry.map(c => [c[1], c[0]])
+          : r.stopIds.map(sid => stops.find(s => s.id === sid)).filter(Boolean).map(s => [s.lng, s.lat]);
 
         const m = calculateRouteMetrics(r);
 
