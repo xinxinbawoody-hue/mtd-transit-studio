@@ -34,15 +34,55 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 
   <style>
-    body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; }
-    #map { height: 100%; width: 100%; z-index: 1; }
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+      background-color: #060c18;
+    }
 
-    /* Glassmorphism Sidebar Panel - Spacious Layout */
+    #map {
+      height: 100%;
+      width: 100%;
+      z-index: 1;
+      background-color: #191a1a;
+    }
+
+    /* Glassmorphism Sidebar Panel */
     .glass-panel {
       background: rgba(10, 22, 40, 0.96);
       backdrop-filter: blur(16px);
       -webkit-backdrop-filter: blur(16px);
       border-right: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    /* Resizer Bar Styling */
+    #sidebar-resizer {
+      width: 10px;
+      cursor: col-resize;
+      background: rgba(19, 41, 75, 0.8);
+      border-left: 1px solid rgba(255, 255, 255, 0.1);
+      border-right: 1px solid rgba(255, 255, 255, 0.1);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.2s ease, width 0.15s ease;
+      z-index: 40;
+      user-select: none;
+      touch-action: none;
+    }
+
+    #sidebar-resizer:hover, #sidebar-resizer.resizing {
+      background: #E84A27;
+      width: 12px;
+    }
+
+    #sidebar-resizer::after {
+      content: "⋮";
+      color: rgba(255, 255, 255, 0.6);
+      font-size: 14px;
+      font-weight: bold;
     }
 
     /* Custom Slim Scrollbar */
@@ -58,14 +98,14 @@
       justify-content: center;
       color: #ffffff;
       font-weight: 800;
-      font-size: 11px;
+      font-size: 12px;
       border-radius: 50%;
       border: 2.5px solid #ffffff;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+      box-shadow: 0 4px 14px rgba(0,0,0,0.6);
       transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
       cursor: pointer;
     }
-    .stop-marker-badge:hover { transform: scale(1.25); z-index: 999; }
+    .stop-marker-badge:hover { transform: scale(1.3); z-index: 999; }
 
     /* Shared & Hub Badges */
     .hub-star-badge {
@@ -75,14 +115,15 @@
       background: #FFC72C;
       color: #000;
       border-radius: 50%;
-      width: 13px;
-      height: 13px;
-      font-size: 8px;
+      width: 14px;
+      height: 14px;
+      font-size: 9px;
       display: flex;
       align-items: center;
       justify-content: center;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.4);
+      box-shadow: 0 2px 4px rgba(0,0,0,0.5);
     }
+
     .shared-badge {
       position: absolute;
       bottom: -4px;
@@ -90,13 +131,13 @@
       background: #3B82F6;
       color: #fff;
       border-radius: 50%;
-      width: 13px;
-      height: 13px;
-      font-size: 7px;
+      width: 14px;
+      height: 14px;
+      font-size: 8px;
       display: flex;
       align-items: center;
       justify-content: center;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.4);
+      box-shadow: 0 2px 4px rgba(0,0,0,0.5);
     }
 
     /* MAP CLICK ADD MODE */
@@ -143,13 +184,13 @@
       </div>
       <div>
         <h1 class="font-extrabold text-base sm:text-lg tracking-wide flex items-center gap-2 leading-none">
-          MTD ROUTE STUDIO <span class="bg-illini-orange/20 text-illini-orange text-[11px] font-bold px-2.5 py-0.5 rounded-full border border-illini-orange/40">v8.0</span>
+          MTD ROUTE STUDIO <span class="bg-illini-orange/20 text-illini-orange text-[11px] font-bold px-2.5 py-0.5 rounded-full border border-illini-orange/40">v9.0</span>
         </h1>
         <p class="text-xs text-slate-300 mt-1 flex items-center gap-2">
           <span class="w-2 h-2 rounded-full bg-emerald-400 inline-block animate-pulse"></span>
           <span>Champaign-Urbana Transit Planner</span>
           <span class="text-slate-500">|</span>
-          <span class="text-slate-400 text-[11px]">Commit: <code class="text-sky-300 bg-slate-900 px-1.5 py-0.5 rounded">60m Snapping & Asymmetric Routes</code></span>
+          <span class="text-slate-400 text-[11px]">Commit: <code class="text-sky-300 bg-slate-900 px-1.5 py-0.5 rounded">v9.0: Auto-populate inbound stops & decouple stop removal</code></span>
         </p>
       </div>
     </div>
@@ -206,11 +247,11 @@
   <!-- MAIN CONTAINER -->
   <div class="flex-1 flex overflow-hidden relative">
 
-    <!-- LEFT SIDEBAR WORKSPACE - SPACIOUS 450PX WIDTH -->
-    <aside id="sidebar-container" class="w-full md:w-[450px] glass-panel flex flex-col z-20 shrink-0 shadow-2xl">
+    <!-- LEFT SIDEBAR WORKSPACE - DYNAMICALLY RESIZABLE -->
+    <aside id="sidebar-container" class="glass-panel flex flex-col z-20 shrink-0 shadow-2xl relative" style="width: 440px; min-width: 320px; max-width: 750px;">
       
       <!-- NAVIGATION TABS -->
-      <div class="bg-slate-950/80 p-2.5 border-b border-slate-800 grid grid-cols-4 gap-1.5 text-xs font-semibold">
+      <div class="bg-slate-950/80 p-2.5 border-b border-slate-800 grid grid-cols-4 gap-1.5 text-xs font-semibold shrink-0">
         <button id="tab-btn-routes" onclick="switchTab('routes')" class="py-2.5 px-1.5 rounded-xl text-center transition-all bg-illini-orange text-white font-bold shadow">
           <i class="fa-solid fa-bus block text-base mb-1"></i> Routes & Stops
         </button>
@@ -229,7 +270,7 @@
       <div id="tab-content-routes" class="flex-1 flex flex-col overflow-hidden">
         
         <!-- TOP SECTION: ALL BUS LINES LIST -->
-        <div class="p-4 border-b border-slate-800 bg-slate-950/80 space-y-3 shrink-0 max-h-[36%] overflow-y-auto">
+        <div class="p-4 border-b border-slate-800 bg-slate-950/80 space-y-3 shrink-0 max-h-[38%] overflow-y-auto">
           <div class="flex items-center justify-between">
             <span class="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center gap-2">
               <i class="fa-solid fa-list-check text-illini-orange text-sm"></i> Bus Lines (<span id="routes-count-badge">0</span>)
@@ -274,13 +315,13 @@
         <!-- BOTTOM SECTION: ACTIVE LINE STOPS & ASYMMETRIC DIRECTION MANAGER -->
         <div class="flex-1 flex flex-col overflow-hidden bg-slate-950/40">
           
-          <div class="p-4 border-b border-slate-800 bg-slate-900/60 space-y-3">
+          <div class="p-4 border-b border-slate-800 bg-slate-900/60 space-y-3 shrink-0">
             <div class="flex items-center justify-between">
               <div class="flex items-center gap-2.5">
                 <span id="active-line-pill" class="w-4 h-4 rounded-full bg-illini-orange border border-white"></span>
                 <span id="active-line-title" class="font-extrabold text-sm text-white">Line 130 - Silver Express</span>
               </div>
-              <span id="active-line-stops-count" class="text-xs text-slate-400 font-mono">0 stops</span>
+              <span id="active-line-stops-count" class="text-xs text-slate-300 font-bold bg-slate-800 px-2.5 py-1 rounded-lg border border-slate-700">0 stops</span>
             </div>
 
             <!-- Routing Mode Toggle (One-Way vs Bidirectional) -->
@@ -293,13 +334,13 @@
               </button>
             </div>
 
-            <!-- Asymmetric Direction Tabs (Outbound 上行 vs Inbound 下行) -->
+            <!-- Asymmetric Direction Tabs (Outbound ➡️ vs Inbound ⬅️) -->
             <div id="direction-tabs-bar" class="flex items-center gap-2 bg-slate-950 p-1.5 rounded-2xl border border-slate-800 text-xs">
               <button id="dir-tab-outbound" onclick="setActiveDirection('outbound')" class="flex-1 py-1.5 rounded-xl font-bold transition flex items-center justify-center gap-1.5 bg-illini-orange text-white shadow">
-                <i class="fa-solid fa-arrow-up-right-dots"></i> Outbound (上行)
+                <i class="fa-solid fa-right-long"></i> Outbound Leg (➡️)
               </button>
               <button id="dir-tab-inbound" onclick="setActiveDirection('inbound')" class="flex-1 py-1.5 rounded-xl font-bold transition flex items-center justify-center gap-1.5 text-slate-400 hover:text-white">
-                <i class="fa-solid fa-arrow-down-left-dots"></i> Inbound (下行)
+                <i class="fa-solid fa-left-long"></i> Inbound Leg (⬅️)
               </button>
             </div>
 
@@ -309,8 +350,8 @@
                 <i class="fa-solid fa-plus-circle"></i> <span id="map-click-btn-text">📍 Add Stops on Map</span>
               </button>
 
-              <button onclick="copyOutboundToInboundReversed()" id="copy-inbound-btn" title="Copy Outbound to Inbound (Reversed)" class="bg-slate-900 hover:bg-slate-800 border border-slate-700 text-amber-400 font-bold px-3 py-2 rounded-xl transition flex items-center gap-1.5">
-                <i class="fa-solid fa-copy"></i> <span>Copy Outbound</span>
+              <button onclick="copyOutboundToInboundReversed()" id="copy-inbound-btn" title="Copy & Reverse Outbound Stops to Inbound" class="bg-slate-900 hover:bg-slate-800 border border-slate-700 text-amber-400 font-bold px-3 py-2 rounded-xl transition flex items-center gap-1.5 text-xs">
+                <i class="fa-solid fa-rotate"></i> <span>🔄 Copy & Reverse Outbound</span>
               </button>
 
               <button onclick="clearCurrentRouteDirectionStops()" title="Clear stops for current direction" class="bg-slate-900 hover:bg-rose-950 text-rose-300 border border-slate-800 px-3 py-2 rounded-xl transition">
@@ -409,12 +450,15 @@
       </div>
 
       <!-- FOOTER STATUS -->
-      <div class="p-3 bg-slate-950 border-t border-slate-800 text-[11px] text-slate-400 flex items-center justify-between">
-        <span>MTD Route Studio v8.0</span>
+      <div class="p-3 bg-slate-950 border-t border-slate-800 text-[11px] text-slate-400 flex items-center justify-between shrink-0">
+        <span>MTD Route Studio v8.5</span>
         <span id="footer-system-summary">Total Fleet: 0 buses</span>
       </div>
 
     </aside>
+
+    <!-- RESIZABLE SIDEBAR DRAG HANDLE -->
+    <div id="sidebar-resizer" title="Drag to resize sidebar width"></div>
 
     <!-- MAP CANVAS CONTAINER -->
     <div id="map" class="flex-1 h-full w-full relative"></div>
@@ -535,6 +579,52 @@
         if (inOut || inIn) count++;
       });
       return count;
+    }
+
+    // INITIALIZE RESIZABLE SIDEBAR LOGIC
+    function initSidebarResizer() {
+      const sidebar = document.getElementById('sidebar-container');
+      const resizer = document.getElementById('sidebar-resizer');
+      let isResizing = false;
+
+      function startResize(e) {
+        isResizing = true;
+        resizer.classList.add('resizing');
+        document.body.style.cursor = 'col-resize';
+        document.body.style.userSelect = 'none';
+      }
+
+      function handleMove(clientX) {
+        if (!isResizing) return;
+        let newWidth = clientX;
+        if (newWidth < 320) newWidth = 320;
+        if (newWidth > 750) newWidth = 750;
+        sidebar.style.width = `${newWidth}px`;
+        if (map) map.invalidateSize();
+      }
+
+      function stopResize() {
+        if (isResizing) {
+          isResizing = false;
+          resizer.classList.remove('resizing');
+          document.body.style.cursor = '';
+          document.body.style.userSelect = '';
+          if (map) map.invalidateSize();
+        }
+      }
+
+      resizer.addEventListener('mousedown', startResize);
+      document.addEventListener('mousemove', (e) => handleMove(e.clientX));
+      document.addEventListener('mouseup', stopResize);
+
+      // Touch screen support
+      resizer.addEventListener('touchstart', (e) => {
+        if (e.touches[0]) startResize(e.touches[0]);
+      });
+      document.addEventListener('touchmove', (e) => {
+        if (e.touches[0]) handleMove(e.touches[0].clientX);
+      });
+      document.addEventListener('touchend', stopResize);
     }
 
     // INITIALIZE LEAFLET MAP WITH ESRI AS DEFAULT
@@ -688,14 +778,14 @@
         const sharedHtml = sharingCount > 1 ? `<span class="shared-badge" title="Shared by ${sharingCount} lines"><i class="fa-solid fa-layer-group"></i></span>` : '';
 
         const icon = L.divIcon({
-          html: `<div class="stop-marker-badge relative" style="background-color: ${color}; width:28px; height:28px;">
-                  ${label || `<i class="fa-solid fa-bus" style="font-size:10px;"></i>`}
+          html: `<div class="stop-marker-badge relative" style="background-color: ${color}; width:30px; height:30px;">
+                  ${label || `<i class="fa-solid fa-bus" style="font-size:11px;"></i>`}
                   ${starHtml}
                   ${sharedHtml}
                  </div>`,
           className: '',
-          iconSize: [28, 28],
-          iconAnchor: [14, 14]
+          iconSize: [30, 30],
+          iconAnchor: [15, 15]
         });
 
         const marker = L.marker([stop.lat, stop.lng], { icon: icon, draggable: true }).addTo(map);
@@ -707,7 +797,7 @@
           renderRoutesOnMap();
           renderStopsManagerSection();
           pushHistorySnapshot();
-          showToast(`Moved shared stop "${stop.name}"`, "info");
+          showToast(`Moved stop "${stop.name}"`, "info");
         });
 
         marker.on('contextmenu', (e) => { L.DomEvent.stopPropagation(e); deleteStop(stop.id); });
@@ -717,7 +807,7 @@
       });
     }
 
-    // ASYMMETRIC ROUTE RENDERING
+    // ASYMMETRIC ROUTE RENDERING (SOLID OUTBOUND, DASHED INBOUND)
     async function renderRoutesOnMap() {
       for (const route of routes) {
         if (!route.visible) {
@@ -740,7 +830,7 @@
           continue;
         }
 
-        // OUTBOUND ROUTE (上行)
+        // OUTBOUND ROUTE (SOLID)
         const outboundStops = (route.outboundStopIds || []).map(sid => stops.find(s => s.id === sid)).filter(Boolean);
         if (outboundStops.length >= 2) {
           const outboundCoords = outboundStops.map(s => [s.lat, s.lng]);
@@ -778,7 +868,7 @@
           route.outboundDistanceMeters = 0;
         }
 
-        // INBOUND ROUTE (下行)
+        // INBOUND ROUTE (DASHED)
         if (route.isBidirectional) {
           const inboundStops = (route.inboundStopIds || []).map(sid => stops.find(s => s.id === sid)).filter(Boolean);
           if (inboundStops.length >= 2) {
@@ -794,16 +884,16 @@
                 routePolylinesMap[route.id].inbound.setLatLngs(osrmInbound.latLngs);
                 routePolylinesMap[route.id].inbound.setStyle({
                   color: route.color,
-                  weight: isSelected ? 4.5 : 2.5,
+                  weight: isSelected ? 5.0 : 2.5,
                   opacity: isSelected ? 0.85 : 0.3,
-                  dashArray: '6, 8'
+                  dashArray: '8, 8'
                 });
               } else {
                 const returnPoly = L.polyline(osrmInbound.latLngs, {
                   color: route.color,
-                  weight: isSelected ? 4.5 : 2.5,
+                  weight: isSelected ? 5.0 : 2.5,
                   opacity: isSelected ? 0.85 : 0.3,
-                  dashArray: '6, 8'
+                  dashArray: '8, 8'
                 }).addTo(map);
                 returnPoly.on('click', () => { if (!isClickToAddMode) setActiveRoute(route.id); });
                 routePolylinesMap[route.id].inbound = returnPoly;
@@ -1044,11 +1134,20 @@
       if (!activeRoute) return;
 
       const activeDir = activeRoute.activeDirection || 'outbound';
-      const targetSeq = activeDir === 'outbound' ? activeRoute.outboundStopIds : activeRoute.inboundStopIds;
+      let targetSeq = activeDir === 'outbound' ? activeRoute.outboundStopIds : activeRoute.inboundStopIds;
+
+      // AUTO-POPULATE INBOUND LEGS IF EMPTY WHEN SWITCHING TO INBOUND
+      if (activeDir === 'inbound' && (!targetSeq || targetSeq.length === 0)) {
+        if (activeRoute.outboundStopIds && activeRoute.outboundStopIds.length > 0) {
+          activeRoute.inboundStopIds = [...activeRoute.outboundStopIds].reverse();
+          targetSeq = activeRoute.inboundStopIds;
+          showToast("🔄 Auto-populated Inbound leg by reversing Outbound stops", "info");
+        }
+      }
 
       document.getElementById('active-line-pill').style.backgroundColor = activeRoute.color;
       document.getElementById('active-line-title').innerText = `Line ${activeRoute.code} - ${activeRoute.name}`;
-      document.getElementById('active-line-stops-count').innerText = `${targetSeq.length} stops (${activeDir === 'outbound' ? '上行' : '下行'})`;
+      document.getElementById('active-line-stops-count').innerText = `${targetSeq.length} stops (${activeDir === 'outbound' ? 'Outbound' : 'Inbound'})`;
 
       // Direction Mode Buttons
       const btnOneway = document.getElementById('mode-btn-oneway');
@@ -1093,30 +1192,30 @@
             ondragleave="handleDragLeave(event)"
             ondrop="handleDrop(event, ${idx})"
             ondragend="handleDragEnd(event)"
-            class="stop-card bg-slate-950 border border-slate-800 hover:border-slate-700 p-2.5 rounded-2xl text-xs space-y-2 shadow cursor-grab active:cursor-grabbing">
+            class="stop-card bg-slate-950 border border-slate-800 hover:border-slate-700 p-3 rounded-2xl text-xs space-y-2.5 shadow cursor-grab active:cursor-grabbing">
             <div class="flex items-center gap-2.5">
-              <div class="text-slate-500 hover:text-slate-300 text-sm font-black px-0.5"><i class="fa-solid fa-grip-vertical"></i></div>
-              <span class="bg-slate-800 text-illini-orange border border-illini-orange/30 font-mono w-6 h-6 rounded-full flex items-center justify-center text-xs font-extrabold shrink-0">
+              <div class="text-slate-500 hover:text-slate-300 text-base font-black px-0.5"><i class="fa-solid fa-grip-vertical"></i></div>
+              <span class="bg-slate-800 text-illini-orange border border-illini-orange/40 font-mono w-7 h-7 rounded-full flex items-center justify-center text-xs font-extrabold shrink-0">
                 ${idx + 1}
               </span>
-              <input type="text" value="${stop.name}" oninput="updateStopName('${stop.id}', this.value)" class="flex-1 bg-slate-900 border border-slate-700 focus:border-illini-orange text-white font-bold text-xs rounded-xl px-2.5 py-1.5 focus:outline-none">
+              <input type="text" value="${stop.name}" oninput="updateStopName('${stop.id}', this.value)" class="flex-1 bg-slate-900 border border-slate-700 focus:border-illini-orange text-white font-bold text-xs rounded-xl px-3 py-1.5 focus:outline-none">
               
-              <button onclick="flyToStop('${stop.id}')" title="Locate on map" class="p-1.5 bg-slate-900 text-sky-400 hover:text-white rounded-xl border border-slate-800 transition">
+              <button onclick="flyToStop('${stop.id}')" title="Locate on map" class="p-2 bg-slate-900 text-sky-400 hover:text-white rounded-xl border border-slate-800 transition">
                 <i class="fa-solid fa-crosshairs"></i>
               </button>
-              <button onclick="toggleMajorHub('${stop.id}')" title="Toggle transfer hub status" class="p-1.5 bg-slate-900 ${stop.isHub ? 'text-amber-400' : 'text-slate-500'} rounded-xl border border-slate-800 transition">
+              <button onclick="toggleMajorHub('${stop.id}')" title="Toggle transfer hub status" class="p-2 bg-slate-900 ${stop.isHub ? 'text-amber-400' : 'text-slate-500'} rounded-xl border border-slate-800 transition">
                 <i class="fa-solid fa-star"></i>
               </button>
-              <button onclick="removeStopFromActiveDirection(${idx})" title="Remove from this direction" class="p-1.5 bg-slate-900 text-rose-400 hover:bg-rose-950 rounded-xl border border-slate-800 transition">
+              <button onclick="removeStopFromActiveDirection(${idx})" title="Remove from this line (keep physical stop)" class="p-2 bg-slate-900 text-rose-400 hover:bg-rose-950 rounded-xl border border-slate-800 transition flex items-center gap-1">
                 <i class="fa-solid fa-xmark"></i>
               </button>
             </div>
             <div class="flex justify-between items-center text-xs text-slate-400 px-1 pt-0.5">
               <span class="flex items-center gap-2">
                 <span>${stop.category || 'Transit Stop'}</span>
-                ${sharingCount > 1 ? `<span class="bg-indigo-500/20 text-indigo-300 border border-indigo-500/40 px-1.5 py-0.5 rounded-md text-[10px] font-bold">Shared (${sharingCount} Lines)</span>` : ''}
+                ${sharingCount > 1 ? `<span class="bg-amber-500/20 text-amber-300 border border-amber-500/40 px-2 py-0.5 rounded-md text-[11px] font-bold flex items-center gap-1"><i class="fa-solid fa-link"></i> Shared (${sharingCount} Lines)</span>` : ''}
               </span>
-              <span class="text-[11px]">${stop.isHub ? '⭐ Transfer Hub (120s)' : 'Standard (20s)'}</span>
+              <span class="text-[11px] font-medium">${stop.isHub ? '⭐ Transfer Hub (120s)' : 'Standard Stop (20s)'}</span>
             </div>
           </div>
         `;
@@ -1124,7 +1223,7 @@
 
       cardContainer.innerHTML = cardsHtml.length ? cardsHtml : `
         <div class="text-xs text-slate-400 italic p-6 text-center border border-dashed border-slate-800 rounded-2xl bg-slate-950/40">
-          No stops in <b>${activeDir === 'outbound' ? 'Outbound (上行)' : 'Inbound (下行)'}</b> sequence.<br>Click <b>"📍 Add Stops on Map"</b> or <b>"Copy Outbound"</b> to add stops!
+          No stops in <b>${activeDir === 'outbound' ? 'Outbound Leg (➡️)' : 'Inbound Leg (⬅️)'}</b> sequence.<br>Click <b>"📍 Add Stops on Map"</b> or <b>"Copy Outbound"</b> to add stops!
         </div>
       `;
     }
@@ -1134,97 +1233,19 @@
       const activeRoute = routes.find(r => r.id === activeRouteId);
       if (activeRoute) {
         activeRoute.activeDirection = dir;
+
+        // Auto-clone outbound stops if inbound sequence is empty
+        if (dir === 'inbound' && (!activeRoute.inboundStopIds || activeRoute.inboundStopIds.length === 0)) {
+          if (activeRoute.outboundStopIds && activeRoute.outboundStopIds.length > 0) {
+            activeRoute.inboundStopIds = [...activeRoute.outboundStopIds].reverse();
+            showToast("🔄 Auto-populated Inbound leg by reversing Outbound stops", "info");
+          }
+        }
+
         renderStopsManagerSection();
         renderAllStopsOnMap();
-      }
-    }
-
-    function copyOutboundToInboundReversed() {
-      const activeRoute = routes.find(r => r.id === activeRouteId);
-      if (activeRoute && activeRoute.outboundStopIds.length > 0) {
-        activeRoute.inboundStopIds = [...activeRoute.outboundStopIds].reverse();
-        activeRoute.activeDirection = 'inbound';
-        renderStopsManagerSection();
         renderRoutesOnMap();
-        renderAllStopsOnMap();
-        pushHistorySnapshot();
-        showToast("Copied Outbound sequence (reversed) to Inbound!", "success");
       }
-    }
-
-    function setActiveRoute(routeId) {
-      activeRouteId = routeId;
-      renderAllRoutesSidebarList();
-      renderStopsManagerSection();
-      renderRoutesOnMap();
-      renderAllStopsOnMap();
-      updateAnalyticsTab();
-    }
-
-    function toggleRouteVisibility(routeId) {
-      const r = routes.find(x => x.id === routeId);
-      if (r) {
-        r.visible = !r.visible;
-        renderAllRoutesSidebarList();
-        renderRoutesOnMap();
-        pushHistorySnapshot();
-      }
-    }
-
-    function deleteRoute(routeId) {
-      if (routes.length <= 1) {
-        showToast("Must retain at least one bus line!", "warning");
-        return;
-      }
-      routes = routes.filter(r => r.id !== routeId);
-      if (activeRouteId === routeId) activeRouteId = routes[0].id;
-      renderAllRoutesSidebarList();
-      renderStopsManagerSection();
-      renderRoutesOnMap();
-      renderAllStopsOnMap();
-      pushHistorySnapshot();
-      showToast("Deleted bus line", "info");
-    }
-
-    function addNewRoute() {
-      const newId = 'line-' + Date.now();
-      const palette = ['#E84A27', '#13294B', '#00875A', '#00A3A6', '#FFC72C', '#967ADC', '#D9381E'];
-      const pickedColor = palette[Math.floor(Math.random() * palette.length)];
-
-      const newRoute = {
-        id: newId,
-        code: `${Math.floor(Math.random() * 80 + 10)}`,
-        name: 'Custom Bus Line',
-        color: pickedColor,
-        visible: true,
-        isBidirectional: true,
-        activeDirection: 'outbound',
-        headway: 15,
-        speedMph: 12.5,
-        outboundStopIds: [],
-        inboundStopIds: [],
-        outboundGeometry: null,
-        inboundGeometry: null,
-        outboundDistanceMeters: 0,
-        inboundDistanceMeters: 0
-      };
-
-      routes.push(newRoute);
-      setActiveRoute(newId);
-      switchTab('routes');
-      if (!isClickToAddMode) toggleContinuousMapClickMode(true);
-      pushHistorySnapshot();
-      showToast(`Created Line ${newRoute.code}!`, "success");
-    }
-
-    function addPresetToActive(presetId) {
-      const presetStop = stops.find(s => s.id === presetId);
-      if (!presetStop) return;
-      addStopToActiveRouteDirection(presetId, presetStop.lat, presetStop.lng);
-      renderRoutesOnMap();
-      renderAllStopsOnMap();
-      pushHistorySnapshot();
-      showToast(`Added "${presetStop.name}" to active direction`, "success");
     }
 
     function removeStopFromActiveDirection(idx) {
@@ -1235,72 +1256,34 @@
       const targetSeq = activeDir === 'outbound' ? activeRoute.outboundStopIds : activeRoute.inboundStopIds;
 
       if (targetSeq.length > idx) {
+        const removedStopId = targetSeq[idx];
+        const stopObj = stops.find(s => s.id === removedStopId);
         targetSeq.splice(idx, 1);
+        
         renderStopsManagerSection();
         renderRoutesOnMap();
         renderAllStopsOnMap();
+        renderAllRoutesSidebarList();
+        updateAnalyticsTab();
         pushHistorySnapshot();
+
+        const stopName = stopObj ? stopObj.name : 'Stop';
+        showToast(`Removed "${stopName}" from ${activeRoute.code} (${activeDir})`, "info");
       }
-    }
-
-    function clearCurrentRouteDirectionStops() {
-      const activeRoute = routes.find(r => r.id === activeRouteId);
-      if (activeRoute) {
-        const activeDir = activeRoute.activeDirection || 'outbound';
-        if (activeDir === 'outbound') activeRoute.outboundStopIds = [];
-        else activeRoute.inboundStopIds = [];
-
-        renderStopsManagerSection();
-        renderRoutesOnMap();
-        renderAllStopsOnMap();
-        pushHistorySnapshot();
-        showToast(`Cleared ${activeDir === 'outbound' ? 'Outbound' : 'Inbound'} stops`, "info");
-      }
-    }
-
-    function updateStopName(stopId, newName) {
-      const stop = stops.find(s => s.id === stopId);
-      if (stop) {
-        stop.name = newName;
-        pushHistorySnapshot();
-      }
-    }
-
-    function flyToStop(stopId) {
-      const stop = stops.find(s => s.id === stopId);
-      if (stop && map) {
-        map.flyTo([stop.lat, stop.lng], 16, { animate: true, duration: 1.0 });
-      }
-    }
-
-    function toggleMajorHub(stopId) {
-      const stop = stops.find(s => s.id === stopId);
-      if (!stop) return;
-      stop.isHub = !stop.isHub;
-      renderAllStopsOnMap();
-      renderStopsManagerSection();
-      updateAnalyticsTab();
-      pushHistorySnapshot();
-      showToast(`"${stop.name}" -> ${stop.isHub ? '⭐ Transfer Hub (120s)' : 'Standard Stop (20s)'}`, "info");
-    }
-
-    function deleteStop(stopId) {
-      stops = stops.filter(s => s.id !== stopId);
-      routes.forEach(r => {
-        r.outboundStopIds = (r.outboundStopIds || []).filter(sid => sid !== stopId);
-        r.inboundStopIds = (r.inboundStopIds || []).filter(sid => sid !== stopId);
-      });
-      renderAllStopsOnMap();
-      renderRoutesOnMap();
-      renderStopsManagerSection();
-      pushHistorySnapshot();
-      showToast("Stop deleted across all lines", "info");
     }
 
     function setRoutingMode(isBidi) {
       const activeRoute = routes.find(r => r.id === activeRouteId);
       if (activeRoute) {
         activeRoute.isBidirectional = isBidi;
+
+        if (isBidi && (!activeRoute.inboundStopIds || activeRoute.inboundStopIds.length === 0)) {
+          if (activeRoute.outboundStopIds && activeRoute.outboundStopIds.length > 0) {
+            activeRoute.inboundStopIds = [...activeRoute.outboundStopIds].reverse();
+            showToast("🔄 Auto-populated Inbound leg by reversing Outbound stops", "info");
+          }
+        }
+
         renderAllRoutesSidebarList();
         renderStopsManagerSection();
         renderRoutesOnMap();
@@ -1444,7 +1427,7 @@
       const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify({ stops, routes, activeRouteId }, null, 2));
       const link = document.createElement('a');
       link.setAttribute("href", dataStr);
-      link.setAttribute("download", `mtd_workspace_v8_${Date.now()}.json`);
+      link.setAttribute("download", `mtd_workspace_v85_${Date.now()}.json`);
       document.body.appendChild(link);
       link.click();
       link.remove();
@@ -1524,6 +1507,7 @@
     // ON LOAD INITIALIZATION
     window.onload = function() {
       loadFromLocalStorage();
+      initSidebarResizer();
       initLeafletMap();
       renderAllRoutesSidebarList();
       renderStopsManagerSection();
