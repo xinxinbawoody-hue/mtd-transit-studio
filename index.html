@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>MTD Route Studio - Urbana-Champaign (v3.5)</title>
+  <title>MTD Route Studio - Urbana-Champaign (v4.0)</title>
   
   <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
@@ -125,7 +125,7 @@
       </div>
       <div>
         <h1 class="font-extrabold text-base sm:text-lg tracking-wide flex items-center gap-2 leading-none">
-          MTD ROUTE STUDIO <span class="bg-illini-orange/20 text-illini-orange text-[11px] font-bold px-2 py-0.5 rounded border border-illini-orange/40">v3.5 Urbana-Champaign</span>
+          MTD ROUTE STUDIO <span class="bg-illini-orange/20 text-illini-orange text-[11px] font-bold px-2 py-0.5 rounded border border-illini-orange/40">v4.0 Urbana-Champaign</span>
         </h1>
         <p class="text-[11px] text-slate-300 mt-0.5 flex items-center gap-1.5">
           <span id="osrm-status-dot" class="w-2 h-2 rounded-full bg-emerald-400 inline-block animate-pulse"></span>
@@ -229,16 +229,18 @@
           </div>
         </div>
 
-        <!-- STOPS MANAGER LIST -->
+        <!-- STOPS MANAGER LIST WITH DRAG & DROP REORDERING -->
         <div class="flex-1 overflow-y-auto p-3.5 space-y-3">
           <div class="flex items-center justify-between">
             <span class="text-[11px] font-bold text-slate-400 uppercase tracking-wider" id="stops-manager-count-label">Stops Sequence (0)</span>
-            <span class="text-[10px] text-slate-500 italic">Right-click marker on map to delete</span>
+            <span class="text-[10px] text-slate-400 italic flex items-center gap-1">
+              <i class="fa-solid fa-grip-vertical text-slate-500"></i> Drag card to reorder
+            </span>
           </div>
 
           <!-- Container for Stop Cards -->
           <div id="stops-manager-list" class="space-y-2">
-            <!-- JS populated with inline inputs -->
+            <!-- JS populated with draggable stop cards -->
           </div>
 
           <!-- Quick Add Preset Stop Dropdown -->
@@ -271,7 +273,7 @@
         <div class="flex items-center justify-between bg-slate-950 p-3 rounded-2xl border border-slate-800">
           <span class="text-xs font-bold text-slate-200">Active Lines</span>
           <button onclick="addNewRoute()" class="bg-emerald-600 hover:bg-emerald-500 text-white text-xs px-3 py-1.5 rounded-xl font-bold flex items-center gap-1.5 shadow transition">
-            <i class="fa-solid fa-plus"></i> Add New Line
+            <i class="fa-solid fa-plus"></i> + New Line
           </button>
         </div>
 
@@ -390,7 +392,7 @@
 
       <!-- FOOTER STATUS BAR -->
       <div class="p-3 bg-slate-950 border-t border-slate-800 text-center text-[11px] text-slate-400 flex items-center justify-between shrink-0">
-        <span>MTD Studio Urbana-Champaign v3.5</span>
+        <span>MTD Studio Urbana-Champaign v4.0</span>
         <span id="network-summary-mini" class="text-emerald-400 font-mono font-bold">Total Fleet: 0 Buses</span>
       </div>
     </aside>
@@ -422,7 +424,7 @@
       <!-- ACTIVE MAP-CLICKING MODE BANNER -->
       <div id="map-click-mode-banner" class="hidden absolute top-4 left-1/2 -translate-x-1/2 z-[1000] bg-illini-orange text-white text-xs font-extrabold px-5 py-2.5 rounded-full shadow-2xl flex items-center gap-3 animate-bounce border-2 border-white/20">
         <span class="w-2.5 h-2.5 rounded-full bg-white animate-ping"></span>
-        <span>👉 CONTINUOUS MODE: CLICK ANYWHERE ON MAP TO PLACE STOPS (RIGHT-CLICK MARKER TO DELETE)</span>
+        <span id="map-banner-instruction-text">👉 CLICK ANYWHERE ON MAP TO DRAW STREET ROUTE (RIGHT-CLICK MARKER TO DELETE)</span>
         <button onclick="toggleMapClickMode()" class="bg-black/30 hover:bg-black/50 text-white rounded-full w-5 h-5 flex items-center justify-center text-[11px] transition">✕</button>
       </div>
 
@@ -504,7 +506,7 @@
         color: '#E84A27', // UIUC Orange
         headway: 10,
         speedMph: 12.5,
-        isBidirectional: true, // Bidirectional by default
+        isBidirectional: true,
         stopIds: ['IT', 'ECE', 'SIEBEL', 'ISR', 'UNION', 'IKENBERRY', 'ARC'],
         routeGeometry: null,
         returnGeometry: null,
@@ -533,6 +535,9 @@
     let activeRouteId = 'route-23x';
     let customStopCounter = 1;
     
+    // Drag-and-Drop State
+    let draggedStopIndex = null;
+
     // Undo / Redo History Stack
     let historyStack = [];
     let historyIndex = -1;
@@ -549,7 +554,7 @@
     let showBuffers = false;
     let isClickToAddMode = false;
 
-    const STORAGE_KEY = 'mtd_studio_network_v35_state';
+    const STORAGE_KEY = 'mtd_studio_network_v40_state';
 
     // --- 2. INITIALIZATION & TILE MAP ENGINE ---
 
@@ -941,6 +946,11 @@
           }
 
           routePolylinesMap[route.id] = layersList;
+        } else {
+          route.routeGeometry = null;
+          route.returnGeometry = null;
+          route.roadDistanceMeters = 0;
+          route.returnDistanceMeters = 0;
         }
       }
 
@@ -998,7 +1008,7 @@
         if (btnSidebarText) btnSidebarText.innerText = 'Exit Add Mode';
         banner.classList.remove('hidden');
         if (mapEl) mapEl.classList.add('map-crosshair');
-        showToast("Continuous Mode: Click anywhere on map to add sequential stops!", 'warning');
+        showToast("Continuous Mode: Click anywhere on map to place stops along streets!", 'warning');
       } else {
         btn.classList.remove('bg-illini-orange', 'text-white', 'border-illini-orange');
         textSpan.innerText = '📍 Continuous Add Stops';
@@ -1028,7 +1038,7 @@
       renderStopsManagerTab();
       renderLandmarksTab();
       pushHistorySnapshot();
-      showToast(`Added "${autoName}" - Click map again for next stop!`, 'success');
+      showToast(`Added "${autoName}" to current route!`, 'success');
     }
 
     function updateStopName(stopId, newName) {
@@ -1068,7 +1078,46 @@
       showToast("Stop removed from network", 'info');
     }
 
-    // --- 8. ROUTE & NETWORK MANAGEMENT & FAST BATCH ACTIONS ---
+    // --- 8. HTML5 DRAG-AND-DROP STOP REORDERING ---
+
+    function handleDragStart(e, index) {
+      draggedStopIndex = index;
+      e.dataTransfer.effectAllowed = 'move';
+      e.dataTransfer.setData('text/plain', index);
+      e.currentTarget.classList.add('opacity-40', 'border-illini-orange');
+    }
+
+    function handleDragOver(e, index) {
+      e.preventDefault();
+      e.dataTransfer.dropEffect = 'move';
+    }
+
+    function handleDrop(e, targetIndex) {
+      e.preventDefault();
+      if (draggedStopIndex === null || draggedStopIndex === targetIndex) return;
+      
+      const activeRoute = routes.find(r => r.id === activeRouteId);
+      if (!activeRoute) return;
+
+      const [movedStopId] = activeRoute.stopIds.splice(draggedStopIndex, 1);
+      activeRoute.stopIds.splice(targetIndex, 0, movedStopId);
+
+      draggedStopIndex = null;
+      renderStopsManagerTab();
+      renderRoutesOnMap();
+      renderAllStopsOnMap();
+      pushHistorySnapshot();
+      showToast("Reordered stop sequence 🚏", "info");
+    }
+
+    function handleDragEnd(e) {
+      draggedStopIndex = null;
+      if (e.currentTarget) {
+        e.currentTarget.classList.remove('opacity-40', 'border-illini-orange');
+      }
+    }
+
+    // --- 9. ROUTE & NETWORK MANAGEMENT & FAST BATCH ACTIONS ---
 
     function setActiveRoute(routeId) {
       activeRouteId = routeId;
@@ -1079,6 +1128,7 @@
       updateStatsDashboard();
     }
 
+    // FEATURE 1: CREATE BLANK ROUTE + AUTO-ACTIVATE MAP CLICK DRAW MODE
     function addNewRoute() {
       const newId = 'route-' + Date.now();
       const palette = ['#E84A27', '#13294B', '#00875A', '#00A3A6', '#FFC72C', '#967ADC', '#D9381E'];
@@ -1092,7 +1142,7 @@
         headway: 15,
         speedMph: 12.5,
         isBidirectional: true,
-        stopIds: ['UNION', 'ISR', 'LINCOLN_GREEN'],
+        stopIds: [], // Start completely BLANK!
         routeGeometry: null,
         returnGeometry: null,
         roadDistanceMeters: 0,
@@ -1101,8 +1151,17 @@
 
       routes.push(newRoute);
       setActiveRoute(newId);
+
+      // Automatically switch to Stops Manager tab
+      switchTab('stops');
+
+      // Automatically enable continuous map-click mode to draw immediately
+      if (!isClickToAddMode) {
+        toggleMapClickMode();
+      }
+
       pushHistorySnapshot();
-      showToast(`Created Line ${newRoute.code}`, 'success');
+      showToast(`Created Line ${newRoute.code}. Click anywhere on the map to draw your route!`, 'success');
     }
 
     function deleteActiveRoute() {
@@ -1202,7 +1261,7 @@
       }
     }
 
-    // --- 9. STATS & BIDIRECTIONAL FLEET CALCULATIONS ---
+    // --- 10. STATS & BIDIRECTIONAL FLEET CALCULATIONS ---
 
     function calcDistanceMiles(lat1, lon1, lat2, lon2) {
       const R = 3958.8;
@@ -1216,7 +1275,9 @@
     }
 
     function calculateRouteMetrics(route) {
-      if (!route) return { totalDistMiles: 0, totalDistKm: 0, oneWayMins: 0, roundTripMins: 0, busesNeeded: 0 };
+      if (!route || !route.stopIds || route.stopIds.length < 2) {
+        return { totalDistMiles: 0, totalDistKm: 0, oneWayMins: 0, roundTripMins: 0, busesNeeded: 0 };
+      }
       
       let outboundDistMeters = route.roadDistanceMeters || 0;
       let returnDistMeters = route.isBidirectional ? (route.returnDistanceMeters || outboundDistMeters) : 0;
@@ -1283,7 +1344,7 @@
       document.getElementById('network-summary-mini').innerText = `Total Fleet: ${networkFleet} Buses`;
     }
 
-    // --- 10. TAB SWITCHER & RENDERERS ---
+    // --- 11. TAB SWITCHER & RENDERERS ---
 
     function switchTab(tabKey) {
       const tabs = ['stops', 'lines', 'landmarks', 'project'];
@@ -1300,7 +1361,7 @@
       });
     }
 
-    // TAB 1: RENDER STOPS MANAGER (🚏 站点管理)
+    // TAB 1: RENDER STOPS MANAGER WITH DRAG & DROP
     function renderStopsManagerTab() {
       // 1. Render Active Line Switcher Pills
       const pillsContainer = document.getElementById('stops-tab-route-pills');
@@ -1318,7 +1379,7 @@
         }).join('');
       }
 
-      // 2. Render Active Line Stops Cards with Inline Editable Inputs
+      // 2. Render Active Line Stops Cards with Drag-and-Drop & Inline Editing
       const activeRoute = routes.find(r => r.id === activeRouteId) || routes[0];
       const listContainer = document.getElementById('stops-manager-list');
       const countLabel = document.getElementById('stops-manager-count-label');
@@ -1332,8 +1393,19 @@
         if (!stop) return '';
 
         return `
-          <div class="bg-slate-950 border border-slate-800 hover:border-slate-700 p-2.5 rounded-xl text-xs space-y-2 shadow transition">
+          <div draggable="true" 
+            ondragstart="handleDragStart(event, ${idx})" 
+            ondragover="handleDragOver(event, ${idx})" 
+            ondrop="handleDrop(event, ${idx})" 
+            ondragend="handleDragEnd(event)"
+            class="bg-slate-950 border border-slate-800 hover:border-slate-700 p-2.5 rounded-xl text-xs space-y-2 shadow transition cursor-grab active:cursor-grabbing group">
             <div class="flex items-center gap-2">
+              
+              <!-- DRAG HANDLE ICON -->
+              <div class="text-slate-500 hover:text-slate-300 cursor-grab active:cursor-grabbing text-sm font-black px-0.5" title="Drag to reorder stop">
+                <i class="fa-solid fa-grip-vertical"></i>
+              </div>
+
               <span class="bg-slate-800 text-illini-orange border border-illini-orange/30 font-mono w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-extrabold shrink-0">
                 ${idx + 1}
               </span>
@@ -1354,7 +1426,7 @@
                 <i class="fa-solid fa-star"></i>
               </button>
 
-              <!-- MOVE UP / DOWN -->
+              <!-- MOVE UP / DOWN BUTTONS -->
               <button onclick="moveStopInRoute(${idx}, -1)" ${idx === 0 ? 'disabled' : ''} title="Move Up" class="p-1.5 bg-slate-900 hover:bg-slate-800 text-slate-300 disabled:opacity-20 rounded-lg border border-slate-800 transition">
                 <i class="fa-solid fa-chevron-up"></i>
               </button>
@@ -1377,8 +1449,9 @@
       }).join('');
 
       listContainer.innerHTML = cardsHtml.length ? cardsHtml : `
-        <div class="text-xs text-slate-500 italic p-6 text-center border border-dashed border-slate-800 rounded-2xl">
-          No stops assigned to Line ${activeRoute.code}. Click "📍 Continuous Add Stops" or pick from presets below.
+        <div class="text-xs text-slate-400 italic p-6 text-center border border-dashed border-slate-800 rounded-2xl bg-slate-950/50">
+          <i class="fa-solid fa-pen-ruler text-illini-orange text-lg block mb-2"></i>
+          Line ${activeRoute.code} is currently empty.<br>Click <b>"📍 Continuous Add Stops"</b> or pick from presets below to start drawing!
         </div>
       `;
 
@@ -1520,7 +1593,7 @@
       `).join('');
     }
 
-    // --- 11. TIMETABLE GENERATOR LOGIC ---
+    // --- 12. TIMETABLE GENERATOR LOGIC ---
 
     function updateTimetableStopDropdown() {
       const rSelect = document.getElementById('tt-route-select');
@@ -1565,7 +1638,7 @@
       `).join('');
     }
 
-    // --- 12. LOCALSTORAGE & PROJECT FILE IMPORT/EXPORT ---
+    // --- 13. LOCALSTORAGE & PROJECT FILE IMPORT/EXPORT ---
 
     function saveToLocalStorage() {
       const payload = { stops, routes, activeRouteId, customStopCounter };
@@ -1591,7 +1664,7 @@
       const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify({ stops, routes, activeRouteId }, null, 2));
       const link = document.createElement('a');
       link.setAttribute("href", dataStr);
-      link.setAttribute("download", `mtd_workspace_v35_${Date.now()}.json`);
+      link.setAttribute("download", `mtd_workspace_v40_${Date.now()}.json`);
       document.body.appendChild(link);
       link.click();
       link.remove();
@@ -1629,7 +1702,7 @@
     function exportGeoJSON() {
       const geojson = {
         type: "FeatureCollection",
-        metadata: { app: "MTD Route Studio v3.5", generated: new Date().toISOString() },
+        metadata: { app: "MTD Route Studio v4.0", generated: new Date().toISOString() },
         features: []
       };
 
@@ -1656,7 +1729,7 @@
       const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(geojson, null, 2));
       const link = document.createElement('a');
       link.setAttribute("href", dataStr);
-      link.setAttribute("download", `mtd_urbana_network_v35_${Date.now()}.geojson`);
+      link.setAttribute("download", `mtd_urbana_network_v40_${Date.now()}.geojson`);
       document.body.appendChild(link);
       link.click();
       link.remove();
