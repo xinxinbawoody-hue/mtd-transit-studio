@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>MTD Route Studio - Urbana-Champaign Transit Planner v10.5</title>
+  <title>MTD Route Studio - Urbana-Champaign Transit Planner v11.0</title>
 
   <!-- Leaflet CSS & JS -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
@@ -184,7 +184,7 @@
       </div>
       <div>
         <h1 class="font-extrabold text-base sm:text-lg tracking-wide flex items-center gap-2 leading-none">
-          MTD ROUTE STUDIO <span class="bg-illini-orange/20 text-illini-orange text-[11px] font-bold px-2.5 py-0.5 rounded-full border border-illini-orange/40">v10.5</span>
+          MTD ROUTE STUDIO <span class="bg-illini-orange/20 text-illini-orange text-[11px] font-bold px-2.5 py-0.5 rounded-full border border-illini-orange/40">v11.0</span>
         </h1>
         <p class="text-xs text-slate-300 mt-1 flex items-center gap-2">
           <span class="w-2 h-2 rounded-full bg-emerald-400 inline-block animate-pulse"></span>
@@ -273,7 +273,7 @@
           <span class="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center gap-2">
             <i class="fa-solid fa-bus text-illini-orange"></i> Bus Lines (<span id="routes-count-badge">0</span>)
           </span>
-          <button onclick="addNewRoute()" class="text-xs text-illini-orange hover:underline font-bold">+ Add New Line</button>
+          <button onclick="addNewRoute()" class="text-xs text-illini-orange hover:underline font-bold">+ Clean New Line</button>
         </div>
 
         <!-- All Lines Cards Scrollable -->
@@ -306,10 +306,10 @@
             </div>
           </div>
 
-          <!-- STOP INSERTION DIRECTION MODE TOGGLE -->
+          <!-- STOP INSERTION & DELETION SCOPE TOGGLE -->
           <div class="bg-slate-950 p-2 rounded-2xl border border-slate-800 space-y-1.5">
             <div class="text-[11px] font-bold text-slate-400 flex items-center gap-1.5">
-              <i class="fa-solid fa-bullseye text-illini-orange"></i> Stop Insertion Target Scope:
+              <i class="fa-solid fa-bullseye text-illini-orange"></i> Stop Add/Delete Scope:
             </div>
             <div class="grid grid-cols-2 gap-1.5 text-xs">
               <button id="scope-btn-both" onclick="setAddStopScope('both')" class="py-1.5 px-2 rounded-xl font-bold transition flex items-center justify-center gap-1.5 bg-illini-orange text-white shadow">
@@ -381,7 +381,7 @@
 
           <div class="pt-2 border-t border-slate-800">
             <div class="flex justify-between text-xs text-slate-300 mb-1.5">
-              <span>Standard Stop Dwell Time (秒/站):</span>
+              <span>Standard Stop Dwell Time:</span>
               <b id="dwell-value-badge" class="text-amber-400 font-bold">30 secs</b>
             </div>
             <input type="range" min="5" max="120" step="5" value="30" id="dwell-slider-analytics" oninput="updateDwellSec(this.value)" class="w-full accent-amber-400 cursor-pointer">
@@ -455,7 +455,7 @@
 
       <!-- FOOTER STATUS -->
       <div class="p-3 bg-slate-950 border-t border-slate-800 text-[11px] text-slate-400 flex items-center justify-between shrink-0">
-        <span>MTD Route Studio v10.5</span>
+        <span>MTD Route Studio v11.0</span>
         <span id="footer-system-summary">Total Fleet: 0 buses</span>
       </div>
 
@@ -480,7 +480,7 @@
 
   <!-- JAVASCRIPT LOGIC -->
   <script>
-    const STORAGE_KEY = 'MTD_STUDIO_V10_5_DATA';
+    const STORAGE_KEY = 'MTD_STUDIO_V11_0_DATA';
     const NEARBY_SNAP_RADIUS_MILES = 0.037; // ~60 meters
 
     let activeTabKey = 'lines';
@@ -497,7 +497,7 @@
       { id: 'p8', name: 'Illinois Terminal', lat: 40.11620, lng: -88.24350, category: 'Transit Hub', isHub: true }
     ];
 
-    // ASYMMETRIC BUS LINES DATA STRUCTURE WITH CUSTOM DWELL TIME
+    // INITIAL BUS LINES
     let routes = [
       {
         id: 'line-1',
@@ -509,7 +509,7 @@
         activeDirection: 'outbound',
         headway: 15,
         speedMph: 12.5,
-        dwellSec: 30, // Custom dwell time in seconds
+        dwellSec: 30,
         outboundStopIds: ['p3', 'p1', 'p2', 'p6'],
         inboundStopIds: ['p6', 'p2', 'p1', 'p3'],
         outboundGeometry: null,
@@ -527,7 +527,7 @@
         activeDirection: 'outbound',
         headway: 10,
         speedMph: 11.0,
-        dwellSec: 25, // Custom dwell time in seconds
+        dwellSec: 25,
         outboundStopIds: ['p4', 'p5', 'p6', 'p7'],
         inboundStopIds: ['p7', 'p6', 'p5', 'p4'],
         outboundGeometry: null,
@@ -665,7 +665,7 @@
       setTimeout(() => { map.invalidateSize(); }, 200);
     }
 
-    // ROUTE SELECTION (WITHOUT FORCING TAB SWITCH BY DEFAULT)
+    // ROUTE SELECTION (WITHOUT FORCING TAB SWITCH)
     function setActiveRoute(id, options = {}) {
       const target = routes.find(r => r.id === id);
       if (!target) return;
@@ -982,11 +982,11 @@
       if (scope === 'both') {
         btnBoth.className = "py-1.5 px-2 rounded-xl font-bold transition flex items-center justify-center gap-1.5 bg-illini-orange text-white shadow";
         btnCurrent.className = "py-1.5 px-2 rounded-xl font-bold transition flex items-center justify-center gap-1.5 text-slate-400 hover:text-white bg-slate-900";
-        showToast("Insertion Scope: Stop will be added to BOTH Outbound & Inbound legs", "info");
+        showToast("Scope: Add / Delete applies to BOTH Outbound & Inbound legs", "info");
       } else {
         btnBoth.className = "py-1.5 px-2 rounded-xl font-bold transition flex items-center justify-center gap-1.5 text-slate-400 hover:text-white bg-slate-900";
         btnCurrent.className = "py-1.5 px-2 rounded-xl font-bold transition flex items-center justify-center gap-1.5 bg-illini-orange text-white shadow";
-        showToast("Insertion Scope: Stop will be added ONLY to the active direction leg", "info");
+        showToast("Scope: Add / Delete applies ONLY to current direction leg", "info");
       }
     }
 
@@ -1174,7 +1174,7 @@
       e.target.classList.remove('dragging');
     }
 
-    // ROUTE CREATION & DELETION
+    // ROUTE CREATION (v11.0 CLEAN SLATE - ZERO STOPS INITIALIZATION)
     function addNewRoute() {
       const id = 'line-' + Date.now();
       const code = String(100 + routes.length * 10);
@@ -1192,8 +1192,8 @@
         headway: 15,
         speedMph: 12.0,
         dwellSec: 30,
-        outboundStopIds: ['p3', 'p1'],
-        inboundStopIds: ['p1', 'p3'],
+        outboundStopIds: [], // CLEAN SLATE - ZERO INITIAL STOPS
+        inboundStopIds: [],  // CLEAN SLATE - ZERO INITIAL STOPS
         outboundGeometry: null,
         inboundGeometry: null,
         outboundDistanceMeters: 0,
@@ -1203,7 +1203,7 @@
       routes.push(newR);
       setActiveRoute(id);
       pushHistorySnapshot();
-      showToast(`Created new line: ${newR.name}`, "success");
+      showToast(`Created clean line ${newR.code} with 0 stops. Click map or presets to add stops!`, "success");
     }
 
     function deleteRoute(id) {
@@ -1279,21 +1279,13 @@
       }).join('');
     }
 
-    // DEDICATED STOPS EDITOR (TAB 2)
+    // DEDICATED STOPS EDITOR (TAB 2) WITH SYNCHRONIZED DUAL-DIRECTION DELETION
     function renderStopsManagerSection() {
       const activeRoute = routes.find(r => r.id === activeRouteId) || routes[0];
       if (!activeRoute) return;
 
       const activeDir = activeRoute.activeDirection || 'outbound';
       let targetSeq = activeDir === 'outbound' ? activeRoute.outboundStopIds : activeRoute.inboundStopIds;
-
-      if (activeDir === 'inbound' && (!targetSeq || targetSeq.length === 0)) {
-        if (activeRoute.outboundStopIds && activeRoute.outboundStopIds.length > 0) {
-          activeRoute.inboundStopIds = [...activeRoute.outboundStopIds].reverse();
-          targetSeq = activeRoute.inboundStopIds;
-          showToast("🔄 Auto-populated Inbound leg by reversing Outbound stops", "info");
-        }
-      }
 
       document.getElementById('active-line-pill').style.backgroundColor = activeRoute.color;
       document.getElementById('active-line-title').innerText = `Line ${activeRoute.code} - ${activeRoute.name}`;
@@ -1325,11 +1317,14 @@
       }
 
       const cardContainer = document.getElementById('stops-card-container');
+      const otherSeq = activeDir === 'outbound' ? activeRoute.inboundStopIds : activeRoute.outboundStopIds;
+
       const cardsHtml = targetSeq.map((sid, idx) => {
         const stop = stops.find(s => s.id === sid);
         if (!stop) return '';
 
         const sharingCount = getStopSharingCount(stop.id);
+        const isInBothLegs = otherSeq.includes(stop.id);
 
         return `
           <div draggable="true"
@@ -1339,20 +1334,28 @@
             ondrop="handleDrop(event, ${idx})"
             ondragend="handleDragEnd(event)"
             class="stop-card bg-slate-900 border border-slate-800 hover:border-slate-700 p-4 rounded-2xl text-xs space-y-2.5 shadow-md cursor-grab active:cursor-grabbing">
-            <div class="flex items-center gap-3">
+            <div class="flex items-center gap-2.5">
               <div class="text-slate-500 hover:text-slate-300 text-lg font-black px-0.5"><i class="fa-solid fa-grip-vertical"></i></div>
-              <span class="bg-slate-800 text-illini-orange border border-illini-orange/40 font-mono w-9 h-9 rounded-full flex items-center justify-center text-sm font-extrabold shrink-0 shadow-sm">
+              <span class="bg-slate-800 text-illini-orange border border-illini-orange/40 font-mono w-8 h-8 rounded-full flex items-center justify-center text-xs font-extrabold shrink-0 shadow-sm">
                 ${idx + 1}
               </span>
-              <input type="text" value="${stop.name}" oninput="updateStopName('${stop.id}', this.value)" class="flex-1 bg-slate-950 border border-slate-700 focus:border-illini-orange text-white font-bold text-sm rounded-xl px-3.5 py-2 focus:outline-none">
+              <input type="text" value="${stop.name}" oninput="updateStopName('${stop.id}', this.value)" class="flex-1 bg-slate-950 border border-slate-700 focus:border-illini-orange text-white font-bold text-xs rounded-xl px-3 py-2 focus:outline-none min-w-0">
               
-              <button onclick="flyToStop('${stop.id}')" title="Locate on map" class="p-2.5 bg-slate-950 text-sky-400 hover:text-white rounded-xl border border-slate-800 transition">
+              <button onclick="flyToStop('${stop.id}')" title="Locate on map" class="p-2 bg-slate-950 text-sky-400 hover:text-white rounded-xl border border-slate-800 transition">
                 <i class="fa-solid fa-crosshairs"></i>
               </button>
-              <button onclick="toggleMajorHub('${stop.id}')" title="Toggle transfer hub status" class="p-2.5 bg-slate-950 ${stop.isHub ? 'text-amber-400' : 'text-slate-500'} rounded-xl border border-slate-800 transition">
+              <button onclick="toggleMajorHub('${stop.id}')" title="Toggle transfer hub status" class="p-2 bg-slate-950 ${stop.isHub ? 'text-amber-400' : 'text-slate-500'} rounded-xl border border-slate-800 transition">
                 <i class="fa-solid fa-star"></i>
               </button>
-              <button onclick="removeStopFromActiveDirection(${idx})" title="Remove from this line (keep physical stop)" class="p-2.5 bg-slate-950 text-rose-400 hover:bg-rose-950 rounded-xl border border-slate-800 transition flex items-center gap-1">
+              
+              <!-- Quick Dual-Leg Delete Button if stop exists in both legs -->
+              ${isInBothLegs ? `
+                <button onclick="removeStopFromActiveDirection(${idx}, true)" title="Remove from BOTH Outbound & Inbound legs" class="px-2 py-2 bg-rose-950/80 hover:bg-rose-900 text-rose-300 rounded-xl border border-rose-800/80 transition flex items-center gap-1 font-bold text-[10px]">
+                  <i class="fa-solid fa-arrows-split-up-and-left"></i> Both
+                </button>
+              ` : ''}
+
+              <button onclick="removeStopFromActiveDirection(${idx}, false)" title="Remove stop from line" class="p-2 bg-slate-950 text-rose-400 hover:bg-rose-950 rounded-xl border border-slate-800 transition flex items-center justify-center">
                 <i class="fa-solid fa-xmark"></i>
               </button>
             </div>
@@ -1360,6 +1363,7 @@
               <span class="flex items-center gap-2">
                 <span class="font-medium">${stop.category || 'Transit Stop'}</span>
                 ${sharingCount > 1 ? `<span class="bg-amber-500/20 text-amber-300 border border-amber-500/40 px-2 py-0.5 rounded-md text-[11px] font-bold flex items-center gap-1"><i class="fa-solid fa-link"></i> Shared (${sharingCount} Lines)</span>` : ''}
+                ${isInBothLegs ? `<span class="bg-sky-500/20 text-sky-300 border border-sky-500/40 px-1.5 py-0.5 rounded text-[10px] font-bold">↔️ Both Legs</span>` : ''}
               </span>
               <span class="text-[11px] font-medium">${stop.isHub ? `⭐ Transfer Hub (${currentDwell + 60}s dwell)` : `Standard Stop (${currentDwell}s dwell)`}</span>
             </div>
@@ -1368,9 +1372,12 @@
       }).join('');
 
       cardContainer.innerHTML = cardsHtml.length ? cardsHtml : `
-        <div class="text-xs text-slate-400 italic p-10 text-center border border-dashed border-slate-800 rounded-2xl bg-slate-950/40 space-y-2">
-          <div class="text-sm font-bold text-slate-300">No stops in ${activeDir === 'outbound' ? 'Outbound Leg (➡️)' : 'Inbound Leg (⬅️)'} sequence.</div>
-          <div class="text-slate-500">Click <b>"📍 Add Stops on Map"</b> or <b>"Copy & Reverse"</b> to add stops!</div>
+        <div class="text-xs text-slate-400 italic p-10 text-center border border-dashed border-slate-800 rounded-2xl bg-slate-950/40 space-y-3">
+          <div class="w-12 h-12 bg-slate-900 rounded-full text-illini-orange flex items-center justify-center mx-auto text-xl border border-slate-800">
+            <i class="fa-solid fa-location-dot"></i>
+          </div>
+          <div class="text-sm font-bold text-slate-300">Clean Slate: No stops in ${activeDir === 'outbound' ? 'Outbound Leg (➡️)' : 'Inbound Leg (⬅️)'}.</div>
+          <div class="text-slate-500 max-w-xs mx-auto leading-relaxed">Click <b>"📍 Add Stops on Map"</b>, select campus <b>"Presets"</b>, or click <b>"Copy & Reverse"</b> to build this line!</div>
         </div>
       `;
     }
@@ -1404,13 +1411,6 @@
       if (activeRoute) {
         activeRoute.activeDirection = dir;
 
-        if (dir === 'inbound' && (!activeRoute.inboundStopIds || activeRoute.inboundStopIds.length === 0)) {
-          if (activeRoute.outboundStopIds && activeRoute.outboundStopIds.length > 0) {
-            activeRoute.inboundStopIds = [...activeRoute.outboundStopIds].reverse();
-            showToast("🔄 Auto-populated Inbound leg by reversing Outbound stops", "info");
-          }
-        }
-
         renderStopsManagerSection();
         renderAllStopsOnMap();
         renderRoutesOnMap();
@@ -1429,28 +1429,40 @@
       }
     }
 
-    function removeStopFromActiveDirection(idx) {
+    // SYNCHRONIZED DUAL-DIRECTION STOP DELETION LOGIC (v11.0)
+    function removeStopFromActiveDirection(idx, forceBoth = false) {
       const activeRoute = routes.find(r => r.id === activeRouteId);
       if (!activeRoute) return;
 
       const activeDir = activeRoute.activeDirection || 'outbound';
-      const targetSeq = activeDir === 'outbound' ? activeRoute.outboundStopIds : activeRoute.inboundStopIds;
+      const currentSeq = activeDir === 'outbound' ? activeRoute.outboundStopIds : activeRoute.inboundStopIds;
+      const otherSeq = activeDir === 'outbound' ? activeRoute.inboundStopIds : activeRoute.outboundStopIds;
 
-      if (targetSeq.length > idx) {
-        const removedStopId = targetSeq[idx];
-        const stopObj = stops.find(s => s.id === removedStopId);
-        targetSeq.splice(idx, 1);
-        
-        renderStopsManagerSection();
-        renderRoutesOnMap();
-        renderAllStopsOnMap();
-        renderAllRoutesSidebarList();
-        updateAnalyticsTab();
-        pushHistorySnapshot();
+      if (currentSeq.length <= idx) return;
 
-        const stopName = stopObj ? stopObj.name : 'Stop';
-        showToast(`Removed "${stopName}" from ${activeRoute.code} (${activeDir})`, "info");
+      const removedStopId = currentSeq[idx];
+      const stopObj = stops.find(s => s.id === removedStopId);
+      const stopName = stopObj ? stopObj.name : 'Stop';
+
+      const isInBothLegs = otherSeq.includes(removedStopId);
+
+      if (forceBoth || (addStopScope === 'both' && isInBothLegs)) {
+        // Remove stop from both Outbound and Inbound sequences
+        activeRoute.outboundStopIds = activeRoute.outboundStopIds.filter(id => id !== removedStopId);
+        activeRoute.inboundStopIds = activeRoute.inboundStopIds.filter(id => id !== removedStopId);
+        showToast(`Removed "${stopName}" from BOTH Outbound & Inbound legs`, "info");
+      } else {
+        // Remove strictly from current leg
+        currentSeq.splice(idx, 1);
+        showToast(`Removed "${stopName}" from ${activeDir} leg ONLY`, "info");
       }
+
+      renderStopsManagerSection();
+      renderRoutesOnMap();
+      renderAllStopsOnMap();
+      renderAllRoutesSidebarList();
+      updateAnalyticsTab();
+      pushHistorySnapshot();
     }
 
     function clearCurrentRouteDirectionStops() {
@@ -1505,7 +1517,7 @@
       }
     }
 
-    // OPERATIONAL METRICS CALCULATION (INCLUDING CUSTOM DWELL TIME MATH)
+    // OPERATIONAL METRICS CALCULATION
     function calculateRouteMetrics(route) {
       if (!route) return { totalDistMiles: 0, outboundMiles: 0, inboundMiles: 0, pureTravelMins: 0, totalDwellMins: 0, roundTripMins: 0, busesNeeded: 0 };
 
@@ -1549,7 +1561,7 @@
       const totalDwellMins = totalDwellSec / 60;
       const pureTravelMins = (totalDistMiles / (route.speedMph || 12.5)) * 60;
       const roundTripMins = Math.round((pureTravelMins + totalDwellMins) * 1.10);
-      const busesNeeded = Math.max(1, Math.ceil(roundTripMins / (route.headway || 15)));
+      const busesNeeded = totalDistMiles > 0 ? Math.max(1, Math.ceil(roundTripMins / (route.headway || 15))) : 0;
 
       return { totalDistMiles, outboundMiles, inboundMiles, pureTravelMins, totalDwellMins, roundTripMins, busesNeeded };
     }
@@ -1638,7 +1650,7 @@
       const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify({ stops, routes, activeRouteId, addStopScope }, null, 2));
       const link = document.createElement('a');
       link.setAttribute("href", dataStr);
-      link.setAttribute("download", `mtd_workspace_v10_5_${Date.now()}.json`);
+      link.setAttribute("download", `mtd_workspace_v11_0_${Date.now()}.json`);
       document.body.appendChild(link);
       link.click();
       link.remove();
