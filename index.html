@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>MTD Route Studio - Urbana-Champaign</title>
+  <title>MTD Route Studio - Urbana-Champaign (v3.5)</title>
   
   <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
@@ -125,7 +125,7 @@
       </div>
       <div>
         <h1 class="font-extrabold text-base sm:text-lg tracking-wide flex items-center gap-2 leading-none">
-          MTD ROUTE STUDIO <span class="bg-illini-orange/20 text-illini-orange text-[11px] font-bold px-2 py-0.5 rounded border border-illini-orange/40">Urbana-Champaign</span>
+          MTD ROUTE STUDIO <span class="bg-illini-orange/20 text-illini-orange text-[11px] font-bold px-2 py-0.5 rounded border border-illini-orange/40">v3.5 Urbana-Champaign</span>
         </h1>
         <p class="text-[11px] text-slate-300 mt-0.5 flex items-center gap-1.5">
           <span id="osrm-status-dot" class="w-2 h-2 rounded-full bg-emerald-400 inline-block animate-pulse"></span>
@@ -134,8 +134,21 @@
       </div>
     </div>
 
-    <!-- Header Actions & Quick Utilities -->
-    <div class="flex items-center space-x-2.5">
+    <!-- Header Actions, Undo/Redo & Utilities -->
+    <div class="flex items-center space-x-2">
+      
+      <!-- UNDO / REDO BUTTONS -->
+      <div class="flex items-center bg-slate-900 border border-slate-800 rounded-xl p-1 shadow-inner">
+        <button id="undo-btn" onclick="undo()" title="Undo (Ctrl+Z)" disabled class="px-2.5 py-1 text-slate-400 hover:text-white disabled:opacity-30 disabled:hover:text-slate-400 text-xs font-bold rounded-lg transition flex items-center gap-1">
+          <i class="fa-solid fa-rotate-left"></i> <span class="hidden sm:inline">Undo</span>
+        </button>
+        <div class="w-px h-4 bg-slate-800 my-auto"></div>
+        <button id="redo-btn" onclick="redo()" title="Redo (Ctrl+Y)" disabled class="px-2.5 py-1 text-slate-400 hover:text-white disabled:opacity-30 disabled:hover:text-slate-400 text-xs font-bold rounded-lg transition flex items-center gap-1">
+          <i class="fa-solid fa-rotate-right"></i> <span class="hidden sm:inline">Redo</span>
+        </button>
+      </div>
+
+      <!-- Map Style Selector -->
       <div class="hidden lg:flex items-center bg-slate-900/90 border border-slate-800 rounded-xl p-1 text-xs">
         <span class="text-slate-400 px-2 text-[11px] font-semibold"><i class="fa-solid fa-layer-group text-slate-400 mr-1"></i> Base:</span>
         <select id="header-map-style-select" onchange="changeMapBaseLayer(this.value)" class="bg-slate-800 text-slate-200 rounded-lg px-2 py-1 text-xs font-medium focus:outline-none focus:ring-1 focus:ring-illini-orange border border-slate-700">
@@ -146,19 +159,19 @@
         </select>
       </div>
 
-      <button onclick="toggleBuffers()" id="header-buffer-btn" class="bg-slate-800/90 hover:bg-slate-700 text-slate-200 text-xs px-3 py-2 rounded-xl border border-slate-700 transition flex items-center gap-2">
+      <button onclick="toggleBuffers()" id="header-buffer-btn" class="bg-slate-800/90 hover:bg-slate-700 text-slate-200 text-xs px-2.5 py-2 rounded-xl border border-slate-700 transition flex items-center gap-1.5">
         <i class="fa-solid fa-circle-dot text-emerald-400"></i>
-        <span class="hidden sm:inline font-medium">400m Walk Buffer</span>
+        <span class="hidden sm:inline font-medium">400m Buffer</span>
       </button>
 
-      <button onclick="exportProjectJSON()" class="bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs px-3 py-2 rounded-xl border border-slate-700 font-semibold transition flex items-center gap-1.5">
+      <button onclick="exportProjectJSON()" class="bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs px-2.5 py-2 rounded-xl border border-slate-700 font-semibold transition flex items-center gap-1.5">
         <i class="fa-solid fa-floppy-disk text-sky-400"></i>
         <span class="hidden sm:inline">Save JSON</span>
       </button>
 
-      <button onclick="exportGeoJSON()" class="bg-illini-orange hover:bg-orange-600 text-white text-xs px-3.5 py-2 rounded-xl font-bold transition flex items-center gap-1.5 shadow-md">
+      <button onclick="exportGeoJSON()" class="bg-illini-orange hover:bg-orange-600 text-white text-xs px-3 py-2 rounded-xl font-bold transition flex items-center gap-1.5 shadow-md">
         <i class="fa-solid fa-download"></i>
-        <span>Export GeoJSON</span>
+        <span>GeoJSON</span>
       </button>
     </div>
   </header>
@@ -188,12 +201,14 @@
       <!-- TAB 1: DEDICATED STOPS MANAGER (🚏 站点管理) -->
       <div id="tab-content-stops" class="flex-1 flex flex-col overflow-hidden">
         
-        <!-- Active Route Quick Switcher & Click-Mode Action -->
+        <!-- Active Route Quick Switcher & Fast Actions -->
         <div class="p-3.5 border-b border-slate-800 bg-slate-950 space-y-2.5">
           <div class="flex items-center justify-between">
-            <span class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Active Transit Line</span>
+            <span class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Active Line</span>
+            
+            <!-- Continuous Click Add Mode Toggle -->
             <button onclick="toggleMapClickMode()" id="sidebar-map-click-btn" class="bg-illini-orange hover:bg-orange-600 text-white text-xs px-3 py-1.5 rounded-lg font-bold flex items-center gap-1.5 shadow transition">
-              <i class="fa-solid fa-map-pin"></i> <span>📍 Drop Stop on Map</span>
+              <i class="fa-solid fa-plus-circle"></i> <span id="click-mode-btn-text">📍 Continuous Add Stops</span>
             </button>
           </div>
 
@@ -201,13 +216,24 @@
           <div id="stops-tab-route-pills" class="flex items-center gap-2 overflow-x-auto pb-1">
             <!-- Rendered dynamically -->
           </div>
+
+          <!-- Fast Batch Utilities Bar -->
+          <div class="flex items-center justify-between pt-1 border-t border-slate-800/80 text-xs">
+            <button onclick="reverseActiveRouteStops()" class="bg-slate-900 hover:bg-slate-800 text-slate-200 border border-slate-700 px-2.5 py-1 rounded-lg font-semibold flex items-center gap-1.5 transition">
+              <i class="fa-solid fa-right-left text-sky-400"></i> <span>Reverse Order</span>
+            </button>
+            
+            <button onclick="clearActiveRouteStops()" class="bg-slate-900 hover:bg-rose-950/60 text-rose-300 border border-slate-800 hover:border-rose-800/80 px-2.5 py-1 rounded-lg font-semibold flex items-center gap-1.5 transition">
+              <i class="fa-solid fa-trash-can text-rose-400"></i> <span>Clear Line Stops</span>
+            </button>
+          </div>
         </div>
 
         <!-- STOPS MANAGER LIST -->
         <div class="flex-1 overflow-y-auto p-3.5 space-y-3">
           <div class="flex items-center justify-between">
             <span class="text-[11px] font-bold text-slate-400 uppercase tracking-wider" id="stops-manager-count-label">Stops Sequence (0)</span>
-            <span class="text-[10px] text-slate-500 italic">Type in box to rename instantly</span>
+            <span class="text-[10px] text-slate-500 italic">Right-click marker on map to delete</span>
           </div>
 
           <!-- Container for Stop Cards -->
@@ -238,7 +264,7 @@
             <i class="fa-solid fa-bus text-illini-orange"></i> Multi-Line Network Manager
           </h2>
           <p class="text-xs text-slate-400 mt-1 leading-relaxed">
-            Create and configure multiple CUMTD bus lines simultaneously.
+            Configure CUMTD bus lines, headway frequency, and One-Way vs Bidirectional / Round-Trip routing modes.
           </p>
         </div>
 
@@ -364,7 +390,7 @@
 
       <!-- FOOTER STATUS BAR -->
       <div class="p-3 bg-slate-950 border-t border-slate-800 text-center text-[11px] text-slate-400 flex items-center justify-between shrink-0">
-        <span>MTD Studio Urbana-Champaign</span>
+        <span>MTD Studio Urbana-Champaign v3.5</span>
         <span id="network-summary-mini" class="text-emerald-400 font-mono font-bold">Total Fleet: 0 Buses</span>
       </div>
     </aside>
@@ -379,7 +405,7 @@
       <div class="absolute top-4 right-4 z-[1000] flex flex-col space-y-2">
         <button onclick="toggleMapClickMode()" id="map-stop-tool-btn" class="glass-panel text-slate-100 hover:text-white px-3.5 py-2.5 rounded-xl border border-slate-700/80 text-xs font-bold flex items-center gap-2.5 shadow-2xl transition hover:scale-105">
           <i class="fa-solid fa-map-pin text-illini-orange text-sm"></i>
-          <span id="map-tool-btn-text">📍 Click Map to Add Stop</span>
+          <span id="map-tool-btn-text">📍 Continuous Add Stops</span>
         </button>
 
         <button onclick="fitAllRoutesView()" class="glass-panel text-slate-200 hover:text-white px-3 py-2 rounded-xl border border-slate-700/80 text-xs font-semibold flex items-center gap-2 shadow-xl transition">
@@ -396,7 +422,7 @@
       <!-- ACTIVE MAP-CLICKING MODE BANNER -->
       <div id="map-click-mode-banner" class="hidden absolute top-4 left-1/2 -translate-x-1/2 z-[1000] bg-illini-orange text-white text-xs font-extrabold px-5 py-2.5 rounded-full shadow-2xl flex items-center gap-3 animate-bounce border-2 border-white/20">
         <span class="w-2.5 h-2.5 rounded-full bg-white animate-ping"></span>
-        <span>👉 CLICK ANYWHERE ON MAP/STREETS (e.g. LINCOLN AVE) TO PLACE A STOP</span>
+        <span>👉 CONTINUOUS MODE: CLICK ANYWHERE ON MAP TO PLACE STOPS (RIGHT-CLICK MARKER TO DELETE)</span>
         <button onclick="toggleMapClickMode()" class="bg-black/30 hover:bg-black/50 text-white rounded-full w-5 h-5 flex items-center justify-center text-[11px] transition">✕</button>
       </div>
 
@@ -416,7 +442,7 @@
           <div class="bg-slate-900/60 p-2.5 rounded-xl border border-slate-800">
             <div class="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Cycle Time (Roundtrip)</div>
             <div id="stat-cycle" class="text-base sm:text-lg font-black text-sky-400 mt-0.5">0 mins</div>
-            <div class="text-[10px] text-slate-400">Incl. Dwell & Layover</div>
+            <div id="stat-routing-mode-label" class="text-[10px] text-slate-400">Bidirectional ↔️</div>
           </div>
 
           <div class="bg-slate-900/60 p-2.5 rounded-xl border border-slate-800">
@@ -478,9 +504,12 @@
         color: '#E84A27', // UIUC Orange
         headway: 10,
         speedMph: 12.5,
+        isBidirectional: true, // Bidirectional by default
         stopIds: ['IT', 'ECE', 'SIEBEL', 'ISR', 'UNION', 'IKENBERRY', 'ARC'],
         routeGeometry: null,
-        roadDistanceMeters: 0
+        returnGeometry: null,
+        roadDistanceMeters: 0,
+        returnDistanceMeters: 0
       },
       {
         id: 'route-lincoln',
@@ -489,9 +518,12 @@
         color: '#00875A', // MTD Green
         headway: 15,
         speedMph: 14.0,
+        isBidirectional: true,
         stopIds: ['LINCOLN_FLORIDA', 'LINCOLN_GREEN', 'LINCOLN_SPRINGFIELD', 'LINCOLN_UNIVERSITY', 'CARLE', 'URBANA_SQ'],
         routeGeometry: null,
-        roadDistanceMeters: 0
+        returnGeometry: null,
+        roadDistanceMeters: 0,
+        returnDistanceMeters: 0
       }
     ];
 
@@ -501,6 +533,11 @@
     let activeRouteId = 'route-23x';
     let customStopCounter = 1;
     
+    // Undo / Redo History Stack
+    let historyStack = [];
+    let historyIndex = -1;
+    let isRestoringHistory = false;
+
     let map = null;
     let baseMapLayers = {};
     let activeBaseLayer = null;
@@ -512,13 +549,17 @@
     let showBuffers = false;
     let isClickToAddMode = false;
 
-    const STORAGE_KEY = 'mtd_studio_network_v3_state';
+    const STORAGE_KEY = 'mtd_studio_network_v35_state';
 
     // --- 2. INITIALIZATION & TILE MAP ENGINE ---
 
     window.onload = function() {
       loadFromLocalStorage();
       initMapEngine();
+      
+      // Initialize undo history baseline
+      pushHistorySnapshot(true);
+
       renderAllStopsOnMap();
       renderRoutesOnMap();
       renderStopsManagerTab();
@@ -526,6 +567,8 @@
       renderLandmarksTab();
       updateTimetableStopDropdown();
       updateStatsDashboard();
+      
+      setupKeyboardShortcuts();
     };
 
     function initMapEngine() {
@@ -557,7 +600,7 @@
       activeBaseLayer = baseMapLayers.esriStreet;
       activeBaseLayer.addTo(map);
 
-      // Instant map click listener for zero-popup stop creation
+      // Continuous Map Click listener
       map.on('click', function(e) {
         if (isClickToAddMode) {
           handleMapClickAddStop(e.latlng.lat, e.latlng.lng);
@@ -573,7 +616,102 @@
       }
     }
 
-    // --- 3. OSRM REAL-ROAD ROUTING ENGINE ---
+    // --- 3. UNDO / REDO HISTORY ENGINE ---
+
+    function pushHistorySnapshot(isInitial = false) {
+      if (isRestoringHistory) return;
+
+      const stateSnapshot = JSON.stringify({
+        stops: stops,
+        routes: routes,
+        activeRouteId: activeRouteId,
+        customStopCounter: customStopCounter
+      });
+
+      // Avoid duplicate states
+      if (historyStack.length > 0 && historyStack[historyIndex] === stateSnapshot) {
+        return;
+      }
+
+      // Truncate redo states if new action occurs
+      historyStack = historyStack.slice(0, historyIndex + 1);
+      historyStack.push(stateSnapshot);
+
+      if (historyStack.length > 35) {
+        historyStack.shift();
+      }
+
+      historyIndex = historyStack.length - 1;
+      updateUndoRedoUI();
+      saveToLocalStorage();
+    }
+
+    function undo() {
+      if (historyIndex > 0) {
+        historyIndex--;
+        restoreHistoryState(historyStack[historyIndex]);
+        showToast("↩️ Undo successful", "info");
+      }
+    }
+
+    function redo() {
+      if (historyIndex < historyStack.length - 1) {
+        historyIndex++;
+        restoreHistoryState(historyStack[historyIndex]);
+        showToast("↪️ Redo successful", "info");
+      }
+    }
+
+    function restoreHistoryState(jsonStr) {
+      isRestoringHistory = true;
+      try {
+        const data = JSON.parse(jsonStr);
+        stops = data.stops;
+        routes = data.routes;
+        activeRouteId = data.activeRouteId;
+        if (data.customStopCounter) customStopCounter = data.customStopCounter;
+
+        renderAllStopsOnMap();
+        renderRoutesOnMap();
+        renderStopsManagerTab();
+        renderLinesEditorTab();
+        renderLandmarksTab();
+        updateStatsDashboard();
+        saveToLocalStorage();
+      } catch (e) {
+        console.error("Error restoring history state:", e);
+      } finally {
+        isRestoringHistory = false;
+        updateUndoRedoUI();
+      }
+    }
+
+    function updateUndoRedoUI() {
+      const undoBtn = document.getElementById('undo-btn');
+      const redoBtn = document.getElementById('redo-btn');
+
+      if (undoBtn) undoBtn.disabled = (historyIndex <= 0);
+      if (redoBtn) redoBtn.disabled = (historyIndex >= historyStack.length - 1);
+    }
+
+    function setupKeyboardShortcuts() {
+      document.addEventListener('keydown', function(e) {
+        // Ignore inside input/textarea fields
+        if (document.activeElement && (document.activeElement.tagName === 'INPUT' || document.activeElement.tagName === 'TEXTAREA')) {
+          return;
+        }
+
+        if ((e.ctrlKey || e.metaKey) && !e.shiftKey && e.key.toLowerCase() === 'z') {
+          e.preventDefault();
+          undo();
+        } else if (((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'y') || ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key.toLowerCase() === 'z')) {
+          e.preventDefault();
+          redo();
+        }
+      });
+    }
+
+    // --- 4. OSRM REAL-ROAD ROUTING ENGINE ---
 
     async function fetchOsrmRoute(stopCoords) {
       if (!stopCoords || stopCoords.length < 2) return null;
@@ -599,7 +737,7 @@
           };
         }
       } catch (err) {
-        console.warn('OSRM API failed or timed out. Falling back to straight line geometry:', err);
+        console.warn('OSRM API fallback:', err);
         updateOsrmStatus('fallback', 'Straight Line Fallback Mode');
       }
 
@@ -638,7 +776,7 @@
       return dist;
     }
 
-    // --- 4. MAP RENDERING & DRAGGABLE MARKERS ---
+    // --- 5. MAP RENDERING & MARKERS WITH RIGHT-CLICK DELETE ---
 
     function renderAllStopsOnMap() {
       Object.values(markersMap).forEach(m => map.removeLayer(m));
@@ -681,8 +819,18 @@
           
           renderRoutesOnMap();
           renderStopsManagerTab();
-          saveToLocalStorage();
+          pushHistorySnapshot();
           showToast(`Repositioned "${stop.name}" - OSRM road route updated!`, 'info');
+        });
+
+        // FAST DELETE: Right-click or Double-click on Map Marker to instantly delete
+        marker.on('contextmenu', function(e) {
+          L.DomEvent.stopPropagation(e);
+          deleteStop(stop.id);
+        });
+        marker.on('dblclick', function(e) {
+          L.DomEvent.stopPropagation(e);
+          deleteStop(stop.id);
         });
 
         marker.bindPopup(buildMarkerPopupHtml(stop));
@@ -714,33 +862,44 @@
             <button onclick="addStopToActiveRoute('${stop.id}')" class="bg-illini-orange hover:bg-orange-600 text-white text-xs px-2.5 py-1 rounded font-bold transition flex-1">
               + Add to Line
             </button>
-            <button onclick="toggleMajorHub('${stop.id}')" class="bg-amber-100 hover:bg-amber-200 text-amber-800 text-xs px-2 py-1 rounded font-semibold transition">
-              ${stop.isHub ? 'Unmark Hub' : 'Set Hub'}
+            <button onclick="deleteStop('${stop.id}')" class="bg-rose-100 hover:bg-rose-200 text-rose-800 text-xs px-2 py-1 rounded font-semibold transition">
+              Delete ❌
             </button>
           </div>
         </div>
       `;
     }
 
+    // --- 6. BIDIRECTIONAL / ROUND-TRIP ROUTE RENDERING ---
+
     async function renderRoutesOnMap() {
-      Object.values(routePolylinesMap).forEach(p => map.removeLayer(p));
+      // Clear existing polylines
+      Object.values(routePolylinesMap).forEach(layers => {
+        if (Array.isArray(layers)) {
+          layers.forEach(l => map.removeLayer(l));
+        } else {
+          map.removeLayer(layers);
+        }
+      });
       routePolylinesMap = {};
 
       for (const route of routes) {
-        const stopCoords = route.stopIds
+        const outboundStops = route.stopIds
           .map(sid => stops.find(s => s.id === sid))
-          .filter(Boolean)
-          .map(s => [s.lat, s.lng]);
+          .filter(Boolean);
 
-        if (stopCoords.length >= 2) {
-          const osrmResult = await fetchOsrmRoute(stopCoords);
+        if (outboundStops.length >= 2) {
+          const outboundCoords = outboundStops.map(s => [s.lat, s.lng]);
           const isSelected = route.id === activeRouteId;
+          const layersList = [];
 
-          if (osrmResult) {
-            route.routeGeometry = osrmResult.latLngs;
-            route.roadDistanceMeters = osrmResult.distanceMeters;
+          // 1. Fetch Outbound OSRM Geometry
+          const osrmOutbound = await fetchOsrmRoute(outboundCoords);
+          if (osrmOutbound) {
+            route.routeGeometry = osrmOutbound.latLngs;
+            route.roadDistanceMeters = osrmOutbound.distanceMeters;
 
-            const polyline = L.polyline(osrmResult.latLngs, {
+            const outboundPoly = L.polyline(osrmOutbound.latLngs, {
               color: route.color,
               weight: isSelected ? 6.5 : 3.5,
               opacity: isSelected ? 0.95 : 0.50,
@@ -748,11 +907,40 @@
               lineJoin: 'round'
             }).addTo(map);
 
-            polyline.bindTooltip(`<b>Line ${route.code}</b> - ${route.name}`, { sticky: true });
-            polyline.on('click', () => setActiveRoute(route.id));
-
-            routePolylinesMap[route.id] = polyline;
+            outboundPoly.bindTooltip(`<b>Line ${route.code} (Outbound)</b> - ${route.name}`, { sticky: true });
+            outboundPoly.on('click', () => setActiveRoute(route.id));
+            layersList.push(outboundPoly);
           }
+
+          // 2. Fetch Return Leg OSRM Geometry if BIDIRECTIONAL mode is enabled
+          if (route.isBidirectional && outboundCoords.length >= 2) {
+            const returnCoords = [...outboundCoords].reverse();
+            const osrmReturn = await fetchOsrmRoute(returnCoords);
+
+            if (osrmReturn) {
+              route.returnGeometry = osrmReturn.latLngs;
+              route.returnDistanceMeters = osrmReturn.distanceMeters;
+
+              // Render return leg as offset dashed polyline
+              const returnPoly = L.polyline(osrmReturn.latLngs, {
+                color: route.color,
+                weight: isSelected ? 4.5 : 2.5,
+                opacity: isSelected ? 0.75 : 0.40,
+                dashArray: '6, 8',
+                lineCap: 'round',
+                lineJoin: 'round'
+              }).addTo(map);
+
+              returnPoly.bindTooltip(`<b>Line ${route.code} (Return ↔️)</b> - ${route.name}`, { sticky: true });
+              returnPoly.on('click', () => setActiveRoute(route.id));
+              layersList.push(returnPoly);
+            }
+          } else {
+            route.returnGeometry = null;
+            route.returnDistanceMeters = 0;
+          }
+
+          routePolylinesMap[route.id] = layersList;
         }
       }
 
@@ -794,31 +982,34 @@
       }
     }
 
-    // --- 5. ZERO-POPUP MAP-CLICK STOP CREATION ---
+    // --- 7. CONTINUOUS MAP-CLICK STOP CREATION MODE ---
 
     function toggleMapClickMode() {
       isClickToAddMode = !isClickToAddMode;
       const btn = document.getElementById('map-stop-tool-btn');
       const textSpan = document.getElementById('map-tool-btn-text');
+      const btnSidebarText = document.getElementById('click-mode-btn-text');
       const banner = document.getElementById('map-click-mode-banner');
       const mapEl = document.getElementById('map');
 
       if (isClickToAddMode) {
         btn.classList.add('bg-illini-orange', 'text-white', 'border-illini-orange');
-        textSpan.innerText = 'Exit Map Click Mode';
+        textSpan.innerText = 'Exit Continuous Mode';
+        if (btnSidebarText) btnSidebarText.innerText = 'Exit Add Mode';
         banner.classList.remove('hidden');
         if (mapEl) mapEl.classList.add('map-crosshair');
-        showToast("Click mode active: Click anywhere on streets (Lincoln Ave, etc.) to place a stop!", 'warning');
+        showToast("Continuous Mode: Click anywhere on map to add sequential stops!", 'warning');
       } else {
         btn.classList.remove('bg-illini-orange', 'text-white', 'border-illini-orange');
-        textSpan.innerText = '📍 Click Map to Add Stop';
+        textSpan.innerText = '📍 Continuous Add Stops';
+        if (btnSidebarText) btnSidebarText.innerText = '📍 Continuous Add Stops';
         banner.classList.add('hidden');
         if (mapEl) mapEl.classList.remove('map-crosshair');
       }
     }
 
     function handleMapClickAddStop(lat, lng) {
-      // ZERO POPUPS: Generate auto sequential name instantly
+      // Continuous mode: Drop stop immediately without popup
       const autoName = `Stop #${customStopCounter++} (${lat.toFixed(4)}, ${lng.toFixed(4)})`;
 
       const newStop = {
@@ -832,12 +1023,12 @@
       };
 
       stops.push(newStop);
-      addStopToActiveRoute(newStop.id);
+      addStopToActiveRoute(newStop.id, false); // Don't push state twice
       renderAllStopsOnMap();
       renderStopsManagerTab();
       renderLandmarksTab();
-      saveToLocalStorage();
-      showToast(`Added "${autoName}" on street!`, 'success');
+      pushHistorySnapshot();
+      showToast(`Added "${autoName}" - Click map again for next stop!`, 'success');
     }
 
     function updateStopName(stopId, newName) {
@@ -847,7 +1038,7 @@
         if (markersMap[stopId]) {
           markersMap[stopId].setPopupContent(buildMarkerPopupHtml(stop));
         }
-        saveToLocalStorage();
+        pushHistorySnapshot();
       }
     }
 
@@ -859,7 +1050,7 @@
       renderStopsManagerTab();
       renderLandmarksTab();
       updateStatsDashboard();
-      saveToLocalStorage();
+      pushHistorySnapshot();
       showToast(`"${stop.name}" -> ${stop.isHub ? '⭐ Major Hub (120s Dwell)' : 'Standard Stop (20s Dwell)'}`, 'info');
     }
 
@@ -873,11 +1064,11 @@
       renderStopsManagerTab();
       renderLinesEditorTab();
       renderLandmarksTab();
-      saveToLocalStorage();
+      pushHistorySnapshot();
       showToast("Stop removed from network", 'info');
     }
 
-    // --- 6. ROUTE & NETWORK MANAGEMENT ---
+    // --- 8. ROUTE & NETWORK MANAGEMENT & FAST BATCH ACTIONS ---
 
     function setActiveRoute(routeId) {
       activeRouteId = routeId;
@@ -900,14 +1091,17 @@
         color: pickedColor,
         headway: 15,
         speedMph: 12.5,
+        isBidirectional: true,
         stopIds: ['UNION', 'ISR', 'LINCOLN_GREEN'],
         routeGeometry: null,
-        roadDistanceMeters: 0
+        returnGeometry: null,
+        roadDistanceMeters: 0,
+        returnDistanceMeters: 0
       };
 
       routes.push(newRoute);
       setActiveRoute(newId);
-      saveToLocalStorage();
+      pushHistorySnapshot();
       showToast(`Created Line ${newRoute.code}`, 'success');
     }
 
@@ -919,23 +1113,18 @@
       routes = routes.filter(r => r.id !== activeRouteId);
       activeRouteId = routes[0].id;
       setActiveRoute(activeRouteId);
-      saveToLocalStorage();
+      pushHistorySnapshot();
       showToast("Line deleted", 'info');
     }
 
-    function addStopToActiveRoute(stopId) {
+    function addStopToActiveRoute(stopId, doSnapshot = true) {
       const activeRoute = routes.find(r => r.id === activeRouteId);
       if (activeRoute) {
-        if (!activeRoute.stopIds.includes(stopId)) {
-          activeRoute.stopIds.push(stopId);
-        } else {
-          // Allow duplicate stops for loop circuits
-          activeRoute.stopIds.push(stopId);
-        }
+        activeRoute.stopIds.push(stopId);
         renderStopsManagerTab();
         renderRoutesOnMap();
         renderAllStopsOnMap();
-        saveToLocalStorage();
+        if (doSnapshot) pushHistorySnapshot();
       }
     }
 
@@ -954,7 +1143,31 @@
         renderStopsManagerTab();
         renderRoutesOnMap();
         renderAllStopsOnMap();
-        saveToLocalStorage();
+        pushHistorySnapshot();
+      }
+    }
+
+    function reverseActiveRouteStops() {
+      const activeRoute = routes.find(r => r.id === activeRouteId);
+      if (activeRoute && activeRoute.stopIds.length > 1) {
+        activeRoute.stopIds.reverse();
+        renderStopsManagerTab();
+        renderRoutesOnMap();
+        renderAllStopsOnMap();
+        pushHistorySnapshot();
+        showToast("Reversed route stop sequence 🔄", 'info');
+      }
+    }
+
+    function clearActiveRouteStops() {
+      const activeRoute = routes.find(r => r.id === activeRouteId);
+      if (activeRoute) {
+        activeRoute.stopIds = [];
+        renderStopsManagerTab();
+        renderRoutesOnMap();
+        renderAllStopsOnMap();
+        pushHistorySnapshot();
+        showToast("Cleared all stops for current line", 'info');
       }
     }
 
@@ -969,23 +1182,27 @@
         renderStopsManagerTab();
         renderRoutesOnMap();
         renderAllStopsOnMap();
-        saveToLocalStorage();
+        pushHistorySnapshot();
       }
     }
 
     function updateRouteField(routeId, field, val) {
       const route = routes.find(r => r.id === routeId);
       if (route) {
-        route[field] = (field === 'headway' || field === 'speedMph') ? Number(val) : val;
+        if (field === 'isBidirectional') {
+          route.isBidirectional = (val === 'true' || val === true);
+        } else {
+          route[field] = (field === 'headway' || field === 'speedMph') ? Number(val) : val;
+        }
         renderStopsManagerTab();
         renderLinesEditorTab();
         renderRoutesOnMap();
         renderAllStopsOnMap();
-        saveToLocalStorage();
+        pushHistorySnapshot();
       }
     }
 
-    // --- 7. STATS & FLEET CALCULATIONS ---
+    // --- 9. STATS & BIDIRECTIONAL FLEET CALCULATIONS ---
 
     function calcDistanceMiles(lat1, lon1, lat2, lon2) {
       const R = 3958.8;
@@ -1001,36 +1218,40 @@
     function calculateRouteMetrics(route) {
       if (!route) return { totalDistMiles: 0, totalDistKm: 0, oneWayMins: 0, roundTripMins: 0, busesNeeded: 0 };
       
-      let totalDistMiles = 0;
+      let outboundDistMeters = route.roadDistanceMeters || 0;
+      let returnDistMeters = route.isBidirectional ? (route.returnDistanceMeters || outboundDistMeters) : 0;
 
-      if (route.roadDistanceMeters && route.roadDistanceMeters > 0) {
-        totalDistMiles = route.roadDistanceMeters * 0.000621371;
-      } else {
+      if (!outboundDistMeters) {
         const routeStops = route.stopIds.map(sid => stops.find(s => s.id === sid)).filter(Boolean);
         for (let i = 0; i < routeStops.length - 1; i++) {
-          totalDistMiles += calcDistanceMiles(routeStops[i].lat, routeStops[i].lng, routeStops[i+1].lat, routeStops[i+1].lng);
+          outboundDistMeters += calcDistanceMiles(routeStops[i].lat, routeStops[i].lng, routeStops[i+1].lat, routeStops[i+1].lng) * 1609.34;
         }
+        returnDistMeters = route.isBidirectional ? outboundDistMeters : 0;
       }
 
-      // Calculate dwell buffers (120s for Major Hubs, 20s for standard stops)
+      const totalDistMeters = outboundDistMeters + returnDistMeters;
+      const totalDistMiles = totalDistMeters * 0.000621371;
+
+      // Dwell Buffers (Outbound + Return multiplier if bidirectional)
       let dwellMinutes = 0;
+      const directionMultiplier = route.isBidirectional ? 2 : 1;
+
       route.stopIds.forEach(sid => {
         const st = stops.find(s => s.id === sid);
         if (st) {
-          dwellMinutes += st.isHub ? (120 / 60) : (20 / 60);
+          dwellMinutes += (st.isHub ? (120 / 60) : (20 / 60)) * directionMultiplier;
         }
       });
 
       const travelHours = totalDistMiles / (route.speedMph || 12.5);
-      const oneWayMins = (travelHours * 60) + dwellMinutes;
-      const roundTripMins = (oneWayMins * 2) * 1.10; // 10% layover buffer
+      const pureTravelMins = travelHours * 60;
+      const roundTripMins = Math.round((pureTravelMins + dwellMinutes) * 1.10); // 10% Layover
       const busesNeeded = Math.max(1, Math.ceil(roundTripMins / (route.headway || 15)));
 
       return {
         totalDistMiles: totalDistMiles,
         totalDistKm: totalDistMiles * 1.60934,
-        oneWayMins: Math.round(oneWayMins),
-        roundTripMins: Math.round(roundTripMins),
+        roundTripMins: roundTripMins,
         busesNeeded: busesNeeded
       };
     }
@@ -1045,6 +1266,11 @@
       document.getElementById('stat-fleet').innerText = `${m.busesNeeded} Vehicles`;
       document.getElementById('stat-headway-label').innerText = `For ${activeRoute ? activeRoute.headway : 10} min headway`;
       document.getElementById('stat-speed-display').innerText = `${activeRoute ? activeRoute.speedMph : 12.5} mph`;
+      
+      const modeLabel = document.getElementById('stat-routing-mode-label');
+      if (modeLabel && activeRoute) {
+        modeLabel.innerText = activeRoute.isBidirectional ? 'Bidirectional Round-Trip ↔️' : 'One-Way Circuit ➡️';
+      }
 
       // Aggregate Total Network Fleet
       let networkFleet = 0;
@@ -1057,7 +1283,7 @@
       document.getElementById('network-summary-mini').innerText = `Total Fleet: ${networkFleet} Buses`;
     }
 
-    // --- 8. TAB SWITCHER & RENDERERS ---
+    // --- 10. TAB SWITCHER & RENDERERS ---
 
     function switchTab(tabKey) {
       const tabs = ['stops', 'lines', 'landmarks', 'project'];
@@ -1074,7 +1300,7 @@
       });
     }
 
-    // TAB 1: RENDER DEDICATED STOPS MANAGER (🚏 站点管理)
+    // TAB 1: RENDER STOPS MANAGER (🚏 站点管理)
     function renderStopsManagerTab() {
       // 1. Render Active Line Switcher Pills
       const pillsContainer = document.getElementById('stops-tab-route-pills');
@@ -1086,7 +1312,7 @@
               class="px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-2 whitespace-nowrap border ${isSelected ? 'border-white text-white shadow-lg scale-105' : 'border-transparent text-slate-400 hover:bg-slate-800'}"
               style="background-color: ${isSelected ? r.color : 'rgba(30,41,59,0.8)'}">
               <span class="w-2.5 h-2.5 rounded-full" style="background-color: ${r.color}"></span>
-              <span>Line ${r.code}</span>
+              <span>Line ${r.code} ${r.isBidirectional ? '↔️' : ''}</span>
             </button>
           `;
         }).join('');
@@ -1112,7 +1338,7 @@
                 ${idx + 1}
               </span>
 
-              <!-- INLINE EDITABLE STOP NAME TEXT FIELD -->
+              <!-- INLINE EDITABLE STOP NAME INPUT -->
               <input type="text" value="${stop.name}" 
                 oninput="updateStopName('${stop.id}', this.value)"
                 placeholder="Enter stop name..."
@@ -1136,9 +1362,9 @@
                 <i class="fa-solid fa-chevron-down"></i>
               </button>
 
-              <!-- DELETE FROM ROUTE -->
+              <!-- FAST DELETE FROM ROUTE -->
               <button onclick="removeStopFromRoute(${idx})" title="Remove from line" class="p-1.5 bg-slate-900 hover:bg-rose-950 text-rose-400 rounded-lg border border-slate-800 transition">
-                <i class="fa-solid fa-trash-can"></i>
+                <i class="fa-solid fa-xmark text-sm font-black"></i>
               </button>
             </div>
 
@@ -1152,7 +1378,7 @@
 
       listContainer.innerHTML = cardsHtml.length ? cardsHtml : `
         <div class="text-xs text-slate-500 italic p-6 text-center border border-dashed border-slate-800 rounded-2xl">
-          No stops assigned to Line ${activeRoute.code}. Click "📍 Drop Stop on Map" or select from presets below.
+          No stops assigned to Line ${activeRoute.code}. Click "📍 Continuous Add Stops" or pick from presets below.
         </div>
       `;
 
@@ -1185,6 +1411,15 @@
                   <i class="fa-solid fa-trash"></i>
                 </button>
               </div>
+            </div>
+
+            <!-- Routing Mode Toggle (One-Way vs Bidirectional) -->
+            <div class="bg-slate-900/80 p-2 rounded-xl border border-slate-800 flex items-center justify-between">
+              <span class="text-[11px] font-bold text-slate-300">Routing Direction Mode:</span>
+              <select onchange="updateRouteField('${r.id}', 'isBidirectional', this.value)" class="bg-slate-800 text-white font-bold text-xs rounded-lg px-2 py-1 focus:outline-none border border-slate-700">
+                <option value="true" ${r.isBidirectional ? 'selected' : ''}>↔️ Bidirectional (Round-Trip)</option>
+                <option value="false" ${!r.isBidirectional ? 'selected' : ''}>➡️ One-Way Circuit</option>
+              </select>
             </div>
 
             <div class="grid grid-cols-3 gap-2">
@@ -1285,7 +1520,7 @@
       `).join('');
     }
 
-    // --- 9. TIMETABLE GENERATOR LOGIC ---
+    // --- 11. TIMETABLE GENERATOR LOGIC ---
 
     function updateTimetableStopDropdown() {
       const rSelect = document.getElementById('tt-route-select');
@@ -1330,7 +1565,7 @@
       `).join('');
     }
 
-    // --- 10. LOCALSTORAGE & PROJECT FILE IMPORT/EXPORT ---
+    // --- 12. LOCALSTORAGE & PROJECT FILE IMPORT/EXPORT ---
 
     function saveToLocalStorage() {
       const payload = { stops, routes, activeRouteId, customStopCounter };
@@ -1356,7 +1591,7 @@
       const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify({ stops, routes, activeRouteId }, null, 2));
       const link = document.createElement('a');
       link.setAttribute("href", dataStr);
-      link.setAttribute("download", `mtd_project_workspace_${Date.now()}.json`);
+      link.setAttribute("download", `mtd_workspace_v35_${Date.now()}.json`);
       document.body.appendChild(link);
       link.click();
       link.remove();
@@ -1381,7 +1616,7 @@
             renderLinesEditorTab();
             renderLandmarksTab();
             updateTimetableStopDropdown();
-            saveToLocalStorage();
+            pushHistorySnapshot();
             showToast("Successfully loaded project workspace JSON!", 'success');
           }
         } catch (err) {
@@ -1394,7 +1629,7 @@
     function exportGeoJSON() {
       const geojson = {
         type: "FeatureCollection",
-        metadata: { app: "MTD Route Studio", generated: new Date().toISOString() },
+        metadata: { app: "MTD Route Studio v3.5", generated: new Date().toISOString() },
         features: []
       };
 
@@ -1414,14 +1649,14 @@
         geojson.features.push({
           type: "Feature",
           geometry: { type: "LineString", coordinates: coords },
-          properties: { id: r.id, code: r.code, name: r.name, color: r.color, headway: r.headway }
+          properties: { id: r.id, code: r.code, name: r.name, color: r.color, headway: r.headway, isBidirectional: r.isBidirectional }
         });
       });
 
       const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(geojson, null, 2));
       const link = document.createElement('a');
       link.setAttribute("href", dataStr);
-      link.setAttribute("download", `mtd_urbana_network_${Date.now()}.geojson`);
+      link.setAttribute("download", `mtd_urbana_network_v35_${Date.now()}.geojson`);
       document.body.appendChild(link);
       link.click();
       link.remove();
@@ -1480,6 +1715,7 @@
       renderLandmarksTab();
       updateTimetableStopDropdown();
       updateStatsDashboard();
+      pushHistorySnapshot();
       showToast("Network reset to initial Urbana-Champaign baseline.", 'info');
     }
   </script>
