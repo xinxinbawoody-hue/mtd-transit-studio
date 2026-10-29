@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>MTD Route Studio - Urbana-Champaign Transit Planner</title>
-  
+
   <!-- Leaflet CSS & JS -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -39,15 +39,15 @@
 
     /* Glassmorphism Sidebar Panel - Spacious Layout */
     .glass-panel {
-      background: rgba(19, 41, 75, 0.96);
+      background: rgba(10, 22, 40, 0.96);
       backdrop-filter: blur(16px);
       -webkit-backdrop-filter: blur(16px);
-      border-right: 1px solid rgba(255, 255, 255, 0.12);
+      border-right: 1px solid rgba(255, 255, 255, 0.1);
     }
 
     /* Custom Slim Scrollbar */
     ::-webkit-scrollbar { width: 6px; height: 6px; }
-    ::-webkit-scrollbar-track { background: #080d1a; }
+    ::-webkit-scrollbar-track { background: #060c18; }
     ::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
     ::-webkit-scrollbar-thumb:hover { background: #475569; }
 
@@ -65,9 +65,9 @@
       transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
       cursor: pointer;
     }
-    .stop-marker-badge:hover { transform: scale(1.22); z-index: 999; }
+    .stop-marker-badge:hover { transform: scale(1.25); z-index: 999; }
 
-    /* Hub Star Icon Badge */
+    /* Shared & Hub Badges */
     .hub-star-badge {
       position: absolute;
       top: -4px;
@@ -75,9 +75,24 @@
       background: #FFC72C;
       color: #000;
       border-radius: 50%;
-      width: 12px;
-      height: 12px;
+      width: 13px;
+      height: 13px;
       font-size: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.4);
+    }
+    .shared-badge {
+      position: absolute;
+      bottom: -4px;
+      right: -4px;
+      background: #3B82F6;
+      color: #fff;
+      border-radius: 50%;
+      width: 13px;
+      height: 13px;
+      font-size: 7px;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -128,11 +143,13 @@
       </div>
       <div>
         <h1 class="font-extrabold text-base sm:text-lg tracking-wide flex items-center gap-2 leading-none">
-          MTD ROUTE STUDIO <span class="bg-illini-orange/20 text-illini-orange text-[11px] font-bold px-2.5 py-0.5 rounded-full border border-illini-orange/40">v7.1 English</span>
+          MTD ROUTE STUDIO <span class="bg-illini-orange/20 text-illini-orange text-[11px] font-bold px-2.5 py-0.5 rounded-full border border-illini-orange/40">v8.0</span>
         </h1>
         <p class="text-xs text-slate-300 mt-1 flex items-center gap-2">
           <span class="w-2 h-2 rounded-full bg-emerald-400 inline-block animate-pulse"></span>
-          <span>Champaign-Urbana Transit Network Planner</span>
+          <span>Champaign-Urbana Transit Planner</span>
+          <span class="text-slate-500">|</span>
+          <span class="text-slate-400 text-[11px]">Commit: <code class="text-sky-300 bg-slate-900 px-1.5 py-0.5 rounded">60m Snapping & Asymmetric Routes</code></span>
         </p>
       </div>
     </div>
@@ -189,8 +206,8 @@
   <!-- MAIN CONTAINER -->
   <div class="flex-1 flex overflow-hidden relative">
 
-    <!-- LEFT SIDEBAR WORKSPACE - SPACIOUS 460PX WIDTH -->
-    <aside id="sidebar-container" class="w-full md:w-[460px] glass-panel flex flex-col z-20 shrink-0 shadow-2xl">
+    <!-- LEFT SIDEBAR WORKSPACE - SPACIOUS 450PX WIDTH -->
+    <aside id="sidebar-container" class="w-full md:w-[450px] glass-panel flex flex-col z-20 shrink-0 shadow-2xl">
       
       <!-- NAVIGATION TABS -->
       <div class="bg-slate-950/80 p-2.5 border-b border-slate-800 grid grid-cols-4 gap-1.5 text-xs font-semibold">
@@ -212,10 +229,10 @@
       <div id="tab-content-routes" class="flex-1 flex flex-col overflow-hidden">
         
         <!-- TOP SECTION: ALL BUS LINES LIST -->
-        <div class="p-4 border-b border-slate-800 bg-slate-950/80 space-y-3 shrink-0 max-h-[38%] overflow-y-auto">
+        <div class="p-4 border-b border-slate-800 bg-slate-950/80 space-y-3 shrink-0 max-h-[36%] overflow-y-auto">
           <div class="flex items-center justify-between">
             <span class="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center gap-2">
-              <i class="fa-solid fa-list-check text-illini-orange text-sm"></i> All Bus Lines (<span id="routes-count-badge">0</span>)
+              <i class="fa-solid fa-list-check text-illini-orange text-sm"></i> Bus Lines (<span id="routes-count-badge">0</span>)
             </span>
             <button onclick="addNewRoute()" class="text-xs text-illini-orange hover:underline font-bold">+ Add Line</button>
           </div>
@@ -226,10 +243,11 @@
           </div>
         </div>
 
-        <!-- MIDDLE SECTION: QUICK CAMPUS PRESET CHIPS -->
+        <!-- MIDDLE SECTION: QUICK CAMPUS PRESETS (WITH 60M SNAPPING) -->
         <div class="p-3 border-b border-slate-800 bg-slate-900/80 shrink-0 space-y-2">
-          <div class="text-xs font-bold uppercase text-slate-400 flex items-center gap-1.5">
-            <i class="fa-solid fa-graduation-cap text-sky-400"></i> Quick Campus Presets (Auto Mid-Route Insertion)
+          <div class="text-[11px] font-bold uppercase text-slate-400 flex items-center justify-between">
+            <span class="flex items-center gap-1.5"><i class="fa-solid fa-magnet text-amber-400"></i> UIUC Presets (Auto 60m Snapping)</span>
+            <span class="text-[10px] text-slate-500 font-mono">Shared Stops</span>
           </div>
           <div class="flex items-center gap-2 overflow-x-auto pb-1 text-xs no-scrollbar">
             <button onclick="addPresetToActive('p1')" class="bg-slate-950 hover:bg-illini-orange/20 border border-slate-700 hover:border-illini-orange text-white px-3 py-1.5 rounded-xl shrink-0 transition font-medium text-xs">
@@ -245,21 +263,15 @@
               + Illini Union
             </button>
             <button onclick="addPresetToActive('p5')" class="bg-slate-950 hover:bg-illini-orange/20 border border-slate-700 hover:border-illini-orange text-white px-3 py-1.5 rounded-xl shrink-0 transition font-medium text-xs">
-              + ISR
+              + ISR Residence
             </button>
             <button onclick="addPresetToActive('p6')" class="bg-slate-950 hover:bg-illini-orange/20 border border-slate-700 hover:border-illini-orange text-white px-3 py-1.5 rounded-xl shrink-0 transition font-medium text-xs">
               + Siebel CS
             </button>
-            <button onclick="addPresetToActive('p7')" class="bg-slate-950 hover:bg-illini-orange/20 border border-slate-700 hover:border-illini-orange text-white px-3 py-1.5 rounded-xl shrink-0 transition font-medium text-xs">
-              + ECE Bldg
-            </button>
-            <button onclick="addPresetToActive('p8')" class="bg-slate-950 hover:bg-illini-orange/20 border border-slate-700 hover:border-illini-orange text-white px-3 py-1.5 rounded-xl shrink-0 transition font-medium text-xs">
-              + Terminal
-            </button>
           </div>
         </div>
 
-        <!-- BOTTOM SECTION: ACTIVE LINE STOPS MANAGER -->
+        <!-- BOTTOM SECTION: ACTIVE LINE STOPS & ASYMMETRIC DIRECTION MANAGER -->
         <div class="flex-1 flex flex-col overflow-hidden bg-slate-950/40">
           
           <div class="p-4 border-b border-slate-800 bg-slate-900/60 space-y-3">
@@ -271,26 +283,37 @@
               <span id="active-line-stops-count" class="text-xs text-slate-400 font-mono">0 stops</span>
             </div>
 
-            <!-- Direction Toggle & Action Toolbar -->
+            <!-- Routing Mode Toggle (One-Way vs Bidirectional) -->
             <div class="grid grid-cols-2 gap-2 text-xs">
-              <button id="mode-btn-oneway" onclick="setRoutingMode(false)" class="py-2 px-3 rounded-xl font-bold transition flex items-center justify-center gap-2 border border-slate-700 bg-slate-900 text-slate-400">
+              <button id="mode-btn-oneway" onclick="setRoutingMode(false)" class="py-1.5 px-3 rounded-xl font-bold transition flex items-center justify-center gap-2 border border-slate-700 bg-slate-900 text-slate-400">
                 <i class="fa-solid fa-arrow-right"></i> One-Way Loop
               </button>
-              <button id="mode-btn-bidirectional" onclick="setRoutingMode(true)" class="py-2 px-3 rounded-xl font-bold transition flex items-center justify-center gap-2 border border-illini-orange bg-illini-orange/20 text-white">
+              <button id="mode-btn-bidirectional" onclick="setRoutingMode(true)" class="py-1.5 px-3 rounded-xl font-bold transition flex items-center justify-center gap-2 border border-illini-orange bg-illini-orange/20 text-white">
                 <i class="fa-solid fa-arrows-left-right"></i> Bidirectional
               </button>
             </div>
 
+            <!-- Asymmetric Direction Tabs (Outbound 上行 vs Inbound 下行) -->
+            <div id="direction-tabs-bar" class="flex items-center gap-2 bg-slate-950 p-1.5 rounded-2xl border border-slate-800 text-xs">
+              <button id="dir-tab-outbound" onclick="setActiveDirection('outbound')" class="flex-1 py-1.5 rounded-xl font-bold transition flex items-center justify-center gap-1.5 bg-illini-orange text-white shadow">
+                <i class="fa-solid fa-arrow-up-right-dots"></i> Outbound (上行)
+              </button>
+              <button id="dir-tab-inbound" onclick="setActiveDirection('inbound')" class="flex-1 py-1.5 rounded-xl font-bold transition flex items-center justify-center gap-1.5 text-slate-400 hover:text-white">
+                <i class="fa-solid fa-arrow-down-left-dots"></i> Inbound (下行)
+              </button>
+            </div>
+
+            <!-- Action Bar -->
             <div class="flex items-center justify-between text-xs gap-2 pt-1">
               <button onclick="toggleContinuousMapClickMode()" id="map-click-toggle-btn" class="flex-1 bg-illini-orange hover:bg-orange-600 text-white font-bold py-2 px-3 rounded-xl transition flex items-center justify-center gap-2 shadow">
                 <i class="fa-solid fa-plus-circle"></i> <span id="map-click-btn-text">📍 Add Stops on Map</span>
               </button>
 
-              <button onclick="reverseCurrentRouteStops()" title="Reverse stop sequence" class="bg-slate-900 hover:bg-slate-800 border border-slate-700 text-sky-400 font-bold px-3 py-2 rounded-xl transition flex items-center gap-1.5">
-                <i class="fa-solid fa-right-left"></i> <span>Reverse Order</span>
+              <button onclick="copyOutboundToInboundReversed()" id="copy-inbound-btn" title="Copy Outbound to Inbound (Reversed)" class="bg-slate-900 hover:bg-slate-800 border border-slate-700 text-amber-400 font-bold px-3 py-2 rounded-xl transition flex items-center gap-1.5">
+                <i class="fa-solid fa-copy"></i> <span>Copy Outbound</span>
               </button>
 
-              <button onclick="clearCurrentRouteStops()" title="Clear stops for this line" class="bg-slate-900 hover:bg-rose-950 text-rose-300 border border-slate-800 px-3 py-2 rounded-xl transition">
+              <button onclick="clearCurrentRouteDirectionStops()" title="Clear stops for current direction" class="bg-slate-900 hover:bg-rose-950 text-rose-300 border border-slate-800 px-3 py-2 rounded-xl transition">
                 <i class="fa-solid fa-trash-can text-rose-400"></i>
               </button>
             </div>
@@ -309,7 +332,7 @@
 
       <!-- TAB 2: UIUC PRESETS EXPANDED -->
       <div id="tab-content-presets" class="hidden flex-1 overflow-y-auto p-4 space-y-3">
-        <div class="text-xs text-slate-400 mb-2">Click any standard UIUC campus stop to append or auto-insert into active line:</div>
+        <div class="text-xs text-slate-400 mb-2">Click any standard UIUC campus stop to auto-snap or insert into active line direction:</div>
         <div id="presets-grid" class="grid grid-cols-1 gap-2.5">
           <!-- JS Rendered -->
         </div>
@@ -332,15 +355,19 @@
 
         <div class="bg-slate-900/80 border border-slate-800 p-4 rounded-2xl space-y-3 text-xs">
           <div class="text-xs font-bold uppercase text-slate-400 flex items-center gap-2">
-            <i class="fa-solid fa-calculator text-emerald-400"></i> Fleet & Operations
+            <i class="fa-solid fa-calculator text-emerald-400"></i> Operational Fleet Math
           </div>
           <div class="space-y-2 text-slate-300">
             <div class="flex justify-between py-1 border-b border-slate-800">
-              <span>Route Distance:</span>
-              <b id="analytics-dist" class="text-white">0.0 mi</b>
+              <span>Outbound Distance:</span>
+              <b id="analytics-outbound-dist" class="text-white">0.0 mi</b>
             </div>
             <div class="flex justify-between py-1 border-b border-slate-800">
-              <span>Estimated Cycle Time:</span>
+              <span>Inbound Distance:</span>
+              <b id="analytics-inbound-dist" class="text-white">0.0 mi</b>
+            </div>
+            <div class="flex justify-between py-1 border-b border-slate-800">
+              <span>Total Cycle Time:</span>
               <b id="analytics-cycle" class="text-sky-400">0 mins</b>
             </div>
             <div class="flex justify-between py-1 font-bold text-sm">
@@ -383,7 +410,7 @@
 
       <!-- FOOTER STATUS -->
       <div class="p-3 bg-slate-950 border-t border-slate-800 text-[11px] text-slate-400 flex items-center justify-between">
-        <span>MTD Route Studio v7.1</span>
+        <span>MTD Route Studio v8.0</span>
         <span id="footer-system-summary">Total Fleet: 0 buses</span>
       </div>
 
@@ -394,7 +421,7 @@
 
     <!-- FLOATING MAP CLICK BANNER -->
     <div id="map-click-banner" class="hidden absolute top-4 left-1/2 -translate-x-1/2 bg-illini-navy/95 border-2 border-illini-orange text-white px-5 py-2.5 rounded-full z-[999] shadow-2xl backdrop-blur-md text-xs font-bold flex items-center gap-3">
-      <span><i class="fa-solid fa-crosshairs text-illini-orange animate-spin"></i> Click anywhere on streets to insert stops automatically</span>
+      <span><i class="fa-solid fa-crosshairs text-illini-orange animate-spin"></i> Click anywhere on streets (snaps to nearby stops within 60m)</span>
       <button onclick="toggleContinuousMapClickMode(false)" class="bg-illini-orange hover:bg-orange-600 px-3 py-1 rounded-lg text-[11px] shadow">Done</button>
     </div>
 
@@ -403,11 +430,12 @@
   <!-- TOAST NOTIFICATION CONTAINER -->
   <div id="toast-container" class="fixed bottom-5 right-5 z-[2000] flex flex-col gap-2 pointer-events-none"></div>
 
-  <!-- JAVASCRIPT LOGIC -->
+  <!-- JAVASCRIPT LOGIC STRICTLY ENCAPSULATED -->
   <script>
-    const STORAGE_KEY = 'MTD_STUDIO_V7_DATA';
+    const STORAGE_KEY = 'MTD_STUDIO_V8_DATA';
+    const NEARBY_SNAP_RADIUS_MILES = 0.037; // ~60 meters
 
-    // DEFAULT UIUC CAMPUS STOPS
+    // DEFAULT GLOBAL UIUC CAMPUS STOPS
     let stops = [
       { id: 'p1', name: 'Lincoln & Green St', lat: 40.11032, lng: -88.21950, category: 'UIUC Campus', isHub: true },
       { id: 'p2', name: 'Lincoln & Springfield Ave', lat: 40.11250, lng: -88.21950, category: 'UIUC Campus', isHub: false },
@@ -419,6 +447,7 @@
       { id: 'p8', name: 'Illinois Terminal', lat: 40.11620, lng: -88.24350, category: 'Transit Hub', isHub: true }
     ];
 
+    // ASYMMETRIC BUS LINES DATA STRUCTURE
     let routes = [
       {
         id: 'line-1',
@@ -427,13 +456,15 @@
         color: '#E84A27',
         visible: true,
         isBidirectional: true,
+        activeDirection: 'outbound', // 'outbound' | 'inbound'
         headway: 15,
         speedMph: 12.5,
-        stopIds: ['p3', 'p1', 'p2', 'p6'],
-        routeGeometry: null,
-        returnGeometry: null,
-        roadDistanceMeters: 0,
-        returnDistanceMeters: 0
+        outboundStopIds: ['p3', 'p1', 'p2', 'p6'],
+        inboundStopIds: ['p6', 'p2', 'p1', 'p3'], // Asymmetric return leg!
+        outboundGeometry: null,
+        inboundGeometry: null,
+        outboundDistanceMeters: 0,
+        inboundDistanceMeters: 0
       },
       {
         id: 'line-2',
@@ -442,13 +473,15 @@
         color: '#13294B',
         visible: true,
         isBidirectional: true,
+        activeDirection: 'outbound',
         headway: 10,
         speedMph: 11.0,
-        stopIds: ['p4', 'p5', 'p6', 'p7'],
-        routeGeometry: null,
-        returnGeometry: null,
-        roadDistanceMeters: 0,
-        returnDistanceMeters: 0
+        outboundStopIds: ['p4', 'p5', 'p6', 'p7'],
+        inboundStopIds: ['p7', 'p6', 'p5', 'p4'],
+        outboundGeometry: null,
+        inboundGeometry: null,
+        outboundDistanceMeters: 0,
+        inboundDistanceMeters: 0
       }
     ];
 
@@ -466,11 +499,48 @@
     let markersMap = {};
     let routePolylinesMap = {};
 
-    // INITIALIZE MAP WITH ESRI WORLD STREET MAP AS DEFAULT
+    // GEOMETRIC HAVERSINE DISTANCE IN MILES
+    function calcDistMiles(lat1, lon1, lat2, lon2) {
+      const R = 3958.8;
+      const dLat = (lat2 - lat1) * Math.PI / 180;
+      const dLon = (lon2 - lon1) * Math.PI / 180;
+      const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+                Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+                Math.sin(dLon/2) * Math.sin(dLon/2);
+      return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+    }
+
+    // FIND NEARBY EXISTING PHYSICAL STOP WITHIN 60M RADIUS
+    function findNearbyExistingStop(lat, lng) {
+      let closestStop = null;
+      let minDistance = Infinity;
+
+      stops.forEach(s => {
+        const d = calcDistMiles(s.lat, s.lng, lat, lng);
+        if (d <= NEARBY_SNAP_RADIUS_MILES && d < minDistance) {
+          minDistance = d;
+          closestStop = s;
+        }
+      });
+
+      return closestStop;
+    }
+
+    // COUNT HOW MANY LINES SHARE A PHYSICAL STOP
+    function getStopSharingCount(stopId) {
+      let count = 0;
+      routes.forEach(r => {
+        const inOut = r.outboundStopIds ? r.outboundStopIds.includes(stopId) : false;
+        const inIn = r.inboundStopIds ? r.inboundStopIds.includes(stopId) : false;
+        if (inOut || inIn) count++;
+      });
+      return count;
+    }
+
+    // INITIALIZE LEAFLET MAP WITH ESRI AS DEFAULT
     function initLeafletMap() {
       map = L.map('map', { zoomControl: true, attributionControl: false }).setView([40.1097, -88.2272], 14);
 
-      // Multi-Provider Tiles
       const esriStreet = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}', { maxZoom: 19 });
       const cartoVoyager = L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', { maxZoom: 19, subdomains: 'abcd' });
       const cartoPositron = L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', { maxZoom: 19, subdomains: 'abcd' });
@@ -567,7 +637,7 @@
       });
     }
 
-    // OSRM ROUTING QUERY
+    // OSRM ROUTING ENGINE
     async function fetchOsrmRoute(coords) {
       if (!coords || coords.length < 2) return null;
       const coordString = coords.map(c => `${c[1]},${c[0]}`).join(';');
@@ -585,7 +655,7 @@
           };
         }
       } catch (err) {
-        console.warn("OSRM fallback to straight line calculation:", err);
+        console.warn("OSRM fallback to geometric calculation:", err);
       }
 
       let straightDist = 0;
@@ -595,13 +665,14 @@
       return { latLngs: coords, distanceMeters: straightDist };
     }
 
-    // MAP STOP MARKER RENDERING
+    // MAP STOP MARKER RENDERING WITH SHARED INDICATORS
     function renderAllStopsOnMap() {
       Object.values(markersMap).forEach(m => map.removeLayer(m));
       markersMap = {};
 
       const activeRoute = routes.find(r => r.id === activeRouteId);
-      const activeSequence = activeRoute ? activeRoute.stopIds : [];
+      const activeDir = activeRoute ? (activeRoute.activeDirection || 'outbound') : 'outbound';
+      const activeSequence = activeRoute ? (activeDir === 'outbound' ? activeRoute.outboundStopIds : activeRoute.inboundStopIds) : [];
 
       stops.forEach(stop => {
         const seqIdx = activeSequence.indexOf(stop.id);
@@ -609,15 +680,18 @@
 
         if (isFocusModeOnly && !isInActive) return;
 
+        const sharingCount = getStopSharingCount(stop.id);
         const color = isInActive ? (activeRoute ? activeRoute.color : '#13294B') : '#64748B';
         const label = isInActive ? (seqIdx + 1) : '';
 
         const starHtml = stop.isHub ? `<span class="hub-star-badge"><i class="fa-solid fa-star"></i></span>` : '';
+        const sharedHtml = sharingCount > 1 ? `<span class="shared-badge" title="Shared by ${sharingCount} lines"><i class="fa-solid fa-layer-group"></i></span>` : '';
 
         const icon = L.divIcon({
           html: `<div class="stop-marker-badge relative" style="background-color: ${color}; width:28px; height:28px;">
                   ${label || `<i class="fa-solid fa-bus" style="font-size:10px;"></i>`}
                   ${starHtml}
+                  ${sharedHtml}
                  </div>`,
           className: '',
           iconSize: [28, 28],
@@ -633,7 +707,7 @@
           renderRoutesOnMap();
           renderStopsManagerSection();
           pushHistorySnapshot();
-          showToast(`Moved stop "${stop.name}"`, "info");
+          showToast(`Moved shared stop "${stop.name}"`, "info");
         });
 
         marker.on('contextmenu', (e) => { L.DomEvent.stopPropagation(e); deleteStop(stop.id); });
@@ -643,42 +717,39 @@
       });
     }
 
-    // ROUTE RENDERING WITH ZERO STRAIGHT-LINE FLICKER
+    // ASYMMETRIC ROUTE RENDERING
     async function renderRoutesOnMap() {
       for (const route of routes) {
         if (!route.visible) {
           if (routePolylinesMap[route.id]) {
             if (routePolylinesMap[route.id].outbound) map.removeLayer(routePolylinesMap[route.id].outbound);
-            if (routePolylinesMap[route.id].return) map.removeLayer(routePolylinesMap[route.id].return);
+            if (routePolylinesMap[route.id].inbound) map.removeLayer(routePolylinesMap[route.id].inbound);
             delete routePolylinesMap[route.id];
           }
           continue;
         }
 
-        const routeStops = route.stopIds.map(sid => stops.find(s => s.id === sid)).filter(Boolean);
         const isSelected = route.id === activeRouteId;
 
         if (isFocusModeOnly && !isSelected) {
           if (routePolylinesMap[route.id]) {
             if (routePolylinesMap[route.id].outbound) map.removeLayer(routePolylinesMap[route.id].outbound);
-            if (routePolylinesMap[route.id].return) map.removeLayer(routePolylinesMap[route.id].return);
+            if (routePolylinesMap[route.id].inbound) map.removeLayer(routePolylinesMap[route.id].inbound);
             delete routePolylinesMap[route.id];
           }
           continue;
         }
 
-        if (routeStops.length >= 2) {
-          const outboundCoords = routeStops.map(s => [s.lat, s.lng]);
-
-          // Fetch OSRM in background without deleting existing line to avoid flicker
+        // OUTBOUND ROUTE (上行)
+        const outboundStops = (route.outboundStopIds || []).map(sid => stops.find(s => s.id === sid)).filter(Boolean);
+        if (outboundStops.length >= 2) {
+          const outboundCoords = outboundStops.map(s => [s.lat, s.lng]);
           fetchOsrmRoute(outboundCoords).then(osrmOutbound => {
             if (!osrmOutbound) return;
-            route.routeGeometry = osrmOutbound.latLngs;
-            route.roadDistanceMeters = osrmOutbound.distanceMeters;
+            route.outboundGeometry = osrmOutbound.latLngs;
+            route.outboundDistanceMeters = osrmOutbound.distanceMeters;
 
-            if (!routePolylinesMap[route.id]) {
-              routePolylinesMap[route.id] = {};
-            }
+            if (!routePolylinesMap[route.id]) routePolylinesMap[route.id] = {};
 
             if (routePolylinesMap[route.id].outbound) {
               routePolylinesMap[route.id].outbound.setLatLngs(osrmOutbound.latLngs);
@@ -696,59 +767,64 @@
               poly.on('click', () => { if (!isClickToAddMode) setActiveRoute(route.id); });
               routePolylinesMap[route.id].outbound = poly;
             }
-
             updateAnalyticsTab();
           });
+        } else {
+          if (routePolylinesMap[route.id] && routePolylinesMap[route.id].outbound) {
+            map.removeLayer(routePolylinesMap[route.id].outbound);
+            delete routePolylinesMap[route.id].outbound;
+          }
+          route.outboundGeometry = null;
+          route.outboundDistanceMeters = 0;
+        }
 
-          // Bidirectional Return Leg
-          if (route.isBidirectional && outboundCoords.length >= 2) {
-            const returnCoords = [...outboundCoords].reverse();
-            fetchOsrmRoute(returnCoords).then(osrmReturn => {
-              if (!osrmReturn) return;
-              route.returnGeometry = osrmReturn.latLngs;
-              route.returnDistanceMeters = osrmReturn.distanceMeters;
+        // INBOUND ROUTE (下行)
+        if (route.isBidirectional) {
+          const inboundStops = (route.inboundStopIds || []).map(sid => stops.find(s => s.id === sid)).filter(Boolean);
+          if (inboundStops.length >= 2) {
+            const inboundCoords = inboundStops.map(s => [s.lat, s.lng]);
+            fetchOsrmRoute(inboundCoords).then(osrmInbound => {
+              if (!osrmInbound) return;
+              route.inboundGeometry = osrmInbound.latLngs;
+              route.inboundDistanceMeters = osrmInbound.distanceMeters;
 
-              if (!routePolylinesMap[route.id]) {
-                routePolylinesMap[route.id] = {};
-              }
+              if (!routePolylinesMap[route.id]) routePolylinesMap[route.id] = {};
 
-              if (routePolylinesMap[route.id].return) {
-                routePolylinesMap[route.id].return.setLatLngs(osrmReturn.latLngs);
-                routePolylinesMap[route.id].return.setStyle({
+              if (routePolylinesMap[route.id].inbound) {
+                routePolylinesMap[route.id].inbound.setLatLngs(osrmInbound.latLngs);
+                routePolylinesMap[route.id].inbound.setStyle({
                   color: route.color,
                   weight: isSelected ? 4.5 : 2.5,
                   opacity: isSelected ? 0.85 : 0.3,
                   dashArray: '6, 8'
                 });
               } else {
-                const returnPoly = L.polyline(osrmReturn.latLngs, {
+                const returnPoly = L.polyline(osrmInbound.latLngs, {
                   color: route.color,
                   weight: isSelected ? 4.5 : 2.5,
                   opacity: isSelected ? 0.85 : 0.3,
                   dashArray: '6, 8'
                 }).addTo(map);
                 returnPoly.on('click', () => { if (!isClickToAddMode) setActiveRoute(route.id); });
-                routePolylinesMap[route.id].return = returnPoly;
+                routePolylinesMap[route.id].inbound = returnPoly;
               }
-
               updateAnalyticsTab();
             });
           } else {
-            if (routePolylinesMap[route.id] && routePolylinesMap[route.id].return) {
-              map.removeLayer(routePolylinesMap[route.id].return);
-              delete routePolylinesMap[route.id].return;
+            if (routePolylinesMap[route.id] && routePolylinesMap[route.id].inbound) {
+              map.removeLayer(routePolylinesMap[route.id].inbound);
+              delete routePolylinesMap[route.id].inbound;
             }
+            route.inboundGeometry = null;
+            route.inboundDistanceMeters = 0;
           }
         } else {
-          if (routePolylinesMap[route.id]) {
-            if (routePolylinesMap[route.id].outbound) map.removeLayer(routePolylinesMap[route.id].outbound);
-            if (routePolylinesMap[route.id].return) map.removeLayer(routePolylinesMap[route.id].return);
-            delete routePolylinesMap[route.id];
+          if (routePolylinesMap[route.id] && routePolylinesMap[route.id].inbound) {
+            map.removeLayer(routePolylinesMap[route.id].inbound);
+            delete routePolylinesMap[route.id].inbound;
           }
-          route.routeGeometry = null;
-          route.returnGeometry = null;
-          route.roadDistanceMeters = 0;
-          route.returnDistanceMeters = 0;
+          route.inboundGeometry = null;
+          route.inboundDistanceMeters = 0;
         }
       }
 
@@ -770,7 +846,7 @@
       showToast(isFocusModeOnly ? "👁️ Focus mode: Displaying active line stops" : "🌐 All-network view enabled", "info");
     }
 
-    // CONTINUOUS MAP CLICK MODE
+    // MAP CLICK WITH 60M STOP SNAPPING
     function toggleContinuousMapClickMode(forcedState) {
       isClickToAddMode = (forcedState !== undefined) ? forcedState : !isClickToAddMode;
       const banner = document.getElementById('map-click-banner');
@@ -784,7 +860,7 @@
           mapEl.classList.add('map-add-mode');
         }
         if (btnText) btnText.innerText = 'Exit Add Mode';
-        showToast("Click Mode Active: Click anywhere on map to add stops", "warning");
+        showToast("Click Mode Active: Auto-snaps to existing stops within 60m", "warning");
       } else {
         banner.classList.add('hidden');
         if (mapEl) {
@@ -796,63 +872,60 @@
     }
 
     function handleMapClickAddStop(lat, lng) {
-      const autoName = `Stop #${customStopCounter++}`;
-      const newStop = {
-        id: 'stop-' + Date.now(),
-        name: autoName,
-        lat: Number(lat.toFixed(5)),
-        lng: Number(lng.toFixed(5)),
-        category: 'Custom Stop',
-        isHub: false
-      };
+      const nearbyStop = findNearbyExistingStop(lat, lng);
+      let targetStop = null;
 
-      stops.push(newStop);
-      addStopToActiveRoute(newStop.id, false, newStop.lat, newStop.lng);
+      if (nearbyStop) {
+        targetStop = nearbyStop;
+        showToast(`🧲 Snapped to existing stop: "${nearbyStop.name}"`, "success");
+      } else {
+        const autoName = `Stop #${customStopCounter++}`;
+        targetStop = {
+          id: 'stop-' + Date.now(),
+          name: autoName,
+          lat: Number(lat.toFixed(5)),
+          lng: Number(lng.toFixed(5)),
+          category: 'Custom Stop',
+          isHub: false
+        };
+        stops.push(targetStop);
+        showToast(`Created new stop: "${autoName}"`, "success");
+      }
+
+      addStopToActiveRouteDirection(targetStop.id, targetStop.lat, targetStop.lng);
       renderAllStopsOnMap();
       renderStopsManagerSection();
       pushHistorySnapshot();
-      
-      const activeRoute = routes.find(r => r.id === activeRouteId);
-      const insertedPos = activeRoute ? activeRoute.stopIds.indexOf(newStop.id) + 1 : 1;
-      showToast(`Inserted "${autoName}" at position #${insertedPos}`, "success");
     }
 
-    function addStopToActiveRoute(stopId, doSnapshot = true, targetLat = null, targetLng = null) {
+    function addStopToActiveRouteDirection(stopId, targetLat, targetLng) {
       const activeRoute = routes.find(r => r.id === activeRouteId);
-      if (activeRoute) {
-        let cLat = targetLat;
-        let cLng = targetLng;
-        if (cLat === null || cLng === null) {
-          const stopObj = stops.find(s => s.id === stopId);
-          if (stopObj) {
-            cLat = stopObj.lat;
-            cLng = stopObj.lng;
-          }
-        }
+      if (!activeRoute) return;
 
-        let insertIdx = activeRoute.stopIds.length;
-        if (cLat !== null && cLng !== null && activeRoute.stopIds.length >= 2) {
-          insertIdx = findBestInsertionIndex(activeRoute, cLat, cLng);
-        }
+      const activeDir = activeRoute.activeDirection || 'outbound';
+      const targetSeq = activeDir === 'outbound' ? activeRoute.outboundStopIds : activeRoute.inboundStopIds;
 
-        activeRoute.stopIds.splice(insertIdx, 0, stopId);
-        renderStopsManagerSection();
-        renderRoutesOnMap();
-        renderAllStopsOnMap();
-        renderAllRoutesSidebarList();
-        if (doSnapshot) pushHistorySnapshot();
+      let insertIdx = targetSeq.length;
+      if (targetLat !== null && targetLng !== null && targetSeq.length >= 2) {
+        insertIdx = findBestInsertionIndexForSeq(targetSeq, targetLat, targetLng);
       }
+
+      targetSeq.splice(insertIdx, 0, stopId);
+
+      renderStopsManagerSection();
+      renderRoutesOnMap();
+      renderAllStopsOnMap();
+      renderAllRoutesSidebarList();
     }
 
-    // SMART MID-ROUTE STOP INSERTION DETOUR ALGORITHM
-    function findBestInsertionIndex(route, lat, lng) {
-      const routeStops = route.stopIds.map(sid => stops.find(s => s.id === sid)).filter(Boolean);
+    // SMART DETOUR INSERTION FOR SPECIFIC SEQUENCE
+    function findBestInsertionIndexForSeq(stopIdsSeq, lat, lng) {
+      const routeStops = stopIdsSeq.map(sid => stops.find(s => s.id === sid)).filter(Boolean);
       if (routeStops.length < 2) return routeStops.length;
 
       let bestIndex = routeStops.length;
       let minDetour = Infinity;
 
-      // 1. Evaluate detour distance for inserting between adjacent stops S_i and S_i+1
       for (let i = 0; i < routeStops.length - 1; i++) {
         const s1 = routeStops[i];
         const s2 = routeStops[i + 1];
@@ -867,23 +940,19 @@
         }
       }
 
-      // 2. Check distance to extend at start or end
       const firstStop = routeStops[0];
       const startDist = calcDistMiles(lat, lng, firstStop.lat, firstStop.lng);
 
       const lastStop = routeStops[routeStops.length - 1];
       const endDist = calcDistMiles(lastStop.lat, lastStop.lng, lat, lng);
 
-      if (startDist < minDetour * 0.8 && startDist < endDist) {
-        bestIndex = 0;
-      } else if (endDist < minDetour * 0.8 && endDist <= startDist) {
-        bestIndex = routeStops.length;
-      }
+      if (startDist < minDetour * 0.8 && startDist < endDist) bestIndex = 0;
+      else if (endDist < minDetour * 0.8 && endDist <= startDist) bestIndex = routeStops.length;
 
       return bestIndex;
     }
 
-    // DRAG AND DROP STOP REORDERING HANDLERS
+    // DRAG AND DROP HANDLERS
     function handleDragStart(e, index) {
       draggedIndex = index;
       e.dataTransfer.effectAllowed = 'move';
@@ -911,8 +980,11 @@
       const activeRoute = routes.find(r => r.id === activeRouteId);
       if (!activeRoute) return;
 
-      const [movedId] = activeRoute.stopIds.splice(draggedIndex, 1);
-      activeRoute.stopIds.splice(targetIndex, 0, movedId);
+      const activeDir = activeRoute.activeDirection || 'outbound';
+      const targetSeq = activeDir === 'outbound' ? activeRoute.outboundStopIds : activeRoute.inboundStopIds;
+
+      const [movedId] = targetSeq.splice(draggedIndex, 1);
+      targetSeq.splice(targetIndex, 0, movedId);
 
       draggedIndex = null;
       renderStopsManagerSection();
@@ -957,7 +1029,7 @@
             </div>
 
             <div class="flex items-center justify-between text-xs text-slate-400 pt-1.5 border-t border-slate-800/80">
-              <span class="bg-slate-800/80 px-2.5 py-0.5 rounded-md text-slate-300 font-mono text-[11px]">${r.isBidirectional ? '↔️ Bidirectional' : '➡️ One-Way'}</span>
+              <span class="bg-slate-800/80 px-2 py-0.5 rounded-md text-slate-300 font-mono text-[11px]">${r.isBidirectional ? '↔️ Bidirectional' : '➡️ One-Way'}</span>
               <span>Length: <b class="text-white">${metrics.totalDistMiles.toFixed(1)} mi</b></span>
               <span>Fleet: <b class="text-emerald-400 font-bold">${metrics.busesNeeded} buses</b></span>
             </div>
@@ -971,24 +1043,48 @@
       const activeRoute = routes.find(r => r.id === activeRouteId) || routes[0];
       if (!activeRoute) return;
 
+      const activeDir = activeRoute.activeDirection || 'outbound';
+      const targetSeq = activeDir === 'outbound' ? activeRoute.outboundStopIds : activeRoute.inboundStopIds;
+
       document.getElementById('active-line-pill').style.backgroundColor = activeRoute.color;
       document.getElementById('active-line-title').innerText = `Line ${activeRoute.code} - ${activeRoute.name}`;
-      document.getElementById('active-line-stops-count').innerText = `${activeRoute.stopIds.length} stops`;
+      document.getElementById('active-line-stops-count').innerText = `${targetSeq.length} stops (${activeDir === 'outbound' ? '上行' : '下行'})`;
 
+      // Direction Mode Buttons
       const btnOneway = document.getElementById('mode-btn-oneway');
       const btnBidi = document.getElementById('mode-btn-bidirectional');
+      const dirTabsBar = document.getElementById('direction-tabs-bar');
+      const copyInboundBtn = document.getElementById('copy-inbound-btn');
+
       if (activeRoute.isBidirectional) {
-        btnOneway.className = "py-2 px-3 rounded-xl font-bold transition flex items-center justify-center gap-2 border border-slate-700 bg-slate-900 text-slate-400";
-        btnBidi.className = "py-2 px-3 rounded-xl font-bold transition flex items-center justify-center gap-2 border border-illini-orange bg-illini-orange/20 text-white";
+        btnOneway.className = "py-1.5 px-3 rounded-xl font-bold transition flex items-center justify-center gap-2 border border-slate-700 bg-slate-900 text-slate-400";
+        btnBidi.className = "py-1.5 px-3 rounded-xl font-bold transition flex items-center justify-center gap-2 border border-illini-orange bg-illini-orange/20 text-white";
+        dirTabsBar.classList.remove('hidden');
+        if (copyInboundBtn) copyInboundBtn.classList.remove('hidden');
       } else {
-        btnOneway.className = "py-2 px-3 rounded-xl font-bold transition flex items-center justify-center gap-2 border border-illini-orange bg-illini-orange/20 text-white";
-        btnBidi.className = "py-2 px-3 rounded-xl font-bold transition flex items-center justify-center gap-2 border border-slate-700 bg-slate-900 text-slate-400";
+        btnOneway.className = "py-1.5 px-3 rounded-xl font-bold transition flex items-center justify-center gap-2 border border-illini-orange bg-illini-orange/20 text-white";
+        btnBidi.className = "py-1.5 px-3 rounded-xl font-bold transition flex items-center justify-center gap-2 border border-slate-700 bg-slate-900 text-slate-400";
+        dirTabsBar.classList.add('hidden');
+        if (copyInboundBtn) copyInboundBtn.classList.add('hidden');
+      }
+
+      // Asymmetric Direction Tabs
+      const tabOutbound = document.getElementById('dir-tab-outbound');
+      const tabInbound = document.getElementById('dir-tab-inbound');
+      if (activeDir === 'outbound') {
+        tabOutbound.className = "flex-1 py-1.5 rounded-xl font-bold transition flex items-center justify-center gap-1.5 bg-illini-orange text-white shadow";
+        tabInbound.className = "flex-1 py-1.5 rounded-xl font-bold transition flex items-center justify-center gap-1.5 text-slate-400 hover:text-white";
+      } else {
+        tabOutbound.className = "flex-1 py-1.5 rounded-xl font-bold transition flex items-center justify-center gap-1.5 text-slate-400 hover:text-white";
+        tabInbound.className = "flex-1 py-1.5 rounded-xl font-bold transition flex items-center justify-center gap-1.5 bg-illini-orange text-white shadow";
       }
 
       const cardContainer = document.getElementById('stops-card-container');
-      const cardsHtml = activeRoute.stopIds.map((sid, idx) => {
+      const cardsHtml = targetSeq.map((sid, idx) => {
         const stop = stops.find(s => s.id === sid);
         if (!stop) return '';
+
+        const sharingCount = getStopSharingCount(stop.id);
 
         return `
           <div draggable="true"
@@ -1011,13 +1107,16 @@
               <button onclick="toggleMajorHub('${stop.id}')" title="Toggle transfer hub status" class="p-1.5 bg-slate-900 ${stop.isHub ? 'text-amber-400' : 'text-slate-500'} rounded-xl border border-slate-800 transition">
                 <i class="fa-solid fa-star"></i>
               </button>
-              <button onclick="removeStopFromRoute(${idx})" title="Remove from active route" class="p-1.5 bg-slate-900 text-rose-400 hover:bg-rose-950 rounded-xl border border-slate-800 transition">
+              <button onclick="removeStopFromActiveDirection(${idx})" title="Remove from this direction" class="p-1.5 bg-slate-900 text-rose-400 hover:bg-rose-950 rounded-xl border border-slate-800 transition">
                 <i class="fa-solid fa-xmark"></i>
               </button>
             </div>
-            <div class="flex justify-between text-xs text-slate-400 px-1 pt-0.5">
-              <span>${stop.category || 'Transit Stop'}</span>
-              <span class="text-[11px]">${stop.isHub ? '⭐ Major Hub (120s dwell)' : 'Standard Stop (20s dwell)'}</span>
+            <div class="flex justify-between items-center text-xs text-slate-400 px-1 pt-0.5">
+              <span class="flex items-center gap-2">
+                <span>${stop.category || 'Transit Stop'}</span>
+                ${sharingCount > 1 ? `<span class="bg-indigo-500/20 text-indigo-300 border border-indigo-500/40 px-1.5 py-0.5 rounded-md text-[10px] font-bold">Shared (${sharingCount} Lines)</span>` : ''}
+              </span>
+              <span class="text-[11px]">${stop.isHub ? '⭐ Transfer Hub (120s)' : 'Standard (20s)'}</span>
             </div>
           </div>
         `;
@@ -1025,12 +1124,34 @@
 
       cardContainer.innerHTML = cardsHtml.length ? cardsHtml : `
         <div class="text-xs text-slate-400 italic p-6 text-center border border-dashed border-slate-800 rounded-2xl bg-slate-950/40">
-          Line ${activeRoute.code} has no stops.<br>Click <b>"📍 Add Stops on Map"</b> or use presets above to build the route!
+          No stops in <b>${activeDir === 'outbound' ? 'Outbound (上行)' : 'Inbound (下行)'}</b> sequence.<br>Click <b>"📍 Add Stops on Map"</b> or <b>"Copy Outbound"</b> to add stops!
         </div>
       `;
     }
 
-    // ROUTE ACTIONS
+    // DIRECTION TAB ACTIONS
+    function setActiveDirection(dir) {
+      const activeRoute = routes.find(r => r.id === activeRouteId);
+      if (activeRoute) {
+        activeRoute.activeDirection = dir;
+        renderStopsManagerSection();
+        renderAllStopsOnMap();
+      }
+    }
+
+    function copyOutboundToInboundReversed() {
+      const activeRoute = routes.find(r => r.id === activeRouteId);
+      if (activeRoute && activeRoute.outboundStopIds.length > 0) {
+        activeRoute.inboundStopIds = [...activeRoute.outboundStopIds].reverse();
+        activeRoute.activeDirection = 'inbound';
+        renderStopsManagerSection();
+        renderRoutesOnMap();
+        renderAllStopsOnMap();
+        pushHistorySnapshot();
+        showToast("Copied Outbound sequence (reversed) to Inbound!", "success");
+      }
+    }
+
     function setActiveRoute(routeId) {
       activeRouteId = routeId;
       renderAllRoutesSidebarList();
@@ -1073,17 +1194,19 @@
       const newRoute = {
         id: newId,
         code: `${Math.floor(Math.random() * 80 + 10)}`,
-        name: 'Custom New Line',
+        name: 'Custom Bus Line',
         color: pickedColor,
         visible: true,
         isBidirectional: true,
+        activeDirection: 'outbound',
         headway: 15,
         speedMph: 12.5,
-        stopIds: [],
-        routeGeometry: null,
-        returnGeometry: null,
-        roadDistanceMeters: 0,
-        returnDistanceMeters: 0
+        outboundStopIds: [],
+        inboundStopIds: [],
+        outboundGeometry: null,
+        inboundGeometry: null,
+        outboundDistanceMeters: 0,
+        inboundDistanceMeters: 0
       };
 
       routes.push(newRoute);
@@ -1097,14 +1220,22 @@
     function addPresetToActive(presetId) {
       const presetStop = stops.find(s => s.id === presetId);
       if (!presetStop) return;
-      addStopToActiveRoute(presetId, true, presetStop.lat, presetStop.lng);
-      showToast(`Added "${presetStop.name}" to active line`, "success");
+      addStopToActiveRouteDirection(presetId, presetStop.lat, presetStop.lng);
+      renderRoutesOnMap();
+      renderAllStopsOnMap();
+      pushHistorySnapshot();
+      showToast(`Added "${presetStop.name}" to active direction`, "success");
     }
 
-    function removeStopFromRoute(idx) {
+    function removeStopFromActiveDirection(idx) {
       const activeRoute = routes.find(r => r.id === activeRouteId);
-      if (activeRoute && activeRoute.stopIds.length > idx) {
-        activeRoute.stopIds.splice(idx, 1);
+      if (!activeRoute) return;
+
+      const activeDir = activeRoute.activeDirection || 'outbound';
+      const targetSeq = activeDir === 'outbound' ? activeRoute.outboundStopIds : activeRoute.inboundStopIds;
+
+      if (targetSeq.length > idx) {
+        targetSeq.splice(idx, 1);
         renderStopsManagerSection();
         renderRoutesOnMap();
         renderAllStopsOnMap();
@@ -1112,27 +1243,18 @@
       }
     }
 
-    function reverseCurrentRouteStops() {
-      const activeRoute = routes.find(r => r.id === activeRouteId);
-      if (activeRoute && activeRoute.stopIds.length > 1) {
-        activeRoute.stopIds.reverse();
-        renderStopsManagerSection();
-        renderRoutesOnMap();
-        renderAllStopsOnMap();
-        pushHistorySnapshot();
-        showToast("Reversed route direction", "info");
-      }
-    }
-
-    function clearCurrentRouteStops() {
+    function clearCurrentRouteDirectionStops() {
       const activeRoute = routes.find(r => r.id === activeRouteId);
       if (activeRoute) {
-        activeRoute.stopIds = [];
+        const activeDir = activeRoute.activeDirection || 'outbound';
+        if (activeDir === 'outbound') activeRoute.outboundStopIds = [];
+        else activeRoute.inboundStopIds = [];
+
         renderStopsManagerSection();
         renderRoutesOnMap();
         renderAllStopsOnMap();
         pushHistorySnapshot();
-        showToast("Cleared active line stops", "info");
+        showToast(`Cleared ${activeDir === 'outbound' ? 'Outbound' : 'Inbound'} stops`, "info");
       }
     }
 
@@ -1164,12 +1286,15 @@
 
     function deleteStop(stopId) {
       stops = stops.filter(s => s.id !== stopId);
-      routes.forEach(r => { r.stopIds = r.stopIds.filter(sid => sid !== stopId); });
+      routes.forEach(r => {
+        r.outboundStopIds = (r.outboundStopIds || []).filter(sid => sid !== stopId);
+        r.inboundStopIds = (r.inboundStopIds || []).filter(sid => sid !== stopId);
+      });
       renderAllStopsOnMap();
       renderRoutesOnMap();
       renderStopsManagerSection();
       pushHistorySnapshot();
-      showToast("Stop deleted", "info");
+      showToast("Stop deleted across all lines", "info");
     }
 
     function setRoutingMode(isBidi) {
@@ -1193,55 +1318,58 @@
       }
     }
 
-    // OPERATIONAL METRICS & FLEET CALCULATION
-    function calcDistMiles(lat1, lon1, lat2, lon2) {
-      const R = 3958.8;
-      const dLat = (lat2 - lat1) * Math.PI / 180;
-      const dLon = (lon2 - lon1) * Math.PI / 180;
-      const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
-                Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
-                Math.sin(dLon/2) * Math.sin(dLon/2);
-      return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-    }
-
+    // OPERATIONAL METRICS CALCULATION
     function calculateRouteMetrics(route) {
-      if (!route || !route.stopIds || route.stopIds.length < 2) {
-        return { totalDistMiles: 0, roundTripMins: 0, busesNeeded: 0 };
-      }
+      if (!route) return { totalDistMiles: 0, outboundMiles: 0, inboundMiles: 0, roundTripMins: 0, busesNeeded: 0 };
 
-      let outboundMeters = route.roadDistanceMeters || 0;
-      // Immediate Haversine fallback if OSRM response is pending
-      if (!outboundMeters) {
-        const routeStops = route.stopIds.map(sid => stops.find(s => s.id === sid)).filter(Boolean);
-        for (let i = 0; i < routeStops.length - 1; i++) {
-          outboundMeters += calcDistMiles(routeStops[i].lat, routeStops[i].lng, routeStops[i+1].lat, routeStops[i+1].lng) * 1609.34;
+      const outStops = (route.outboundStopIds || []).map(sid => stops.find(s => s.id === sid)).filter(Boolean);
+      let outMeters = route.outboundDistanceMeters || 0;
+      if (!outMeters && outStops.length >= 2) {
+        for (let i = 0; i < outStops.length - 1; i++) {
+          outMeters += calcDistMiles(outStops[i].lat, outStops[i].lng, outStops[i+1].lat, outStops[i+1].lng) * 1609.34;
         }
       }
 
-      let returnMeters = route.isBidirectional ? (route.returnDistanceMeters || outboundMeters) : 0;
+      let inMeters = 0;
+      if (route.isBidirectional) {
+        const inStops = (route.inboundStopIds || []).map(sid => stops.find(s => s.id === sid)).filter(Boolean);
+        inMeters = route.inboundDistanceMeters || 0;
+        if (!inMeters && inStops.length >= 2) {
+          for (let i = 0; i < inStops.length - 1; i++) {
+            inMeters += calcDistMiles(inStops[i].lat, inStops[i].lng, inStops[i+1].lat, inStops[i+1].lng) * 1609.34;
+          }
+        }
+      }
 
-      const totalDistMeters = outboundMeters + returnMeters;
-      const totalDistMiles = totalDistMeters * 0.000621371;
+      const outboundMiles = outMeters * 0.000621371;
+      const inboundMiles = inMeters * 0.000621371;
+      const totalDistMiles = outboundMiles + inboundMiles;
 
       let dwellMins = 0;
-      const mult = route.isBidirectional ? 2 : 1;
-      route.stopIds.forEach(sid => {
+      (route.outboundStopIds || []).forEach(sid => {
         const st = stops.find(s => s.id === sid);
-        if (st) dwellMins += (st.isHub ? 2.0 : 0.33) * mult;
+        if (st) dwellMins += (st.isHub ? 2.0 : 0.33);
       });
+      if (route.isBidirectional) {
+        (route.inboundStopIds || []).forEach(sid => {
+          const st = stops.find(s => s.id === sid);
+          if (st) dwellMins += (st.isHub ? 2.0 : 0.33);
+        });
+      }
 
       const pureTravelMins = (totalDistMiles / (route.speedMph || 12.5)) * 60;
       const roundTripMins = Math.round((pureTravelMins + dwellMins) * 1.10);
       const busesNeeded = Math.max(1, Math.ceil(roundTripMins / (route.headway || 15)));
 
-      return { totalDistMiles, roundTripMins, busesNeeded };
+      return { totalDistMiles, outboundMiles, inboundMiles, roundTripMins, busesNeeded };
     }
 
     function updateAnalyticsTab() {
       const activeRoute = routes.find(r => r.id === activeRouteId);
       const m = calculateRouteMetrics(activeRoute);
 
-      document.getElementById('analytics-dist').innerText = `${m.totalDistMiles.toFixed(2)} mi`;
+      document.getElementById('analytics-outbound-dist').innerText = `${m.outboundMiles.toFixed(2)} mi`;
+      document.getElementById('analytics-inbound-dist').innerText = `${m.inboundMiles.toFixed(2)} mi`;
       document.getElementById('analytics-cycle').innerText = `${m.roundTripMins} mins`;
       document.getElementById('analytics-fleet').innerText = `${m.busesNeeded} buses`;
 
@@ -1316,7 +1444,7 @@
       const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify({ stops, routes, activeRouteId }, null, 2));
       const link = document.createElement('a');
       link.setAttribute("href", dataStr);
-      link.setAttribute("download", `mtd_workspace_${Date.now()}.json`);
+      link.setAttribute("download", `mtd_workspace_v8_${Date.now()}.json`);
       document.body.appendChild(link);
       link.click();
       link.remove();
@@ -1340,7 +1468,7 @@
             renderRoutesOnMap();
             renderPresetsTab();
             pushHistorySnapshot();
-            showToast("Successfully imported project workspace!", "success");
+            showToast("Imported project workspace successfully!", "success");
           }
         } catch (err) { showToast("Invalid JSON file format", "warning"); }
       };
@@ -1357,12 +1485,14 @@
         });
       });
       routes.forEach(r => {
-        const coords = r.routeGeometry ? r.routeGeometry.map(c => [c[1], c[0]]) : [];
-        geojson.features.push({
-          type: "Feature",
-          geometry: { type: "LineString", coordinates: coords },
-          properties: { id: r.id, code: r.code, name: r.name, isBidirectional: r.isBidirectional }
-        });
+        const outCoords = r.outboundGeometry ? r.outboundGeometry.map(c => [c[1], c[0]]) : [];
+        if (outCoords.length > 0) {
+          geojson.features.push({
+            type: "Feature",
+            geometry: { type: "LineString", coordinates: outCoords },
+            properties: { id: r.id, code: r.code, name: r.name, direction: "Outbound" }
+          });
+        }
       });
 
       const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(geojson, null, 2));
