@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>MTD Route Studio - Urbana-Champaign Transit Planner v12.0</title>
+  <title>MTD Route Studio - Urbana-Champaign Transit Planner v13.0</title>
 
   <!-- Leaflet CSS & JS -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
@@ -177,6 +177,10 @@
       border: 1px solid #334155 !important;
     }
 
+    /* Accordion Details Styling */
+    details summary::-webkit-details-marker { display: none; }
+    details[open] summary .accordion-chevron { transform: rotate(180deg); }
+
     /* Toast Notification Animation */
     .toast-slide-in {
       animation: toastIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
@@ -197,7 +201,7 @@
       </div>
       <div>
         <h1 class="font-extrabold text-base sm:text-lg tracking-wide flex items-center gap-2 leading-none">
-          MTD ROUTE STUDIO <span class="bg-illini-orange/20 text-illini-orange text-[11px] font-bold px-2.5 py-0.5 rounded-full border border-illini-orange/40">v12.0</span>
+          MTD ROUTE STUDIO <span class="bg-illini-orange/20 text-illini-orange text-[11px] font-bold px-2.5 py-0.5 rounded-full border border-illini-orange/40">v13.0</span>
         </h1>
         <p class="text-xs text-slate-300 mt-1 flex items-center gap-2">
           <span class="w-2 h-2 rounded-full bg-emerald-400 inline-block animate-pulse"></span>
@@ -328,31 +332,61 @@
             <span id="active-line-stops-count" class="text-xs text-slate-300 font-bold bg-slate-800 px-2.5 py-1 rounded-lg border border-slate-700">0 stops</span>
           </div>
 
-          <!-- STOP DWELL TIME QUICK CONTROL -->
-          <div class="bg-slate-950 p-2 rounded-2xl border border-slate-800 flex items-center justify-between text-xs">
-            <span class="text-slate-400 font-bold flex items-center gap-1.5 text-[11px]">
-              <i class="fa-solid fa-clock text-amber-400"></i> Stop Dwell Time:
-            </span>
-            <div class="flex items-center gap-2">
-              <input type="range" min="5" max="120" step="5" id="dwell-slider-stops" oninput="updateDwellSec(this.value)" class="w-24 accent-amber-400 cursor-pointer">
-              <span id="dwell-display-stops" class="text-white font-bold font-mono text-[11px] bg-slate-900 px-2 py-0.5 rounded border border-slate-700">30s / stop</span>
-            </div>
-          </div>
+          <!-- COLLAPSIBLE ADVANCED SETTINGS ACCORDION -->
+          <details id="settings-accordion" class="group bg-slate-950 border border-slate-800 rounded-2xl overflow-hidden text-xs transition-all">
+            <summary class="p-2.5 font-bold text-slate-300 cursor-pointer flex items-center justify-between hover:bg-slate-900/80 select-none">
+              <span class="flex items-center gap-2">
+                <i class="fa-solid fa-sliders text-illini-orange"></i> Advanced Line & Insertion Controls
+              </span>
+              <i class="fa-solid fa-chevron-down accordion-chevron text-slate-500 transition-transform duration-200"></i>
+            </summary>
+            
+            <div class="p-3 border-t border-slate-800/80 space-y-3 bg-slate-950">
+              
+              <!-- 1. STOP DWELL TIME CONTROL -->
+              <div class="flex items-center justify-between">
+                <span class="text-slate-400 font-bold flex items-center gap-1.5 text-[11px]">
+                  <i class="fa-solid fa-clock text-amber-400"></i> Stop Dwell Time:
+                </span>
+                <div class="flex items-center gap-2">
+                  <input type="range" min="5" max="120" step="5" id="dwell-slider-stops" oninput="updateDwellSec(this.value)" class="w-24 accent-amber-400 cursor-pointer">
+                  <span id="dwell-display-stops" class="text-white font-bold font-mono text-[11px] bg-slate-900 px-2 py-0.5 rounded border border-slate-700">30s / stop</span>
+                </div>
+              </div>
 
-          <!-- STOP INSERTION & DELETION SCOPE TOGGLE -->
-          <div class="bg-slate-950 p-2 rounded-2xl border border-slate-800 space-y-1.5">
-            <div class="text-[11px] font-bold text-slate-400 flex items-center gap-1.5">
-              <i class="fa-solid fa-bullseye text-illini-orange"></i> Stop Add/Delete Scope:
+              <!-- 2. INSERTION STRATEGY MODE SWITCH (就近插入 vs 尾端追加) -->
+              <div class="space-y-1.5 pt-2 border-t border-slate-800/80">
+                <div class="text-[11px] font-bold text-slate-400 flex items-center justify-between">
+                  <span class="flex items-center gap-1.5"><i class="fa-solid fa-map-pin text-sky-400"></i> Insertion Strategy:</span>
+                  <span id="insertion-strategy-label" class="text-[10px] text-sky-300 font-mono">Smart Detour</span>
+                </div>
+                <div class="grid grid-cols-2 gap-1.5 text-[11px]">
+                  <button id="strategy-btn-smart" onclick="setInsertionStrategy('smart')" class="py-1.5 px-2 rounded-xl font-bold transition flex items-center justify-center gap-1.5 bg-sky-600 text-white shadow">
+                    <i class="fa-solid fa-route"></i> Smart Insert (Nearest)
+                  </button>
+                  <button id="strategy-btn-append" onclick="setInsertionStrategy('append')" class="py-1.5 px-2 rounded-xl font-bold transition flex items-center justify-center gap-1.5 text-slate-400 hover:text-white bg-slate-900 border border-slate-800">
+                    <i class="fa-solid fa-arrow-down-short-wide"></i> Append to End
+                  </button>
+                </div>
+              </div>
+
+              <!-- 3. STOP INSERTION & DELETION SCOPE TOGGLE -->
+              <div class="space-y-1.5 pt-2 border-t border-slate-800/80">
+                <div class="text-[11px] font-bold text-slate-400 flex items-center gap-1.5">
+                  <i class="fa-solid fa-bullseye text-illini-orange"></i> Stop Add/Delete Scope:
+                </div>
+                <div class="grid grid-cols-2 gap-1.5 text-[11px]">
+                  <button id="scope-btn-both" onclick="setAddStopScope('both')" class="py-1.5 px-2 rounded-xl font-bold transition flex items-center justify-center gap-1.5 bg-illini-orange text-white shadow">
+                    <i class="fa-solid fa-arrows-split-up-and-left"></i> Both Directions
+                  </button>
+                  <button id="scope-btn-current" onclick="setAddStopScope('current')" class="py-1.5 px-2 rounded-xl font-bold transition flex items-center justify-center gap-1.5 text-slate-400 hover:text-white bg-slate-900 border border-slate-800">
+                    <i class="fa-solid fa-arrow-right-to-city"></i> Current Leg Only
+                  </button>
+                </div>
+              </div>
+
             </div>
-            <div class="grid grid-cols-2 gap-1.5 text-xs">
-              <button id="scope-btn-both" onclick="setAddStopScope('both')" class="py-1.5 px-2 rounded-xl font-bold transition flex items-center justify-center gap-1.5 bg-illini-orange text-white shadow">
-                <i class="fa-solid fa-arrows-split-up-and-left"></i> Both Directions
-              </button>
-              <button id="scope-btn-current" onclick="setAddStopScope('current')" class="py-1.5 px-2 rounded-xl font-bold transition flex items-center justify-center gap-1.5 text-slate-400 hover:text-white bg-slate-900">
-                <i class="fa-solid fa-arrow-right-to-city"></i> Current Leg Only
-              </button>
-            </div>
-          </div>
+          </details>
 
           <!-- Asymmetric Direction Tabs (Outbound ➡️ vs Inbound ⬅️) -->
           <div id="direction-tabs-bar" class="flex items-center gap-2 bg-slate-950 p-1.5 rounded-2xl border border-slate-800 text-xs">
@@ -488,7 +522,7 @@
 
       <!-- FOOTER STATUS -->
       <div class="p-3 bg-slate-950 border-t border-slate-800 text-[11px] text-slate-400 flex items-center justify-between shrink-0">
-        <span>MTD Route Studio v12.0</span>
+        <span>MTD Route Studio v13.0</span>
         <span id="footer-system-summary">Total Fleet: 0 buses</span>
       </div>
 
@@ -513,11 +547,12 @@
 
   <!-- JAVASCRIPT LOGIC -->
   <script>
-    const STORAGE_KEY = 'MTD_STUDIO_V12_0_DATA';
+    const STORAGE_KEY = 'MTD_STUDIO_V13_0_DATA';
     const NEARBY_SNAP_RADIUS_MILES = 0.037; // ~60 meters
 
     let activeTabKey = 'lines';
     let inactiveOpacity = 0.25; // Default inactive background route opacity (5% - 100%)
+    let insertionStrategy = 'smart'; // 'smart' | 'append'
 
     // DEFAULT GLOBAL UIUC CAMPUS STOPS
     let stops = [
@@ -643,6 +678,27 @@
       saveToLocalStorage();
     }
 
+    // SET INSERTION STRATEGY MODE (SMART DETOUR vs APPEND TO END)
+    function setInsertionStrategy(strategy) {
+      insertionStrategy = strategy;
+      const btnSmart = document.getElementById('strategy-btn-smart');
+      const btnAppend = document.getElementById('strategy-btn-append');
+      const label = document.getElementById('insertion-strategy-label');
+
+      if (strategy === 'smart') {
+        btnSmart.className = "py-1.5 px-2 rounded-xl font-bold transition flex items-center justify-center gap-1.5 bg-sky-600 text-white shadow";
+        btnAppend.className = "py-1.5 px-2 rounded-xl font-bold transition flex items-center justify-center gap-1.5 text-slate-400 hover:text-white bg-slate-900 border border-slate-800";
+        if (label) label.innerText = 'Smart Detour';
+        showToast("Insertion Mode: Smart nearest segment detour", "info");
+      } else {
+        btnSmart.className = "py-1.5 px-2 rounded-xl font-bold transition flex items-center justify-center gap-1.5 text-slate-400 hover:text-white bg-slate-900 border border-slate-800";
+        btnAppend.className = "py-1.5 px-2 rounded-xl font-bold transition flex items-center justify-center gap-1.5 bg-sky-600 text-white shadow";
+        if (label) label.innerText = 'Append to End';
+        showToast("Insertion Mode: Append strictly to end of route", "info");
+      }
+      saveToLocalStorage();
+    }
+
     // INITIALIZE RESIZABLE SIDEBAR LOGIC
     function initSidebarResizer() {
       const sidebar = document.getElementById('sidebar-container');
@@ -738,7 +794,7 @@
     // UNDO / REDO HISTORY SYSTEM
     function pushHistorySnapshot(isInitial = false) {
       if (isRestoringHistory) return;
-      const snapshot = JSON.stringify({ stops, routes, activeRouteId, addStopScope, isFocusModeOnly, inactiveOpacity, customStopCounter });
+      const snapshot = JSON.stringify({ stops, routes, activeRouteId, addStopScope, insertionStrategy, isFocusModeOnly, inactiveOpacity, customStopCounter });
 
       if (historyStack.length > 0 && historyStack[historyIndex] === snapshot) return;
 
@@ -775,6 +831,7 @@
         routes = data.routes;
         activeRouteId = data.activeRouteId;
         if (data.addStopScope) addStopScope = data.addStopScope;
+        if (data.insertionStrategy) insertionStrategy = data.insertionStrategy;
         if (data.isFocusModeOnly !== undefined) isFocusModeOnly = data.isFocusModeOnly;
         if (data.inactiveOpacity !== undefined) {
           inactiveOpacity = data.inactiveOpacity;
@@ -1152,13 +1209,14 @@
 
       if (scope === 'both') {
         btnBoth.className = "py-1.5 px-2 rounded-xl font-bold transition flex items-center justify-center gap-1.5 bg-illini-orange text-white shadow";
-        btnCurrent.className = "py-1.5 px-2 rounded-xl font-bold transition flex items-center justify-center gap-1.5 text-slate-400 hover:text-white bg-slate-900";
+        btnCurrent.className = "py-1.5 px-2 rounded-xl font-bold transition flex items-center justify-center gap-1.5 text-slate-400 hover:text-white bg-slate-900 border border-slate-800";
         showToast("Scope: Add / Delete applies to BOTH Outbound & Inbound legs", "info");
       } else {
-        btnBoth.className = "py-1.5 px-2 rounded-xl font-bold transition flex items-center justify-center gap-1.5 text-slate-400 hover:text-white bg-slate-900";
+        btnBoth.className = "py-1.5 px-2 rounded-xl font-bold transition flex items-center justify-center gap-1.5 text-slate-400 hover:text-white bg-slate-900 border border-slate-800";
         btnCurrent.className = "py-1.5 px-2 rounded-xl font-bold transition flex items-center justify-center gap-1.5 bg-illini-orange text-white shadow";
         showToast("Scope: Add / Delete applies ONLY to current direction leg", "info");
       }
+      saveToLocalStorage();
     }
 
     // MAP CLICK WITH 60M STOP SNAPPING
@@ -1220,7 +1278,7 @@
       if (addStopScope === 'both' && activeRoute.isBidirectional) {
         if (!activeRoute.outboundStopIds.includes(stopId)) {
           let idxOut = activeRoute.outboundStopIds.length;
-          if (targetLat !== null && targetLng !== null && activeRoute.outboundStopIds.length >= 2) {
+          if (insertionStrategy === 'smart' && targetLat !== null && targetLng !== null && activeRoute.outboundStopIds.length >= 2) {
             idxOut = findBestInsertionIndexForSeq(activeRoute.outboundStopIds, targetLat, targetLng);
           }
           activeRoute.outboundStopIds.splice(idxOut, 0, stopId);
@@ -1228,26 +1286,26 @@
 
         if (!activeRoute.inboundStopIds.includes(stopId)) {
           let idxIn = activeRoute.inboundStopIds.length;
-          if (targetLat !== null && targetLng !== null && activeRoute.inboundStopIds.length >= 2) {
+          if (insertionStrategy === 'smart' && targetLat !== null && targetLng !== null && activeRoute.inboundStopIds.length >= 2) {
             idxIn = findBestInsertionIndexForSeq(activeRoute.inboundStopIds, targetLat, targetLng);
           }
           activeRoute.inboundStopIds.splice(idxIn, 0, stopId);
         }
 
-        showToast("Added stop to BOTH Outbound & Inbound legs", "success");
+        showToast(`Added stop to BOTH legs (${insertionStrategy === 'smart' ? 'Smart detour' : 'Appended to end'})`, "success");
       } else {
         const activeDir = activeRoute.activeDirection || 'outbound';
         const targetSeq = activeDir === 'outbound' ? activeRoute.outboundStopIds : activeRoute.inboundStopIds;
 
         if (!targetSeq.includes(stopId)) {
           let insertIdx = targetSeq.length;
-          if (targetLat !== null && targetLng !== null && targetSeq.length >= 2) {
+          if (insertionStrategy === 'smart' && targetLat !== null && targetLng !== null && targetSeq.length >= 2) {
             insertIdx = findBestInsertionIndexForSeq(targetSeq, targetLat, targetLng);
           }
           targetSeq.splice(insertIdx, 0, stopId);
         }
 
-        showToast(`Added stop to ${activeDir === 'outbound' ? 'Outbound' : 'Inbound'} leg ONLY`, "success");
+        showToast(`Added stop to ${activeDir} leg ONLY (${insertionStrategy === 'smart' ? 'Smart detour' : 'Appended to end'})`, "success");
       }
 
       renderStopsManagerSection();
@@ -1345,7 +1403,7 @@
       e.target.classList.remove('dragging');
     }
 
-    // ROUTE CREATION
+    // ⚡ ROUTE CREATION - AUTO-JUMP TO STOPS EDITOR & ENABLE MAP CLICK MODE
     function addNewRoute() {
       const id = 'line-' + Date.now();
       const code = String(100 + routes.length * 10);
@@ -1372,9 +1430,21 @@
       };
 
       routes.push(newR);
-      setActiveRoute(id);
+      activeRouteId = id;
+
+      // 1. Switch active view to Stops Editor
+      switchTab('stops');
+
+      // 2. Automatically turn on Map Click Stop Insertion Mode
+      toggleContinuousMapClickMode(true);
+
+      renderAllRoutesSidebarList();
+      renderStopsManagerSection();
+      renderAllStopsOnMap();
+      renderRoutesOnMap();
       pushHistorySnapshot();
-      showToast(`Created clean line ${newR.code} with 0 stops. Click map or presets to add stops!`, "success");
+
+      showToast(`⚡ Created Line ${newR.code}. Map click mode activated — click anywhere to insert stops!`, "success");
     }
 
     function deleteRoute(id) {
@@ -1450,7 +1520,7 @@
       }).join('');
     }
 
-    // DEDICATED STOPS EDITOR (TAB 2) WITH PHYSICAL PURGE OPTION
+    // DEDICATED STOPS EDITOR (TAB 2) WITH COLLAPSIBLE ACCORDION & STRATEGY SUPPORT
     function renderStopsManagerSection() {
       const activeRoute = routes.find(r => r.id === activeRouteId) || routes[0];
       if (!activeRoute) return;
@@ -1475,6 +1545,7 @@
       if (badgeAnalytics) badgeAnalytics.innerText = `${currentDwell} secs`;
 
       setAddStopScope(addStopScope);
+      setInsertionStrategy(insertionStrategy);
 
       // Direction Tabs
       const tabOutbound = document.getElementById('dir-tab-outbound');
@@ -1804,7 +1875,7 @@
 
     // LOCAL STORAGE & EXPORTS
     function saveToLocalStorage() {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify({ stops, routes, activeRouteId, addStopScope, isFocusModeOnly, inactiveOpacity, customStopCounter }));
+      localStorage.setItem(STORAGE_KEY, JSON.stringify({ stops, routes, activeRouteId, addStopScope, insertionStrategy, isFocusModeOnly, inactiveOpacity, customStopCounter }));
     }
 
     function loadFromLocalStorage() {
@@ -1816,6 +1887,7 @@
           if (parsed.routes) routes = parsed.routes;
           if (parsed.activeRouteId) activeRouteId = parsed.activeRouteId;
           if (parsed.addStopScope) addStopScope = parsed.addStopScope;
+          if (parsed.insertionStrategy) insertionStrategy = parsed.insertionStrategy;
           if (parsed.isFocusModeOnly !== undefined) isFocusModeOnly = parsed.isFocusModeOnly;
           if (parsed.inactiveOpacity !== undefined) inactiveOpacity = parsed.inactiveOpacity;
           if (parsed.customStopCounter) customStopCounter = parsed.customStopCounter;
@@ -1824,10 +1896,10 @@
     }
 
     function exportProjectJSON() {
-      const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify({ stops, routes, activeRouteId, addStopScope, inactiveOpacity }, null, 2));
+      const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify({ stops, routes, activeRouteId, addStopScope, insertionStrategy, inactiveOpacity }, null, 2));
       const link = document.createElement('a');
       link.setAttribute("href", dataStr);
-      link.setAttribute("download", `mtd_workspace_v12_0_${Date.now()}.json`);
+      link.setAttribute("download", `mtd_workspace_v13_0_${Date.now()}.json`);
       document.body.appendChild(link);
       link.click();
       link.remove();
@@ -1846,6 +1918,7 @@
             routes = parsed.routes;
             if (parsed.activeRouteId) activeRouteId = parsed.activeRouteId;
             if (parsed.addStopScope) addStopScope = parsed.addStopScope;
+            if (parsed.insertionStrategy) insertionStrategy = parsed.insertionStrategy;
             if (parsed.inactiveOpacity !== undefined) {
               inactiveOpacity = parsed.inactiveOpacity;
               updateInactiveOpacity(inactiveOpacity);
