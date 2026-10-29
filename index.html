@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>MTD Route Studio - Urbana-Champaign Transit Planner</title>
+  <title>MTD Route Studio - Urbana-Champaign Transit Network Planner</title>
   
   <!-- Leaflet CSS & JS -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
@@ -20,7 +20,7 @@
             illini: {
               navy: '#13294B',
               orange: '#E84A27',
-              darkNavy: '#0B1B36',
+              darkNavy: '#0A1628',
               lightBlue: '#1E3A8A'
             }
           }
@@ -31,7 +31,7 @@
 
   <!-- Font Awesome & Google Fonts -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"/>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 
   <style>
     body { font-family: 'Inter', sans-serif; }
@@ -39,19 +39,19 @@
 
     /* Glassmorphism Sidebar */
     .glass-panel {
-      background: rgba(19, 41, 75, 0.94);
+      background: rgba(19, 41, 75, 0.96);
       backdrop-filter: blur(16px);
       -webkit-backdrop-filter: blur(16px);
       border-right: 1px solid rgba(255, 255, 255, 0.12);
     }
 
-    /* Custom Scrollbar */
+    /* Custom Scrollbars */
     ::-webkit-scrollbar { width: 6px; height: 6px; }
-    ::-webkit-scrollbar-track { background: #090d16; }
+    ::-webkit-scrollbar-track { background: #080d1a; }
     ::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
     ::-webkit-scrollbar-thumb:hover { background: #475569; }
 
-    /* Custom Leaflet Map Markers */
+    /* Active Stop Markers on Map */
     .stop-marker-badge {
       display: flex;
       align-items: center;
@@ -63,12 +63,11 @@
       border: 2.5px solid #ffffff;
       box-shadow: 0 4px 12px rgba(0,0,0,0.5);
       transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-      cursor: grab;
+      cursor: pointer;
     }
-    .stop-marker-badge:active { cursor: grabbing; transform: scale(1.3); }
-    .stop-marker-badge:hover { transform: scale(1.18); }
+    .stop-marker-badge:hover { transform: scale(1.22); z-index: 999; }
 
-    /* Hub Star Badge */
+    /* Hub Badge Icon */
     .hub-star-badge {
       position: absolute;
       top: -4px;
@@ -85,10 +84,10 @@
       box-shadow: 0 2px 4px rgba(0,0,0,0.4);
     }
 
-    /* Map Cursor in Continuous Add Mode */
+    /* Map Crosshair Cursor */
     .map-crosshair { cursor: crosshair !important; }
 
-    /* Drag and Drop Card Styles */
+    /* Drag and Drop Stop Card Animations */
     .stop-card {
       transition: all 0.2s cubic-bezier(0.2, 0, 0, 1);
     }
@@ -105,7 +104,7 @@
       border-bottom: 3px solid #E84A27 !important;
     }
 
-    /* Toast Animation */
+    /* Toast Notification Slide Animation */
     .toast-slide-in {
       animation: toastIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
     }
@@ -125,45 +124,55 @@
       </div>
       <div>
         <h1 class="font-extrabold text-base sm:text-lg tracking-wide flex items-center gap-2 leading-none">
-          MTD ROUTE STUDIO <span class="bg-illini-orange/20 text-illini-orange text-[11px] font-bold px-2 py-0.5 rounded border border-illini-orange/40">Urbana-Champaign</span>
+          MTD ROUTE STUDIO <span class="bg-illini-orange/20 text-illini-orange text-[11px] font-bold px-2 py-0.5 rounded border border-illini-orange/40">v5.0 Clean Map</span>
         </h1>
         <p class="text-[11px] text-slate-300 mt-0.5 flex items-center gap-1.5">
-          <span id="osrm-status-dot" class="w-2 h-2 rounded-full bg-emerald-400 inline-block animate-pulse"></span>
-          <span id="osrm-status-text">OSRM Real-Road Engine Active</span>
+          <span class="w-2 h-2 rounded-full bg-emerald-400 inline-block animate-pulse"></span>
+          <span>Urbana-Champaign OSRM Real-Street Engine</span>
         </p>
       </div>
     </div>
 
-    <!-- System Wide Fleet Analytics Header Widget -->
-    <div class="hidden md:flex items-center gap-6 bg-slate-900/80 px-4 py-1.5 rounded-2xl border border-slate-800 text-xs">
+    <!-- Map Cleanliness & View Mode Controller -->
+    <div class="hidden lg:flex items-center bg-slate-900/90 border border-slate-800 rounded-2xl p-1 text-xs">
+      <button id="view-mode-focus" onclick="setMapFocusMode(true)" class="px-3 py-1.5 rounded-xl font-bold transition flex items-center gap-1.5 bg-illini-orange text-white shadow">
+        <i class="fa-solid fa-eye"></i> 专注当前线路 (Focus Active)
+      </button>
+      <button id="view-mode-all" onclick="setMapFocusMode(false)" class="px-3 py-1.5 rounded-xl font-bold transition flex items-center gap-1.5 text-slate-400 hover:text-white">
+        <i class="fa-solid fa-globe"></i> 全景显示 (Show All Lines)
+      </button>
+    </div>
+
+    <!-- Live System Fleet Analytics Header Widget -->
+    <div class="hidden md:flex items-center gap-5 bg-slate-900/80 px-4 py-1.5 rounded-2xl border border-slate-800 text-xs">
       <div class="flex items-center gap-2">
         <i class="fa-solid fa-route text-illini-orange"></i>
-        <span class="text-slate-400">Total Distance:</span>
+        <span class="text-slate-400">全网里程:</span>
         <span id="header-total-dist" class="font-bold text-white">0.0 mi</span>
       </div>
       <div class="w-px h-4 bg-slate-800"></div>
       <div class="flex items-center gap-2">
         <i class="fa-solid fa-bus-simple text-emerald-400"></i>
-        <span class="text-slate-400">Total Fleet:</span>
-        <span id="header-total-buses" class="font-extrabold text-emerald-400">0 Buses</span>
+        <span class="text-slate-400">全网总配车:</span>
+        <span id="header-total-buses" class="font-extrabold text-emerald-400">0 辆</span>
       </div>
     </div>
 
-    <!-- Header Undo/Redo & Actions -->
+    <!-- Header Undo/Redo & Line Creator -->
     <div class="flex items-center space-x-2">
       <div class="flex items-center bg-slate-900 border border-slate-800 rounded-xl p-1 shadow-inner">
         <button id="undo-btn" onclick="undo()" title="Undo (Ctrl+Z)" disabled class="px-2.5 py-1 text-slate-400 hover:text-white disabled:opacity-30 disabled:hover:text-slate-400 text-xs font-bold rounded-lg transition flex items-center gap-1">
-          <i class="fa-solid fa-rotate-left"></i> <span class="hidden sm:inline">Undo</span>
+          <i class="fa-solid fa-rotate-left"></i> <span class="hidden sm:inline">撤回</span>
         </button>
         <div class="w-px h-4 bg-slate-800 my-auto"></div>
         <button id="redo-btn" onclick="redo()" title="Redo (Ctrl+Y)" disabled class="px-2.5 py-1 text-slate-400 hover:text-white disabled:opacity-30 disabled:hover:text-slate-400 text-xs font-bold rounded-lg transition flex items-center gap-1">
-          <i class="fa-solid fa-rotate-right"></i> <span class="hidden sm:inline">Redo</span>
+          <i class="fa-solid fa-rotate-right"></i> <span class="hidden sm:inline">重做</span>
         </button>
       </div>
 
       <button onclick="addNewRoute()" class="bg-illini-orange hover:bg-orange-600 text-white text-xs px-3 py-2 rounded-xl font-bold transition flex items-center gap-1.5 shadow-md">
         <i class="fa-solid fa-plus"></i>
-        <span>+ New Line</span>
+        <span>新建线路</span>
       </button>
     </div>
   </header>
@@ -171,78 +180,85 @@
   <!-- MAIN CONTAINER -->
   <div class="flex-1 flex overflow-hidden relative">
 
-    <!-- LEFT SIDEBAR -->
-    <aside id="sidebar-container" class="w-full md:w-[440px] glass-panel flex flex-col z-20 shrink-0 shadow-2xl">
+    <!-- LEFT SIDEBAR WORKSPACE -->
+    <aside id="sidebar-container" class="w-full md:w-[460px] glass-panel flex flex-col z-20 shrink-0 shadow-2xl">
       
-      <!-- NAV TABS -->
+      <!-- NAVIGATION TABS -->
       <div class="bg-slate-950/80 p-2 border-b border-slate-800 grid grid-cols-4 gap-1 text-[11px] font-semibold">
-        <button id="tab-btn-stops" onclick="switchTab('stops')" class="py-2 px-1 rounded-lg text-center transition-all bg-illini-orange text-white font-bold shadow">
-          <i class="fa-solid fa-location-dot block text-sm mb-0.5"></i> 🚏 Stops
+        <button id="tab-btn-routes" onclick="switchTab('routes')" class="py-2 px-1 rounded-lg text-center transition-all bg-illini-orange text-white font-bold shadow">
+          <i class="fa-solid fa-bus block text-sm mb-0.5"></i> 🚌 线路与车站
         </button>
         <button id="tab-btn-presets" onclick="switchTab('presets')" class="py-2 px-1 rounded-lg text-center transition-all text-slate-400 hover:text-slate-200 hover:bg-slate-800">
-          <i class="fa-solid fa-building-columns block text-sm mb-0.5"></i> 🏛️ UIUC Hubs
+          <i class="fa-solid fa-building-columns block text-sm mb-0.5"></i> 🏛️ UIUC 地标
         </button>
         <button id="tab-btn-analytics" onclick="switchTab('analytics')" class="py-2 px-1 rounded-lg text-center transition-all text-slate-400 hover:text-slate-200 hover:bg-slate-800">
-          <i class="fa-solid fa-chart-line block text-sm mb-0.5"></i> 📊 Analytics
+          <i class="fa-solid fa-chart-line block text-sm mb-0.5"></i> 📊 配车测算
         </button>
         <button id="tab-btn-export" onclick="switchTab('export')" class="py-2 px-1 rounded-lg text-center transition-all text-slate-400 hover:text-slate-200 hover:bg-slate-800">
-          <i class="fa-solid fa-file-export block text-sm mb-0.5"></i> 💾 Export
+          <i class="fa-solid fa-file-export block text-sm mb-0.5"></i> 💾 项目导出
         </button>
       </div>
 
-      <!-- TAB 1: STOPS MANAGER -->
-      <div id="tab-content-stops" class="flex-1 flex flex-col overflow-hidden">
+      <!-- TAB 1: ALL BUS LINES & STOPS MANAGER -->
+      <div id="tab-content-routes" class="flex-1 flex flex-col overflow-hidden">
         
-        <!-- Active Line Switcher Card -->
-        <div class="p-3.5 border-b border-slate-800 bg-slate-950/60 space-y-2.5">
+        <!-- SECTION 1: ALL BUS LINES LIST (全网公交线路列表) -->
+        <div class="p-3.5 border-b border-slate-800 bg-slate-950/80 space-y-2.5 shrink-0 max-h-[48%] overflow-y-auto">
           <div class="flex items-center justify-between">
-            <span class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Active Transit Line</span>
-            <span id="active-line-color-pill" class="w-3 h-3 rounded-full bg-illini-orange inline-block border border-white"></span>
+            <span class="text-[11px] font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
+              <i class="fa-solid fa-list-check text-illini-orange"></i> 所有公交线路列表 (<span id="routes-count-badge">0</span>)
+            </span>
+            <button onclick="addNewRoute()" class="text-[10px] text-illini-orange hover:underline font-bold">+ 新增线路</button>
           </div>
 
-          <div class="flex gap-2">
-            <select id="route-select-dropdown" onchange="setActiveRoute(this.value)" class="flex-1 bg-slate-900 border border-slate-700 text-white font-bold text-xs rounded-xl p-2 focus:outline-none focus:border-illini-orange">
-              <!-- Dynamically populated -->
-            </select>
-          </div>
-
-          <!-- One-Way vs Bidirectional Toggle Buttons -->
-          <div class="grid grid-cols-2 gap-2 pt-1">
-            <button id="mode-btn-oneway" onclick="setRoutingMode(false)" class="py-1.5 px-2 rounded-lg text-xs font-bold transition flex items-center justify-center gap-1.5 border border-slate-700 bg-slate-900 text-slate-400">
-              <i class="fa-solid fa-arrow-right"></i> One-Way Circuit
-            </button>
-            <button id="mode-btn-bidirectional" onclick="setRoutingMode(true)" class="py-1.5 px-2 rounded-lg text-xs font-bold transition flex items-center justify-center gap-1.5 border border-illini-orange bg-illini-orange/20 text-white">
-              <i class="fa-solid fa-arrows-left-right"></i> Bidirectional ↔️
-            </button>
-          </div>
-
-          <!-- Action Buttons Bar -->
-          <div class="flex items-center justify-between pt-2 border-t border-slate-800/80 text-xs gap-2">
-            <button onclick="toggleContinuousMapClickMode()" id="map-click-toggle-btn" class="flex-1 bg-illini-orange hover:bg-orange-600 text-white font-bold py-2 px-3 rounded-xl transition flex items-center justify-center gap-1.5 shadow">
-              <i class="fa-solid fa-plus-circle"></i> <span id="map-click-btn-text">📍 Continuous Add Stops</span>
-            </button>
-            <button onclick="reverseCurrentRouteStops()" title="Reverse Stop Order" class="bg-slate-900 hover:bg-slate-800 border border-slate-700 text-slate-200 px-2.5 py-2 rounded-xl transition">
-              <i class="fa-solid fa-right-left text-sky-400"></i>
-            </button>
-            <button onclick="clearCurrentRouteStops()" title="Clear Line Stops" class="bg-slate-900 hover:bg-rose-950 text-rose-300 border border-slate-800 px-2.5 py-2 rounded-xl transition">
-              <i class="fa-solid fa-trash-can text-rose-400"></i>
-            </button>
+          <!-- All Bus Lines Cards Container -->
+          <div id="all-routes-list" class="space-y-2">
+            <!-- Dynamically populated -->
           </div>
         </div>
 
-        <!-- STOPS REORDERABLE LIST -->
-        <div class="flex-1 overflow-y-auto p-3.5 space-y-2">
-          <div class="flex items-center justify-between">
-            <span id="stops-count-header" class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Stops Sequence (0)</span>
-            <span class="text-[10px] text-slate-400 italic flex items-center gap-1">
-              <i class="fa-solid fa-grip-vertical text-slate-500"></i> Drag card to reorder
-            </span>
+        <!-- SECTION 2: ACTIVE LINE STOPS MANAGER (当前选定线路车站管理) -->
+        <div class="flex-1 flex flex-col overflow-hidden bg-slate-950/40">
+          
+          <div class="p-3 border-b border-slate-800 bg-slate-900/60 space-y-2">
+            <div class="flex items-center justify-between">
+              <div class="flex items-center gap-2">
+                <span id="active-line-pill" class="w-3 h-3 rounded-full bg-illini-orange border border-white"></span>
+                <span id="active-line-title" class="font-extrabold text-xs text-white">Line 130 - Silver Express</span>
+              </div>
+              <span id="active-line-stops-count" class="text-[10px] text-slate-400 font-mono">0 个车站</span>
+            </div>
+
+            <!-- Direction Toggle & Action Toolbar -->
+            <div class="grid grid-cols-2 gap-2 text-xs">
+              <button id="mode-btn-oneway" onclick="setRoutingMode(false)" class="py-1.5 px-2 rounded-lg font-bold transition flex items-center justify-center gap-1.5 border border-slate-700 bg-slate-900 text-slate-400">
+                <i class="fa-solid fa-arrow-right"></i> 单向环线
+              </button>
+              <button id="mode-btn-bidirectional" onclick="setRoutingMode(true)" class="py-1.5 px-2 rounded-lg font-bold transition flex items-center justify-center gap-1.5 border border-illini-orange bg-illini-orange/20 text-white">
+                <i class="fa-solid fa-arrows-left-right"></i> 往返双向 ↔️
+              </button>
+            </div>
+
+            <div class="flex items-center justify-between text-xs gap-2 pt-1">
+              <button onclick="toggleContinuousMapClickMode()" id="map-click-toggle-btn" class="flex-1 bg-illini-orange hover:bg-orange-600 text-white font-bold py-1.5 px-3 rounded-xl transition flex items-center justify-center gap-1.5 shadow">
+                <i class="fa-solid fa-plus-circle"></i> <span id="map-click-btn-text">📍 点击地图插站</span>
+              </button>
+              <button onclick="reverseCurrentRouteStops()" title="反转站点顺序" class="bg-slate-900 hover:bg-slate-800 border border-slate-700 text-slate-200 px-2.5 py-1.5 rounded-xl transition">
+                <i class="fa-solid fa-right-left text-sky-400"></i>
+              </button>
+              <button onclick="clearCurrentRouteStops()" title="清空该线站点" class="bg-slate-900 hover:bg-rose-950 text-rose-300 border border-slate-800 px-2.5 py-1.5 rounded-xl transition">
+                <i class="fa-solid fa-trash-can text-rose-400"></i>
+              </button>
+            </div>
           </div>
 
-          <!-- Dynamic Draggable Card Container -->
-          <div id="stops-card-container" class="space-y-2">
-            <!-- JS Populated -->
+          <!-- Active Route Reorderable Stops List -->
+          <div class="flex-1 overflow-y-auto p-3 space-y-2">
+            <div id="stops-card-container" class="space-y-2">
+              <!-- JS Populated Cards -->
+            </div>
           </div>
+
         </div>
 
       </div>
@@ -251,9 +267,9 @@
       <div id="tab-content-presets" class="hidden flex-1 overflow-y-auto p-4 space-y-4">
         <div>
           <h2 class="text-sm font-bold text-white flex items-center gap-2">
-            <i class="fa-solid fa-building-columns text-illini-orange"></i> UIUC & Lincoln Ave Landmarks
+            <i class="fa-solid fa-building-columns text-illini-orange"></i> UIUC & Lincoln Ave 经典站点
           </h2>
-          <p class="text-xs text-slate-400 mt-1">Click any preset stop to append it directly to the active route.</p>
+          <p class="text-xs text-slate-400 mt-1">点击任意预设站点直接追加到当前选中的线路：</p>
         </div>
 
         <div id="presets-grid" class="grid grid-cols-1 gap-2">
@@ -265,31 +281,31 @@
       <div id="tab-content-analytics" class="hidden flex-1 overflow-y-auto p-4 space-y-4">
         <div>
           <h2 class="text-sm font-bold text-white flex items-center gap-2">
-            <i class="fa-solid fa-chart-line text-emerald-400"></i> Fleet & Headway Analytics
+            <i class="fa-solid fa-chart-line text-emerald-400"></i> 线路配车与运营测算
           </h2>
-          <p class="text-xs text-slate-400 mt-1">Adjust bus dispatch headway and speed parameters.</p>
+          <p class="text-xs text-slate-400 mt-1">调整发车间隔 (Headway) 与运行参数：</p>
         </div>
 
         <div class="bg-slate-950/80 p-3.5 rounded-2xl border border-slate-800 space-y-3">
           <div class="flex items-center justify-between">
-            <span class="text-xs font-bold text-slate-200">Headway Frequency</span>
-            <span id="headway-value-badge" class="bg-illini-orange/20 text-illini-orange font-mono font-bold text-xs px-2 py-0.5 rounded border border-illini-orange/40">15 mins</span>
+            <span class="text-xs font-bold text-slate-200">发车间隔 (Headway)</span>
+            <span id="headway-value-badge" class="bg-illini-orange/20 text-illini-orange font-mono font-bold text-xs px-2 py-0.5 rounded border border-illini-orange/40">15 分钟</span>
           </div>
           <input type="range" min="5" max="60" step="5" value="15" id="headway-slider" oninput="updateHeadway(this.value)" class="w-full accent-illini-orange cursor-pointer">
           <div class="flex justify-between text-[10px] text-slate-400 font-mono">
-            <span>5 mins (Peak)</span>
-            <span>15 mins</span>
-            <span>30 mins</span>
-            <span>60 mins</span>
+            <span>5分钟 (高峰)</span>
+            <span>15分钟</span>
+            <span>30分钟</span>
+            <span>60分钟</span>
           </div>
         </div>
 
         <div class="bg-slate-950/80 p-3.5 rounded-2xl border border-slate-800 space-y-2">
-          <span class="text-xs font-bold text-slate-200">Route Operational Summary</span>
+          <span class="text-xs font-bold text-slate-200">当前线路运营汇总</span>
           <div class="text-xs space-y-1.5 pt-1 text-slate-300">
-            <div class="flex justify-between"><span>Line Mileage:</span><b id="analytics-dist" class="text-white">0.00 mi</b></div>
-            <div class="flex justify-between"><span>Cycle Roundtrip Time:</span><b id="analytics-cycle" class="text-sky-400">0 mins</b></div>
-            <div class="flex justify-between"><span>Required Line Fleet:</span><b id="analytics-fleet" class="text-illini-orange text-sm font-black">0 Vehicles</b></div>
+            <div class="flex justify-between"><span>马路行驶里程:</span><b id="analytics-dist" class="text-white">0.00 mi</b></div>
+            <div class="flex justify-between"><span>单趟/往返时间:</span><b id="analytics-cycle" class="text-sky-400">0 mins</b></div>
+            <div class="flex justify-between"><span>建议最低配车数:</span><b id="analytics-fleet" class="text-illini-orange text-sm font-black">0 辆</b></div>
           </div>
         </div>
       </div>
@@ -298,25 +314,25 @@
       <div id="tab-content-export" class="hidden flex-1 overflow-y-auto p-4 space-y-4">
         <div>
           <h2 class="text-sm font-bold text-white flex items-center gap-2">
-            <i class="fa-solid fa-file-export text-sky-400"></i> Workspace Backup & GIS Export
+            <i class="fa-solid fa-file-export text-sky-400"></i> 数据备份与 GIS 导出
           </h2>
-          <p class="text-xs text-slate-400 mt-1">Export your route network configurations for backup or GIS mapping.</p>
+          <p class="text-xs text-slate-400 mt-1">导出或恢复你的公交网络规划项目：</p>
         </div>
 
         <div class="grid grid-cols-1 gap-2">
           <button onclick="exportProjectJSON()" class="bg-slate-900 hover:bg-slate-800 border border-slate-700 text-white p-3 rounded-xl text-xs font-semibold flex items-center justify-between transition">
-            <span class="flex items-center gap-2"><i class="fa-solid fa-floppy-disk text-sky-400"></i> Export Workspace (.json)</span>
+            <span class="flex items-center gap-2"><i class="fa-solid fa-floppy-disk text-sky-400"></i> 导出完整工程 (.json)</span>
             <i class="fa-solid fa-download text-slate-400"></i>
           </button>
 
           <label class="bg-slate-900 hover:bg-slate-800 border border-slate-700 text-white p-3 rounded-xl text-xs font-semibold flex items-center justify-between transition cursor-pointer">
-            <span class="flex items-center gap-2"><i class="fa-solid fa-folder-open text-emerald-400"></i> Load Workspace (.json)</span>
+            <span class="flex items-center gap-2"><i class="fa-solid fa-folder-open text-emerald-400"></i> 导入工程文件 (.json)</span>
             <input type="file" accept=".json" onchange="importProjectJSON(event)" class="hidden">
             <i class="fa-solid fa-upload text-slate-400"></i>
           </label>
 
           <button onclick="exportGeoJSON()" class="bg-slate-900 hover:bg-slate-800 border border-slate-700 text-white p-3 rounded-xl text-xs font-semibold flex items-center justify-between transition">
-            <span class="flex items-center gap-2"><i class="fa-solid fa-map-location-dot text-illini-orange"></i> Export Network GeoJSON</span>
+            <span class="flex items-center gap-2"><i class="fa-solid fa-map-location-dot text-illini-orange"></i> 导出 GeoJSON 矢量图层</span>
             <i class="fa-solid fa-download text-slate-400"></i>
           </button>
         </div>
@@ -324,8 +340,8 @@
 
       <!-- SIDEBAR FOOTER -->
       <div class="p-3 bg-slate-950 border-t border-slate-800 text-center text-[11px] text-slate-400 flex items-center justify-between shrink-0">
-        <span>MTD Route Studio v4.5</span>
-        <span id="footer-system-summary" class="text-emerald-400 font-mono font-bold">Total Network Fleet: 0 Buses</span>
+        <span>MTD Route Studio v5.0</span>
+        <span id="footer-system-summary" class="text-emerald-400 font-mono font-bold">全网所需总车数: 0 辆</span>
       </div>
     </aside>
 
@@ -336,7 +352,7 @@
       <!-- ACTIVE MAP CLICKING BANNER -->
       <div id="map-click-banner" class="hidden absolute top-4 left-1/2 -translate-x-1/2 z-[1000] bg-illini-orange text-white text-xs font-extrabold px-5 py-2.5 rounded-full shadow-2xl flex items-center gap-3 animate-bounce border-2 border-white/20">
         <span class="w-2.5 h-2.5 rounded-full bg-white animate-ping"></span>
-        <span>👉 CLICK ANYWHERE ON MAP TO DRAW STREET ROUTE (RIGHT-CLICK MARKER TO DELETE)</span>
+        <span>👉 点击地图任意马路（如 Lincoln Ave）插入站点（右键/双击标记可删除）</span>
         <button onclick="toggleContinuousMapClickMode(false)" class="bg-black/30 hover:bg-black/50 text-white rounded-full w-5 h-5 flex items-center justify-center text-[11px] transition">✕</button>
       </div>
 
@@ -368,8 +384,9 @@
       {
         id: 'line-silver',
         code: '130',
-        name: 'Silver Express (Lincoln Corridor)',
+        name: 'Silver Express (Lincoln Ave)',
         color: '#E84A27',
+        visible: true,
         isBidirectional: true,
         headway: 15,
         speedMph: 13.0,
@@ -384,6 +401,7 @@
         code: '220',
         name: 'Illini Campus Circulator',
         color: '#00875A',
+        visible: true,
         isBidirectional: true,
         headway: 10,
         speedMph: 12.0,
@@ -399,9 +417,10 @@
     let stops = [...PRESET_STOPS];
     let routes = JSON.parse(JSON.stringify(DEFAULT_ROUTES));
     let activeRouteId = 'line-silver';
+    let isFocusModeOnly = true; // Clean map mode
     let customStopCounter = 1;
 
-    // Drag-and-Drop & Undo Stack State
+    // Drag-and-Drop & History State
     let draggedIndex = null;
     let historyStack = [];
     let historyIndex = -1;
@@ -412,38 +431,39 @@
     let routePolylinesMap = {};
     let isClickToAddMode = false;
 
-    const STORAGE_KEY = 'mtd_studio_v45_state';
+    const STORAGE_KEY = 'mtd_studio_v50_state';
 
     window.onload = function() {
       loadFromLocalStorage();
       initLeafletMap();
       pushHistorySnapshot(true);
 
+      renderAllRoutesSidebarList();
+      renderStopsManagerSection();
       renderAllStopsOnMap();
       renderRoutesOnMap();
-      renderStopsManagerTab();
       renderPresetsTab();
       updateAnalyticsTab();
       setupKeyboardShortcuts();
     };
 
-    // LEAFLET MAP ENGINE INITIALIZATION WITH HD BASEMAPS
+    // LEAFLET MAP ENGINE INITIALIZATION WITH HD NO-BLOCK TILE LAYERS
     function initLeafletMap() {
       map = L.map('map', { zoomControl: true, attributionControl: false }).setView([40.1097, -88.2272], 14);
 
-      // HD Tile Layer Providers
-      const osmStandard = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 });
+      // High-Definition Tile Layers (No-Block Policy API Providers)
+      const cartoVoyager = L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', { maxZoom: 19, subdomains: 'abcd' });
       const esriStreet = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}', { maxZoom: 19 });
-      const cartoVoyager = L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', { maxZoom: 19 });
+      const cartoPositron = L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', { maxZoom: 19, subdomains: 'abcd' });
       const esriSatellite = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { maxZoom: 19 });
 
-      esriStreet.addTo(map);
+      cartoVoyager.addTo(map);
 
       const baseLayers = {
-        "🛣️ Esri Street Map": esriStreet,
-        "🗺️ OpenStreetMap": osmStandard,
-        "🎨 Carto Voyager": cartoVoyager,
-        "🛰️ Esri Satellite": esriSatellite
+        "🎨 Carto Voyager (高清彩图)": cartoVoyager,
+        "🛣️ Esri Street Map (地貌街景)": esriStreet,
+        "🏳️ Carto Light (极简高对比)": cartoPositron,
+        "🛰️ Esri Satellite (卫星影像)": esriSatellite
       };
 
       L.control.layers(baseLayers, null, { position: 'topright' }).addTo(map);
@@ -456,10 +476,10 @@
       });
     }
 
-    // UNDO / REDO SYSTEM
+    // UNDO / REDO HISTORY STACK
     function pushHistorySnapshot(isInitial = false) {
       if (isRestoringHistory) return;
-      const snapshot = JSON.stringify({ stops, routes, activeRouteId, customStopCounter });
+      const snapshot = JSON.stringify({ stops, routes, activeRouteId, isFocusModeOnly, customStopCounter });
 
       if (historyStack.length > 0 && historyStack[historyIndex] === snapshot) return;
 
@@ -476,7 +496,7 @@
       if (historyIndex > 0) {
         historyIndex--;
         restoreHistoryState(historyStack[historyIndex]);
-        showToast("↩️ Undo successful", "info");
+        showToast("↩️ 撤回成功", "info");
       }
     }
 
@@ -484,7 +504,7 @@
       if (historyIndex < historyStack.length - 1) {
         historyIndex++;
         restoreHistoryState(historyStack[historyIndex]);
-        showToast("↪️ Redo successful", "info");
+        showToast("↪️ 重做成功", "info");
       }
     }
 
@@ -495,11 +515,13 @@
         stops = data.stops;
         routes = data.routes;
         activeRouteId = data.activeRouteId;
+        if (data.isFocusModeOnly !== undefined) isFocusModeOnly = data.isFocusModeOnly;
         if (data.customStopCounter) customStopCounter = data.customStopCounter;
 
+        renderAllRoutesSidebarList();
+        renderStopsManagerSection();
         renderAllStopsOnMap();
         renderRoutesOnMap();
-        renderStopsManagerTab();
         renderPresetsTab();
         updateAnalyticsTab();
         saveToLocalStorage();
@@ -553,7 +575,7 @@
       return { latLngs: coords, distanceMeters: straightDist };
     }
 
-    // MAP MARKER RENDERING & RIGHT-CLICK DELETE
+    // CLEAN MAP MARKER RENDERING (ONLY RENDER FULL BADGES FOR ACTIVE LINE STOPS)
     function renderAllStopsOnMap() {
       Object.values(markersMap).forEach(m => map.removeLayer(m));
       markersMap = {};
@@ -561,10 +583,15 @@
       const activeRoute = routes.find(r => r.id === activeRouteId);
       const activeSequence = activeRoute ? activeRoute.stopIds : [];
 
+      // Determine which stops to render
       stops.forEach(stop => {
         const seqIdx = activeSequence.indexOf(stop.id);
         const isInActive = seqIdx !== -1;
-        const color = isInActive ? (activeRoute ? activeRoute.color : '#13294B') : '#475569';
+
+        // If in Focus Mode, ONLY render markers that belong to the active line!
+        if (isFocusModeOnly && !isInActive) return;
+
+        const color = isInActive ? (activeRoute ? activeRoute.color : '#13294B') : '#64748B';
         const label = isInActive ? (seqIdx + 1) : '';
 
         const starHtml = stop.isHub ? `<span class="hub-star-badge"><i class="fa-solid fa-star"></i></span>` : '';
@@ -586,12 +613,12 @@
           stop.lat = Number(pos.lat.toFixed(5));
           stop.lng = Number(pos.lng.toFixed(5));
           renderRoutesOnMap();
-          renderStopsManagerTab();
+          renderStopsManagerSection();
           pushHistorySnapshot();
-          showToast(`Repositioned "${stop.name}"`, "info");
+          showToast(`已移动站点 "${stop.name}"`, "info");
         });
 
-        // Fast Right-Click or Double-Click Delete
+        // Fast Right-Click / Double-Click Delete
         marker.on('contextmenu', (e) => { L.DomEvent.stopPropagation(e); deleteStop(stop.id); });
         marker.on('dblclick', (e) => { L.DomEvent.stopPropagation(e); deleteStop(stop.id); });
 
@@ -599,7 +626,7 @@
       });
     }
 
-    // ROUTE POLYLINE RENDERING
+    // CLEAN ROUTE POLYLINE RENDERING
     async function renderRoutesOnMap() {
       Object.values(routePolylinesMap).forEach(layers => {
         if (Array.isArray(layers)) layers.forEach(l => map.removeLayer(l));
@@ -608,11 +635,17 @@
       routePolylinesMap = {};
 
       for (const route of routes) {
+        if (!route.visible) continue;
+
         const routeStops = route.stopIds.map(sid => stops.find(s => s.id === sid)).filter(Boolean);
 
         if (routeStops.length >= 2) {
           const outboundCoords = routeStops.map(s => [s.lat, s.lng]);
           const isSelected = route.id === activeRouteId;
+
+          // If in Focus mode and not active, skip rendering or render muted
+          if (isFocusModeOnly && !isSelected) continue;
+
           const layersList = [];
 
           // Outbound Leg
@@ -623,8 +656,8 @@
 
             const poly = L.polyline(osrmOutbound.latLngs, {
               color: route.color,
-              weight: isSelected ? 6.5 : 3.5,
-              opacity: isSelected ? 0.95 : 0.50
+              weight: isSelected ? 6.5 : 3.0,
+              opacity: isSelected ? 0.95 : 0.35
             }).addTo(map);
 
             poly.on('click', () => setActiveRoute(route.id));
@@ -642,8 +675,8 @@
 
               const returnPoly = L.polyline(osrmReturn.latLngs, {
                 color: route.color,
-                weight: isSelected ? 4.5 : 2.5,
-                opacity: isSelected ? 0.75 : 0.40,
+                weight: isSelected ? 4.5 : 2.0,
+                opacity: isSelected ? 0.80 : 0.25,
                 dashArray: '6, 8'
               }).addTo(map);
 
@@ -667,6 +700,21 @@
       updateAnalyticsTab();
     }
 
+    function setMapFocusMode(isFocus) {
+      isFocusModeOnly = isFocus;
+      document.getElementById('view-mode-focus').className = isFocusModeOnly ?
+        "px-3 py-1.5 rounded-xl font-bold transition flex items-center gap-1.5 bg-illini-orange text-white shadow" :
+        "px-3 py-1.5 rounded-xl font-bold transition flex items-center gap-1.5 text-slate-400 hover:text-white";
+
+      document.getElementById('view-mode-all').className = !isFocusModeOnly ?
+        "px-3 py-1.5 rounded-xl font-bold transition flex items-center gap-1.5 bg-illini-orange text-white shadow" :
+        "px-3 py-1.5 rounded-xl font-bold transition flex items-center gap-1.5 text-slate-400 hover:text-white";
+
+      renderAllStopsOnMap();
+      renderRoutesOnMap();
+      showToast(isFocusModeOnly ? "👁️ 专注模式：仅显示当前线路站点" : "🌐 全景模式：显示全网线路", "info");
+    }
+
     // CONTINUOUS MAP CLICK ADD STOP MODE
     function toggleContinuousMapClickMode(forcedState) {
       isClickToAddMode = (forcedState !== undefined) ? forcedState : !isClickToAddMode;
@@ -677,32 +725,32 @@
       if (isClickToAddMode) {
         banner.classList.remove('hidden');
         if (mapEl) mapEl.classList.add('map-crosshair');
-        if (btnText) btnText.innerText = 'Exit Add Mode';
-        showToast("Continuous Mode: Click anywhere on map to drop stops along streets!", "warning");
+        if (btnText) btnText.innerText = '退出加站';
+        showToast("连续加站模式：点击地图任意马路落针！", "warning");
       } else {
         banner.classList.add('hidden');
         if (mapEl) mapEl.classList.remove('map-crosshair');
-        if (btnText) btnText.innerText = '📍 Continuous Add Stops';
+        if (btnText) btnText.innerText = '📍 点击地图插站';
       }
     }
 
     function handleMapClickAddStop(lat, lng) {
-      const autoName = `Stop #${customStopCounter++} (${lat.toFixed(4)}, ${lng.toFixed(4)})`;
+      const autoName = `站点 #${customStopCounter++} (${lat.toFixed(4)}, ${lng.toFixed(4)})`;
       const newStop = {
         id: 'stop-' + Date.now(),
         name: autoName,
         lat: Number(lat.toFixed(5)),
         lng: Number(lng.toFixed(5)),
-        category: 'Custom Street Stop',
+        category: '自定义站点',
         isHub: false
       };
 
       stops.push(newStop);
       addStopToActiveRoute(newStop.id, false);
       renderAllStopsOnMap();
-      renderStopsManagerTab();
+      renderStopsManagerSection();
       pushHistorySnapshot();
-      showToast(`Added "${autoName}"`, "success");
+      showToast(`已插入新站点 "${autoName}"`, "success");
     }
 
     // DRAG AND DROP STOP REORDERING HANDLERS
@@ -737,11 +785,11 @@
       activeRoute.stopIds.splice(targetIndex, 0, movedId);
 
       draggedIndex = null;
-      renderStopsManagerTab();
+      renderStopsManagerSection();
       renderRoutesOnMap();
       renderAllStopsOnMap();
       pushHistorySnapshot();
-      showToast("Reordered stop sequence 🚏", "info");
+      showToast("已调整站点顺序 🚏", "info");
     }
 
     function handleDragEnd(e) {
@@ -749,13 +797,140 @@
       e.target.classList.remove('dragging');
     }
 
-    // ROUTE MANAGERS & BATCH UTILITIES
+    // ALL ROUTES LIST MANAGER (TOP SIDEBAR SECTION)
+    function renderAllRoutesSidebarList() {
+      const container = document.getElementById('all-routes-list');
+      const countBadge = document.getElementById('routes-count-badge');
+      if (countBadge) countBadge.innerText = routes.length;
+
+      if (!container) return;
+
+      container.innerHTML = routes.map(r => {
+        const isSelected = r.id === activeRouteId;
+        const metrics = calculateRouteMetrics(r);
+
+        return `
+          <div class="p-2.5 rounded-xl border text-xs transition-all space-y-2 ${isSelected ? 'bg-slate-900 border-illini-orange shadow-lg' : 'bg-slate-950/60 border-slate-800 hover:border-slate-700'}">
+            <div class="flex items-center justify-between">
+              <div class="flex items-center gap-2 cursor-pointer flex-1" onclick="setActiveRoute('${r.id}')">
+                <span class="w-3.5 h-3.5 rounded-full border border-white shrink-0" style="background-color: ${r.color};"></span>
+                <span class="font-extrabold ${isSelected ? 'text-illini-orange' : 'text-white'}">Line ${r.code} - ${r.name}</span>
+              </div>
+              <div class="flex items-center gap-1">
+                <button onclick="toggleRouteVisibility('${r.id}')" title="显示/隐藏线路" class="p-1 text-xs ${r.visible ? 'text-emerald-400' : 'text-slate-600'} hover:text-white">
+                  <i class="fa-solid ${r.visible ? 'fa-eye' : 'fa-eye-slash'}"></i>
+                </button>
+                <button onclick="deleteRoute('${r.id}')" title="删除线路" class="p-1 text-xs text-rose-400 hover:bg-rose-950 rounded">
+                  <i class="fa-solid fa-trash-can"></i>
+                </button>
+              </div>
+            </div>
+
+            <div class="flex items-center justify-between text-[10px] text-slate-400 pt-1 border-t border-slate-800/60">
+              <span class="bg-slate-800 px-2 py-0.5 rounded text-slate-300 font-mono">${r.isBidirectional ? '↔️ 往返双向' : '➡️ 单向环线'}</span>
+              <span>里程: <b class="text-white">${metrics.totalDistMiles.toFixed(1)} mi</b></span>
+              <span>建议配车: <b class="text-emerald-400 font-bold">${metrics.busesNeeded} 辆</b></span>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    // ACTIVE STOPS MANAGER (BOTTOM SIDEBAR SECTION)
+    function renderStopsManagerSection() {
+      const activeRoute = routes.find(r => r.id === activeRouteId) || routes[0];
+      if (!activeRoute) return;
+
+      document.getElementById('active-line-pill').style.backgroundColor = activeRoute.color;
+      document.getElementById('active-line-title').innerText = `Line ${activeRoute.code} - ${activeRoute.name}`;
+      document.getElementById('active-line-stops-count').innerText = `${activeRoute.stopIds.length} 个车站`;
+
+      // Direction Mode buttons styling
+      const btnOneway = document.getElementById('mode-btn-oneway');
+      const btnBidi = document.getElementById('mode-btn-bidirectional');
+      if (activeRoute.isBidirectional) {
+        btnOneway.className = "py-1.5 px-2 rounded-lg font-bold transition flex items-center justify-center gap-1.5 border border-slate-700 bg-slate-900 text-slate-400";
+        btnBidi.className = "py-1.5 px-2 rounded-lg font-bold transition flex items-center justify-center gap-1.5 border border-illini-orange bg-illini-orange/20 text-white";
+      } else {
+        btnOneway.className = "py-1.5 px-2 rounded-lg font-bold transition flex items-center justify-center gap-1.5 border border-illini-orange bg-illini-orange/20 text-white";
+        btnBidi.className = "py-1.5 px-2 rounded-lg font-bold transition flex items-center justify-center gap-1.5 border border-slate-700 bg-slate-900 text-slate-400";
+      }
+
+      const cardContainer = document.getElementById('stops-card-container');
+      const cardsHtml = activeRoute.stopIds.map((sid, idx) => {
+        const stop = stops.find(s => s.id === sid);
+        if (!stop) return '';
+
+        return `
+          <div draggable="true"
+            ondragstart="handleDragStart(event, ${idx})"
+            ondragover="handleDragOver(event, ${idx})"
+            ondragleave="handleDragLeave(event)"
+            ondrop="handleDrop(event, ${idx})"
+            ondragend="handleDragEnd(event)"
+            class="stop-card bg-slate-950 border border-slate-800 hover:border-slate-700 p-2 rounded-xl text-xs space-y-1.5 shadow cursor-grab active:cursor-grabbing">
+            <div class="flex items-center gap-2">
+              <div class="text-slate-500 hover:text-slate-300 text-sm font-black px-0.5"><i class="fa-solid fa-grip-vertical"></i></div>
+              <span class="bg-slate-800 text-illini-orange border border-illini-orange/30 font-mono w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-extrabold shrink-0">
+                ${idx + 1}
+              </span>
+              <input type="text" value="${stop.name}" oninput="updateStopName('${stop.id}', this.value)" class="flex-1 bg-slate-900 border border-slate-700 focus:border-illini-orange text-white font-bold text-xs rounded-lg px-2 py-1 focus:outline-none">
+              
+              <button onclick="toggleMajorHub('${stop.id}')" title="切换枢纽站" class="p-1 bg-slate-900 ${stop.isHub ? 'text-amber-400' : 'text-slate-500'} rounded-lg border border-slate-800">
+                <i class="fa-solid fa-star"></i>
+              </button>
+              <button onclick="removeStopFromRoute(${idx})" title="从本线移除" class="p-1 bg-slate-900 text-rose-400 hover:bg-rose-950 rounded-lg border border-slate-800">
+                <i class="fa-solid fa-xmark"></i>
+              </button>
+            </div>
+            <div class="flex justify-between text-[10px] text-slate-400 px-1">
+              <span>坐标: ${stop.lat.toFixed(4)}, ${stop.lng.toFixed(4)}</span>
+              <span>${stop.isHub ? '⭐ 枢纽站 (停靠120秒)' : '普通站 (20秒)'}</span>
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      cardContainer.innerHTML = cardsHtml.length ? cardsHtml : `
+        <div class="text-xs text-slate-400 italic p-6 text-center border border-dashed border-slate-800 rounded-2xl bg-slate-950/40">
+          Line ${activeRoute.code} 当前无车站。<br>点击 <b>"📍 点击地图插站"</b> 即可在地图上绘制线路！
+        </div>
+      `;
+    }
+
+    // ROUTE ACTIONS
     function setActiveRoute(routeId) {
       activeRouteId = routeId;
-      renderStopsManagerTab();
+      renderAllRoutesSidebarList();
+      renderStopsManagerSection();
       renderRoutesOnMap();
       renderAllStopsOnMap();
       updateAnalyticsTab();
+    }
+
+    function toggleRouteVisibility(routeId) {
+      const r = routes.find(x => x.id === routeId);
+      if (r) {
+        r.visible = !r.visible;
+        renderAllRoutesSidebarList();
+        renderRoutesOnMap();
+        pushHistorySnapshot();
+      }
+    }
+
+    function deleteRoute(routeId) {
+      if (routes.length <= 1) {
+        showToast("必须保留至少一条公交线路！", "warning");
+        return;
+      }
+      routes = routes.filter(r => r.id !== routeId);
+      if (activeRouteId === routeId) activeRouteId = routes[0].id;
+      renderAllRoutesSidebarList();
+      renderStopsManagerSection();
+      renderRoutesOnMap();
+      renderAllStopsOnMap();
+      pushHistorySnapshot();
+      showToast("已删除线路", "info");
     }
 
     function addNewRoute() {
@@ -766,8 +941,9 @@
       const newRoute = {
         id: newId,
         code: `${Math.floor(Math.random() * 80 + 10)}`,
-        name: 'New Custom Line',
+        name: '自定义新线路',
         color: pickedColor,
+        visible: true,
         isBidirectional: true,
         headway: 15,
         speedMph: 12.5,
@@ -780,17 +956,17 @@
 
       routes.push(newRoute);
       setActiveRoute(newId);
-      switchTab('stops');
+      switchTab('routes');
       if (!isClickToAddMode) toggleContinuousMapClickMode(true);
       pushHistorySnapshot();
-      showToast(`Created Line ${newRoute.code}. Click map to start drawing!`, "success");
+      showToast(`已创建新线路 Line ${newRoute.code}！`, "success");
     }
 
     function addStopToActiveRoute(stopId, doSnapshot = true) {
       const activeRoute = routes.find(r => r.id === activeRouteId);
       if (activeRoute) {
         activeRoute.stopIds.push(stopId);
-        renderStopsManagerTab();
+        renderStopsManagerSection();
         renderRoutesOnMap();
         renderAllStopsOnMap();
         if (doSnapshot) pushHistorySnapshot();
@@ -801,7 +977,7 @@
       const activeRoute = routes.find(r => r.id === activeRouteId);
       if (activeRoute && activeRoute.stopIds.length > idx) {
         activeRoute.stopIds.splice(idx, 1);
-        renderStopsManagerTab();
+        renderStopsManagerSection();
         renderRoutesOnMap();
         renderAllStopsOnMap();
         pushHistorySnapshot();
@@ -812,11 +988,11 @@
       const activeRoute = routes.find(r => r.id === activeRouteId);
       if (activeRoute && activeRoute.stopIds.length > 1) {
         activeRoute.stopIds.reverse();
-        renderStopsManagerTab();
+        renderStopsManagerSection();
         renderRoutesOnMap();
         renderAllStopsOnMap();
         pushHistorySnapshot();
-        showToast("Reversed route stop order 🔄", "info");
+        showToast("已反转站点行驶顺序 🔄", "info");
       }
     }
 
@@ -824,11 +1000,11 @@
       const activeRoute = routes.find(r => r.id === activeRouteId);
       if (activeRoute) {
         activeRoute.stopIds = [];
-        renderStopsManagerTab();
+        renderStopsManagerSection();
         renderRoutesOnMap();
         renderAllStopsOnMap();
         pushHistorySnapshot();
-        showToast("Cleared stops for active line", "info");
+        showToast("已清空当前线路的车站", "info");
       }
     }
 
@@ -845,10 +1021,10 @@
       if (!stop) return;
       stop.isHub = !stop.isHub;
       renderAllStopsOnMap();
-      renderStopsManagerTab();
+      renderStopsManagerSection();
       updateAnalyticsTab();
       pushHistorySnapshot();
-      showToast(`"${stop.name}" -> ${stop.isHub ? '⭐ Major Hub (120s)' : 'Standard Stop (20s)'}`, "info");
+      showToast(`"${stop.name}" -> ${stop.isHub ? '⭐ 枢纽站 (120s)' : '普通站 (20s)'}`, "info");
     }
 
     function deleteStop(stopId) {
@@ -856,16 +1032,17 @@
       routes.forEach(r => { r.stopIds = r.stopIds.filter(sid => sid !== stopId); });
       renderAllStopsOnMap();
       renderRoutesOnMap();
-      renderStopsManagerTab();
+      renderStopsManagerSection();
       pushHistorySnapshot();
-      showToast("Stop deleted", "info");
+      showToast("已被彻底删除", "info");
     }
 
     function setRoutingMode(isBidi) {
       const activeRoute = routes.find(r => r.id === activeRouteId);
       if (activeRoute) {
         activeRoute.isBidirectional = isBidi;
-        renderStopsManagerTab();
+        renderAllRoutesSidebarList();
+        renderStopsManagerSection();
         renderRoutesOnMap();
         pushHistorySnapshot();
       }
@@ -875,7 +1052,7 @@
       const activeRoute = routes.find(r => r.id === activeRouteId);
       if (activeRoute) {
         activeRoute.headway = Number(val);
-        document.getElementById('headway-value-badge').innerText = `${val} mins`;
+        document.getElementById('headway-value-badge').innerText = `${val} 分钟`;
         updateAnalyticsTab();
         pushHistorySnapshot();
       }
@@ -923,7 +1100,7 @@
 
       document.getElementById('analytics-dist').innerText = `${m.totalDistMiles.toFixed(2)} mi`;
       document.getElementById('analytics-cycle').innerText = `${m.roundTripMins} mins`;
-      document.getElementById('analytics-fleet').innerText = `${m.busesNeeded} Vehicles`;
+      document.getElementById('analytics-fleet').innerText = `${m.busesNeeded} 辆`;
 
       // Aggregate 全网总里程与总配车
       let networkDist = 0;
@@ -935,13 +1112,13 @@
       });
 
       document.getElementById('header-total-dist').innerText = `${networkDist.toFixed(1)} mi`;
-      document.getElementById('header-total-buses').innerText = `${networkFleet} Buses`;
-      document.getElementById('footer-system-summary').innerText = `Total Network Fleet: ${networkFleet} Buses`;
+      document.getElementById('header-total-buses').innerText = `${networkFleet} 辆`;
+      document.getElementById('footer-system-summary').innerText = `全网所需总车数: ${networkFleet} 辆`;
     }
 
-    // TAB SWITCHER & CARD RENDERERS
+    // TAB SWITCHER & PRESETS RENDERER
     function switchTab(tabKey) {
-      ['stops', 'presets', 'analytics', 'export'].forEach(t => {
+      ['routes', 'presets', 'analytics', 'export'].forEach(t => {
         const btn = document.getElementById(`tab-btn-${t}`);
         const content = document.getElementById(`tab-content-${t}`);
         if (t === tabKey) {
@@ -952,72 +1129,6 @@
           content.classList.add('hidden');
         }
       });
-    }
-
-    function renderStopsManagerTab() {
-      const dropdown = document.getElementById('route-select-dropdown');
-      if (dropdown) {
-        dropdown.innerHTML = routes.map(r => `<option value="${r.id}" ${r.id === activeRouteId ? 'selected' : ''}>Line ${r.code} - ${r.name}</option>`).join('');
-      }
-
-      const activeRoute = routes.find(r => r.id === activeRouteId) || routes[0];
-      if (!activeRoute) return;
-
-      document.getElementById('active-line-color-pill').style.backgroundColor = activeRoute.color;
-
-      // Mode buttons styling
-      const btnOneway = document.getElementById('mode-btn-oneway');
-      const btnBidi = document.getElementById('mode-btn-bidirectional');
-      if (activeRoute.isBidirectional) {
-        btnOneway.className = "py-1.5 px-2 rounded-lg text-xs font-bold transition flex items-center justify-center gap-1.5 border border-slate-700 bg-slate-900 text-slate-400";
-        btnBidi.className = "py-1.5 px-2 rounded-lg text-xs font-bold transition flex items-center justify-center gap-1.5 border border-illini-orange bg-illini-orange/20 text-white";
-      } else {
-        btnOneway.className = "py-1.5 px-2 rounded-lg text-xs font-bold transition flex items-center justify-center gap-1.5 border border-illini-orange bg-illini-orange/20 text-white";
-        btnBidi.className = "py-1.5 px-2 rounded-lg text-xs font-bold transition flex items-center justify-center gap-1.5 border border-slate-700 bg-slate-900 text-slate-400";
-      }
-
-      document.getElementById('stops-count-header').innerText = `Stops Sequence (${activeRoute.stopIds.length})`;
-
-      const cardContainer = document.getElementById('stops-card-container');
-      const cardsHtml = activeRoute.stopIds.map((sid, idx) => {
-        const stop = stops.find(s => s.id === sid);
-        if (!stop) return '';
-
-        return `
-          <div draggable="true"
-            ondragstart="handleDragStart(event, ${idx})"
-            ondragover="handleDragOver(event, ${idx})"
-            ondragleave="handleDragLeave(event)"
-            ondrop="handleDrop(event, ${idx})"
-            ondragend="handleDragEnd(event)"
-            class="stop-card bg-slate-950 border border-slate-800 hover:border-slate-700 p-2.5 rounded-xl text-xs space-y-1.5 shadow cursor-grab active:cursor-grabbing">
-            <div class="flex items-center gap-2">
-              <div class="text-slate-500 hover:text-slate-300 text-sm font-black px-0.5"><i class="fa-solid fa-grip-vertical"></i></div>
-              <span class="bg-slate-800 text-illini-orange border border-illini-orange/30 font-mono w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-extrabold shrink-0">
-                ${idx + 1}
-              </span>
-              <input type="text" value="${stop.name}" oninput="updateStopName('${stop.id}', this.value)" class="flex-1 bg-slate-900 border border-slate-700 focus:border-illini-orange text-white font-bold text-xs rounded-lg px-2 py-1 focus:outline-none">
-              
-              <button onclick="toggleMajorHub('${stop.id}')" title="Toggle Hub Status" class="p-1 bg-slate-900 ${stop.isHub ? 'text-amber-400' : 'text-slate-500'} rounded-lg border border-slate-800">
-                <i class="fa-solid fa-star"></i>
-              </button>
-              <button onclick="removeStopFromRoute(${idx})" title="Remove Stop" class="p-1 bg-slate-900 text-rose-400 hover:bg-rose-950 rounded-lg border border-slate-800">
-                <i class="fa-solid fa-xmark"></i>
-              </button>
-            </div>
-            <div class="flex justify-between text-[10px] text-slate-400 px-1">
-              <span>GPS: ${stop.lat.toFixed(4)}, ${stop.lng.toFixed(4)}</span>
-              <span>${stop.isHub ? '⭐ Major Hub (120s)' : 'Standard (20s)'}</span>
-            </div>
-          </div>
-        `;
-      }).join('');
-
-      cardContainer.innerHTML = cardsHtml.length ? cardsHtml : `
-        <div class="text-xs text-slate-400 italic p-6 text-center border border-dashed border-slate-800 rounded-2xl bg-slate-950/40">
-          Line ${activeRoute.code} is currently empty.<br>Click <b>"📍 Continuous Add Stops"</b> to start drawing on the map!
-        </div>
-      `;
     }
 
     function renderPresetsTab() {
@@ -1034,14 +1145,14 @@
               <div class="text-[10px] text-slate-400">${s.category || 'Transit Stop'}</div>
             </div>
           </div>
-          <span class="text-xs font-bold text-illini-orange">+ Add</span>
+          <span class="text-xs font-bold text-illini-orange">+ 追加</span>
         </button>
       `).join('');
     }
 
     // LOCAL STORAGE & EXPORTS
     function saveToLocalStorage() {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify({ stops, routes, activeRouteId, customStopCounter }));
+      localStorage.setItem(STORAGE_KEY, JSON.stringify({ stops, routes, activeRouteId, isFocusModeOnly, customStopCounter }));
     }
 
     function loadFromLocalStorage() {
@@ -1052,6 +1163,7 @@
           if (parsed.stops) stops = parsed.stops;
           if (parsed.routes) routes = parsed.routes;
           if (parsed.activeRouteId) activeRouteId = parsed.activeRouteId;
+          if (parsed.isFocusModeOnly !== undefined) isFocusModeOnly = parsed.isFocusModeOnly;
           if (parsed.customStopCounter) customStopCounter = parsed.customStopCounter;
         } catch (e) { console.warn("Failed loading saved state:", e); }
       }
@@ -1065,7 +1177,7 @@
       document.body.appendChild(link);
       link.click();
       link.remove();
-      showToast("Workspace exported as JSON file", "success");
+      showToast("已成功导出 JSON 项目工程文件", "success");
     }
 
     function importProjectJSON(event) {
@@ -1079,14 +1191,15 @@
             stops = parsed.stops;
             routes = parsed.routes;
             if (parsed.activeRouteId) activeRouteId = parsed.activeRouteId;
+            renderAllRoutesSidebarList();
+            renderStopsManagerSection();
             renderAllStopsOnMap();
             renderRoutesOnMap();
-            renderStopsManagerTab();
             renderPresetsTab();
             pushHistorySnapshot();
-            showToast("Successfully loaded project workspace JSON!", "success");
+            showToast("成功导入项目工程数据！", "success");
           }
-        } catch (err) { showToast("Invalid JSON workspace file.", "warning"); }
+        } catch (err) { showToast("无效的 JSON 工程文件格式", "warning"); }
       };
       reader.readAsText(file);
     }
