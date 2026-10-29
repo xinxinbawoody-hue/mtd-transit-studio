@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>MTD Route Studio - Urbana-Champaign Transit Planner v11.0</title>
+  <title>MTD Route Studio - Urbana-Champaign Transit Planner v12.0</title>
 
   <!-- Leaflet CSS & JS -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
@@ -164,6 +164,19 @@
       border-bottom: 3px solid #E84A27 !important;
     }
 
+    /* Leaflet Popup Dark Customization */
+    .leaflet-popup-content-wrapper {
+      background: #0f172a !important;
+      color: #f8fafc !important;
+      border: 1px solid #334155 !important;
+      border-radius: 16px !important;
+      box-shadow: 0 20px 25px -5px rgba(0,0,0,0.5), 0 8px 10px -6px rgba(0,0,0,0.5) !important;
+    }
+    .leaflet-popup-tip {
+      background: #0f172a !important;
+      border: 1px solid #334155 !important;
+    }
+
     /* Toast Notification Animation */
     .toast-slide-in {
       animation: toastIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
@@ -184,7 +197,7 @@
       </div>
       <div>
         <h1 class="font-extrabold text-base sm:text-lg tracking-wide flex items-center gap-2 leading-none">
-          MTD ROUTE STUDIO <span class="bg-illini-orange/20 text-illini-orange text-[11px] font-bold px-2.5 py-0.5 rounded-full border border-illini-orange/40">v11.0</span>
+          MTD ROUTE STUDIO <span class="bg-illini-orange/20 text-illini-orange text-[11px] font-bold px-2.5 py-0.5 rounded-full border border-illini-orange/40">v12.0</span>
         </h1>
         <p class="text-xs text-slate-300 mt-1 flex items-center gap-2">
           <span class="w-2 h-2 rounded-full bg-emerald-400 inline-block animate-pulse"></span>
@@ -193,14 +206,25 @@
       </div>
     </div>
 
-    <!-- View Mode Switcher -->
-    <div class="hidden lg:flex items-center bg-slate-900/90 border border-slate-800 rounded-2xl p-1.5 text-xs gap-1">
-      <button id="view-mode-focus" onclick="setMapFocusMode(true)" class="px-3.5 py-1.5 rounded-xl font-bold transition flex items-center gap-1.5 bg-illini-orange text-white shadow">
-        <i class="fa-solid fa-eye"></i> Focus Active Line
-      </button>
-      <button id="view-mode-all" onclick="setMapFocusMode(false)" class="px-3.5 py-1.5 rounded-xl font-bold transition flex items-center gap-1.5 text-slate-400 hover:text-white">
-        <i class="fa-solid fa-globe"></i> Show All Lines
-      </button>
+    <!-- View Mode Switcher & Opacity Control -->
+    <div class="hidden xl:flex items-center bg-slate-900/90 border border-slate-800 rounded-2xl p-1.5 text-xs gap-3">
+      <div class="flex items-center gap-1">
+        <button id="view-mode-focus" onclick="setMapFocusMode(true)" class="px-3 py-1.5 rounded-xl font-bold transition flex items-center gap-1.5 bg-illini-orange text-white shadow">
+          <i class="fa-solid fa-eye"></i> Focus Active Line
+        </button>
+        <button id="view-mode-all" onclick="setMapFocusMode(false)" class="px-3 py-1.5 rounded-xl font-bold transition flex items-center gap-1.5 text-slate-400 hover:text-white">
+          <i class="fa-solid fa-globe"></i> Show All Lines
+        </button>
+      </div>
+
+      <div class="h-4 w-px bg-slate-800"></div>
+
+      <!-- Inactive Line Opacity Control -->
+      <div class="flex items-center gap-2 px-1 text-slate-400 font-bold text-[11px]">
+        <span>Background Line Opacity:</span>
+        <input type="range" min="0.05" max="1.0" step="0.05" value="0.25" id="inactive-opacity-header-slider" oninput="updateInactiveOpacity(this.value)" class="w-20 accent-illini-orange cursor-pointer">
+        <span id="inactive-opacity-header-val" class="text-white font-mono w-9 text-right">25%</span>
+      </div>
     </div>
 
     <!-- System Fleet Analytics Widget -->
@@ -274,6 +298,15 @@
             <i class="fa-solid fa-bus text-illini-orange"></i> Bus Lines (<span id="routes-count-badge">0</span>)
           </span>
           <button onclick="addNewRoute()" class="text-xs text-illini-orange hover:underline font-bold">+ Clean New Line</button>
+        </div>
+
+        <!-- Inactive Route Opacity Control for Mobile/Sidebar -->
+        <div class="bg-slate-900/80 p-2.5 rounded-2xl border border-slate-800 flex items-center justify-between text-xs xl:hidden">
+          <span class="text-slate-400 font-bold">Background Lines Opacity:</span>
+          <div class="flex items-center gap-2">
+            <input type="range" min="0.05" max="1.0" step="0.05" value="0.25" id="inactive-opacity-sidebar-slider" oninput="updateInactiveOpacity(this.value)" class="w-24 accent-illini-orange cursor-pointer">
+            <span id="inactive-opacity-sidebar-val" class="text-white font-mono font-bold w-8 text-right">25%</span>
+          </div>
         </div>
 
         <!-- All Lines Cards Scrollable -->
@@ -455,7 +488,7 @@
 
       <!-- FOOTER STATUS -->
       <div class="p-3 bg-slate-950 border-t border-slate-800 text-[11px] text-slate-400 flex items-center justify-between shrink-0">
-        <span>MTD Route Studio v11.0</span>
+        <span>MTD Route Studio v12.0</span>
         <span id="footer-system-summary">Total Fleet: 0 buses</span>
       </div>
 
@@ -480,10 +513,11 @@
 
   <!-- JAVASCRIPT LOGIC -->
   <script>
-    const STORAGE_KEY = 'MTD_STUDIO_V11_0_DATA';
+    const STORAGE_KEY = 'MTD_STUDIO_V12_0_DATA';
     const NEARBY_SNAP_RADIUS_MILES = 0.037; // ~60 meters
 
     let activeTabKey = 'lines';
+    let inactiveOpacity = 0.25; // Default inactive background route opacity (5% - 100%)
 
     // DEFAULT GLOBAL UIUC CAMPUS STOPS
     let stops = [
@@ -590,6 +624,25 @@
       return count;
     }
 
+    // UPDATE INACTIVE BACKGROUND ROUTE OPACITY
+    function updateInactiveOpacity(val) {
+      inactiveOpacity = parseFloat(val);
+      const pct = `${Math.round(inactiveOpacity * 100)}%`;
+
+      const headerVal = document.getElementById('inactive-opacity-header-val');
+      const headerSlider = document.getElementById('inactive-opacity-header-slider');
+      if (headerVal) headerVal.innerText = pct;
+      if (headerSlider) headerSlider.value = inactiveOpacity;
+
+      const sidebarVal = document.getElementById('inactive-opacity-sidebar-val');
+      const sidebarSlider = document.getElementById('inactive-opacity-sidebar-slider');
+      if (sidebarVal) sidebarVal.innerText = pct;
+      if (sidebarSlider) sidebarSlider.value = inactiveOpacity;
+
+      renderRoutesOnMap();
+      saveToLocalStorage();
+    }
+
     // INITIALIZE RESIZABLE SIDEBAR LOGIC
     function initSidebarResizer() {
       const sidebar = document.getElementById('sidebar-container');
@@ -685,7 +738,7 @@
     // UNDO / REDO HISTORY SYSTEM
     function pushHistorySnapshot(isInitial = false) {
       if (isRestoringHistory) return;
-      const snapshot = JSON.stringify({ stops, routes, activeRouteId, addStopScope, isFocusModeOnly, customStopCounter });
+      const snapshot = JSON.stringify({ stops, routes, activeRouteId, addStopScope, isFocusModeOnly, inactiveOpacity, customStopCounter });
 
       if (historyStack.length > 0 && historyStack[historyIndex] === snapshot) return;
 
@@ -723,6 +776,10 @@
         activeRouteId = data.activeRouteId;
         if (data.addStopScope) addStopScope = data.addStopScope;
         if (data.isFocusModeOnly !== undefined) isFocusModeOnly = data.isFocusModeOnly;
+        if (data.inactiveOpacity !== undefined) {
+          inactiveOpacity = data.inactiveOpacity;
+          updateInactiveOpacity(inactiveOpacity);
+        }
         if (data.customStopCounter) customStopCounter = data.customStopCounter;
 
         renderAllRoutesSidebarList();
@@ -781,7 +838,66 @@
       return { latLngs: coords, distanceMeters: straightDist };
     }
 
-    // MAP STOP MARKER RENDERING WITH SHARED INDICATORS
+    // 🚨 COMPLETE PHYSICAL STOP PURGE FUNCTION
+    function purgePhysicalStopCompletely(stopId) {
+      const stopObj = stops.find(s => s.id === stopId);
+      const stopName = stopObj ? stopObj.name : 'Stop';
+
+      // 1. Remove stop from ALL routes' outbound and inbound lists
+      routes.forEach(r => {
+        if (r.outboundStopIds) r.outboundStopIds = r.outboundStopIds.filter(id => id !== stopId);
+        if (r.inboundStopIds) r.inboundStopIds = r.inboundStopIds.filter(id => id !== stopId);
+      });
+
+      // 2. Remove physical stop object completely
+      stops = stops.filter(s => s.id !== stopId);
+
+      // 3. Close open popup
+      if (map) map.closePopup();
+
+      // 4. Update UI & Map
+      renderAllRoutesSidebarList();
+      renderStopsManagerSection();
+      renderAllStopsOnMap();
+      renderRoutesOnMap();
+      renderPresetsTab();
+      updateAnalyticsTab();
+
+      // 5. Save history stack
+      pushHistorySnapshot();
+
+      showToast(`🚨 Permanently purged stop "${stopName}" from system & all lines! (Ctrl+Z to Undo)`, "warning");
+    }
+
+    // REMOVE STOP VIA POPUP ACTION
+    function removeStopFromPopup(stopId, scope) {
+      const activeRoute = routes.find(r => r.id === activeRouteId);
+      if (!activeRoute) return;
+
+      const stopObj = stops.find(s => s.id === stopId);
+      const stopName = stopObj ? stopObj.name : 'Stop';
+
+      if (scope === 'both') {
+        activeRoute.outboundStopIds = activeRoute.outboundStopIds.filter(id => id !== stopId);
+        activeRoute.inboundStopIds = activeRoute.inboundStopIds.filter(id => id !== stopId);
+        showToast(`Removed "${stopName}" from Line ${activeRoute.code} (Both Legs)`, "info");
+      } else {
+        const activeDir = activeRoute.activeDirection || 'outbound';
+        if (activeDir === 'outbound') activeRoute.outboundStopIds = activeRoute.outboundStopIds.filter(id => id !== stopId);
+        else activeRoute.inboundStopIds = activeRoute.inboundStopIds.filter(id => id !== stopId);
+        showToast(`Removed "${stopName}" from Line ${activeRoute.code} (${activeDir} leg only)`, "info");
+      }
+
+      if (map) map.closePopup();
+      renderStopsManagerSection();
+      renderAllStopsOnMap();
+      renderRoutesOnMap();
+      renderAllRoutesSidebarList();
+      updateAnalyticsTab();
+      pushHistorySnapshot();
+    }
+
+    // MAP STOP MARKER RENDERING WITH INTERACTIVE POPUPS
     function renderAllStopsOnMap() {
       Object.values(markersMap).forEach(m => map.removeLayer(m));
       markersMap = {};
@@ -816,6 +932,61 @@
 
         const marker = L.marker([stop.lat, stop.lng], { icon: icon, draggable: true }).addTo(map);
 
+        // BIND RICH INTERACTIVE POPUP
+        const servingLines = routes.filter(r => 
+          (r.outboundStopIds && r.outboundStopIds.includes(stop.id)) || 
+          (r.inboundStopIds && r.inboundStopIds.includes(stop.id))
+        );
+
+        let linesListHtml = servingLines.map(r => {
+          const inOut = r.outboundStopIds && r.outboundStopIds.includes(stop.id);
+          const inIn = r.inboundStopIds && r.inboundStopIds.includes(stop.id);
+          let legsText = (inOut && inIn) ? 'Out & In' : inOut ? 'Outbound' : 'Inbound';
+          return `<div class="flex items-center gap-1.5 text-[11px] font-bold text-slate-200">
+                    <span class="w-2.5 h-2.5 rounded-full inline-block shrink-0" style="background-color:${r.color};"></span>
+                    <span>Line ${r.code} - ${r.name} (${legsText})</span>
+                  </div>`;
+        }).join('');
+
+        if (!linesListHtml) linesListHtml = `<div class="text-[11px] text-slate-400 italic">No lines currently serving this stop</div>`;
+
+        const popupHtml = `
+          <div class="p-1 max-w-[250px] text-slate-100 font-sans space-y-2">
+            <div class="border-b border-slate-800 pb-2">
+              <div class="font-extrabold text-sm text-white leading-tight">${stop.name}</div>
+              <div class="text-[11px] text-slate-400 font-semibold mt-1 flex items-center gap-1.5">
+                ${stop.isHub ? '<span class="text-amber-400 font-bold">⭐ Transfer Hub</span>' : 'Standard Stop'}
+                <span>•</span>
+                <span>${stop.category || 'Transit Stop'}</span>
+              </div>
+            </div>
+
+            <div class="space-y-1">
+              <div class="text-[10px] uppercase tracking-wider font-extrabold text-slate-400">Servicing Routes</div>
+              <div class="space-y-1 bg-slate-950/80 p-2 rounded-xl border border-slate-800 max-h-28 overflow-y-auto">
+                ${linesListHtml}
+              </div>
+            </div>
+
+            <div class="pt-1 space-y-1.5 text-xs">
+              <button onclick="removeStopFromPopup('${stop.id}', 'current')" class="w-full text-left px-2.5 py-1.5 bg-slate-900 hover:bg-slate-800 border border-slate-800 text-slate-200 font-bold rounded-xl flex items-center justify-between transition text-[11px]">
+                <span>❌ Remove from Current Leg</span>
+                <i class="fa-solid fa-angle-right text-[10px] text-slate-500"></i>
+              </button>
+              <button onclick="removeStopFromPopup('${stop.id}', 'both')" class="w-full text-left px-2.5 py-1.5 bg-slate-900 hover:bg-slate-800 border border-slate-800 text-slate-200 font-bold rounded-xl flex items-center justify-between transition text-[11px]">
+                <span>↔️ Remove from Active Line (Both)</span>
+                <i class="fa-solid fa-angle-right text-[10px] text-slate-500"></i>
+              </button>
+              <button onclick="purgePhysicalStopCompletely('${stop.id}')" class="w-full text-left px-2.5 py-1.5 bg-rose-950/80 hover:bg-rose-900 text-rose-200 font-bold rounded-xl border border-rose-800 transition flex items-center justify-between text-[11px]">
+                <span>🚨 Purge Stop (Delete System-Wide)</span>
+                <i class="fa-solid fa-trash-can text-[10px]"></i>
+              </button>
+            </div>
+          </div>
+        `;
+
+        marker.bindPopup(popupHtml, { maxWidth: 260 });
+
         marker.on('dragend', function(e) {
           const pos = e.target.getLatLng();
           stop.lat = Number(pos.lat.toFixed(5));
@@ -830,7 +1001,7 @@
       });
     }
 
-    // ASYMMETRIC ROUTE RENDERING WITH REAL-TIME ACTIVE LEG SOLID HIGHLIGHT
+    // ASYMMETRIC ROUTE RENDERING WITH CUSTOM INACTIVE OPACITY
     async function renderRoutesOnMap() {
       for (const route of routes) {
         if (!route.visible) {
@@ -867,9 +1038,9 @@
             if (!routePolylinesMap[route.id]) routePolylinesMap[route.id] = {};
 
             const isOutboundActive = !route.isBidirectional || (currentDir === 'outbound');
-            const weight = isSelected ? (isOutboundActive ? 7.0 : 4.0) : 3.0;
-            const opacity = isSelected ? (isOutboundActive ? 1.0 : 0.5) : 0.3;
-            const dashArray = isOutboundActive ? null : '8, 10';
+            const weight = isSelected ? (isOutboundActive ? 7.0 : 4.0) : 4.0;
+            const opacity = isSelected ? (isOutboundActive ? 1.0 : 0.5) : inactiveOpacity;
+            const dashArray = (isSelected && !isOutboundActive) ? '8, 10' : null;
 
             if (routePolylinesMap[route.id].outbound) {
               routePolylinesMap[route.id].outbound.setLatLngs(osrmOutbound.latLngs);
@@ -913,9 +1084,9 @@
               if (!routePolylinesMap[route.id]) routePolylinesMap[route.id] = {};
 
               const isInboundActive = (currentDir === 'inbound');
-              const weight = isSelected ? (isInboundActive ? 7.0 : 4.0) : 3.0;
-              const opacity = isSelected ? (isInboundActive ? 1.0 : 0.5) : 0.3;
-              const dashArray = isInboundActive ? null : '8, 10';
+              const weight = isSelected ? (isInboundActive ? 7.0 : 4.0) : 4.0;
+              const opacity = isSelected ? (isInboundActive ? 1.0 : 0.5) : inactiveOpacity;
+              const dashArray = (isSelected && !isInboundActive) ? '8, 10' : null;
 
               if (routePolylinesMap[route.id].inbound) {
                 routePolylinesMap[route.id].inbound.setLatLngs(osrmInbound.latLngs);
@@ -961,12 +1132,12 @@
     function setMapFocusMode(isFocus) {
       isFocusModeOnly = isFocus;
       document.getElementById('view-mode-focus').className = isFocusModeOnly ?
-        "px-3.5 py-1.5 rounded-xl font-bold transition flex items-center gap-1.5 bg-illini-orange text-white shadow" :
-        "px-3.5 py-1.5 rounded-xl font-bold transition flex items-center gap-1.5 text-slate-400 hover:text-white";
+        "px-3 py-1.5 rounded-xl font-bold transition flex items-center gap-1.5 bg-illini-orange text-white shadow" :
+        "px-3 py-1.5 rounded-xl font-bold transition flex items-center gap-1.5 text-slate-400 hover:text-white";
 
       document.getElementById('view-mode-all').className = !isFocusModeOnly ?
-        "px-3.5 py-1.5 rounded-xl font-bold transition flex items-center gap-1.5 bg-illini-orange text-white shadow" :
-        "px-3.5 py-1.5 rounded-xl font-bold transition flex items-center gap-1.5 text-slate-400 hover:text-white";
+        "px-3 py-1.5 rounded-xl font-bold transition flex items-center gap-1.5 bg-illini-orange text-white shadow" :
+        "px-3 py-1.5 rounded-xl font-bold transition flex items-center gap-1.5 text-slate-400 hover:text-white";
 
       renderAllStopsOnMap();
       renderRoutesOnMap();
@@ -1174,7 +1345,7 @@
       e.target.classList.remove('dragging');
     }
 
-    // ROUTE CREATION (v11.0 CLEAN SLATE - ZERO STOPS INITIALIZATION)
+    // ROUTE CREATION
     function addNewRoute() {
       const id = 'line-' + Date.now();
       const code = String(100 + routes.length * 10);
@@ -1192,8 +1363,8 @@
         headway: 15,
         speedMph: 12.0,
         dwellSec: 30,
-        outboundStopIds: [], // CLEAN SLATE - ZERO INITIAL STOPS
-        inboundStopIds: [],  // CLEAN SLATE - ZERO INITIAL STOPS
+        outboundStopIds: [],
+        inboundStopIds: [],
         outboundGeometry: null,
         inboundGeometry: null,
         outboundDistanceMeters: 0,
@@ -1279,7 +1450,7 @@
       }).join('');
     }
 
-    // DEDICATED STOPS EDITOR (TAB 2) WITH SYNCHRONIZED DUAL-DIRECTION DELETION
+    // DEDICATED STOPS EDITOR (TAB 2) WITH PHYSICAL PURGE OPTION
     function renderStopsManagerSection() {
       const activeRoute = routes.find(r => r.id === activeRouteId) || routes[0];
       if (!activeRoute) return;
@@ -1333,32 +1504,39 @@
             ondragleave="handleDragLeave(event)"
             ondrop="handleDrop(event, ${idx})"
             ondragend="handleDragEnd(event)"
-            class="stop-card bg-slate-900 border border-slate-800 hover:border-slate-700 p-4 rounded-2xl text-xs space-y-2.5 shadow-md cursor-grab active:cursor-grabbing">
-            <div class="flex items-center gap-2.5">
+            class="stop-card bg-slate-900 border border-slate-800 hover:border-slate-700 p-3.5 rounded-2xl text-xs space-y-2.5 shadow-md cursor-grab active:cursor-grabbing">
+            <div class="flex items-center gap-2">
               <div class="text-slate-500 hover:text-slate-300 text-lg font-black px-0.5"><i class="fa-solid fa-grip-vertical"></i></div>
-              <span class="bg-slate-800 text-illini-orange border border-illini-orange/40 font-mono w-8 h-8 rounded-full flex items-center justify-center text-xs font-extrabold shrink-0 shadow-sm">
+              <span class="bg-slate-800 text-illini-orange border border-illini-orange/40 font-mono w-7 h-7 rounded-full flex items-center justify-center text-xs font-extrabold shrink-0 shadow-sm">
                 ${idx + 1}
               </span>
-              <input type="text" value="${stop.name}" oninput="updateStopName('${stop.id}', this.value)" class="flex-1 bg-slate-950 border border-slate-700 focus:border-illini-orange text-white font-bold text-xs rounded-xl px-3 py-2 focus:outline-none min-w-0">
+              <input type="text" value="${stop.name}" oninput="updateStopName('${stop.id}', this.value)" class="flex-1 bg-slate-950 border border-slate-700 focus:border-illini-orange text-white font-bold text-xs rounded-xl px-2.5 py-1.5 focus:outline-none min-w-0">
               
-              <button onclick="flyToStop('${stop.id}')" title="Locate on map" class="p-2 bg-slate-950 text-sky-400 hover:text-white rounded-xl border border-slate-800 transition">
+              <button onclick="flyToStop('${stop.id}')" title="Locate on map" class="p-1.5 bg-slate-950 text-sky-400 hover:text-white rounded-xl border border-slate-800 transition">
                 <i class="fa-solid fa-crosshairs"></i>
               </button>
-              <button onclick="toggleMajorHub('${stop.id}')" title="Toggle transfer hub status" class="p-2 bg-slate-950 ${stop.isHub ? 'text-amber-400' : 'text-slate-500'} rounded-xl border border-slate-800 transition">
+              <button onclick="toggleMajorHub('${stop.id}')" title="Toggle transfer hub status" class="p-1.5 bg-slate-950 ${stop.isHub ? 'text-amber-400' : 'text-slate-500'} rounded-xl border border-slate-800 transition">
                 <i class="fa-solid fa-star"></i>
               </button>
               
-              <!-- Quick Dual-Leg Delete Button if stop exists in both legs -->
+              <!-- Quick Dual-Leg Delete Button -->
               ${isInBothLegs ? `
-                <button onclick="removeStopFromActiveDirection(${idx}, true)" title="Remove from BOTH Outbound & Inbound legs" class="px-2 py-2 bg-rose-950/80 hover:bg-rose-900 text-rose-300 rounded-xl border border-rose-800/80 transition flex items-center gap-1 font-bold text-[10px]">
+                <button onclick="removeStopFromActiveDirection(${idx}, true)" title="Remove from BOTH Outbound & Inbound legs" class="px-2 py-1.5 bg-rose-950/80 hover:bg-rose-900 text-rose-300 rounded-xl border border-rose-800/80 transition flex items-center gap-1 font-bold text-[10px]">
                   <i class="fa-solid fa-arrows-split-up-and-left"></i> Both
                 </button>
               ` : ''}
 
-              <button onclick="removeStopFromActiveDirection(${idx}, false)" title="Remove stop from line" class="p-2 bg-slate-950 text-rose-400 hover:bg-rose-950 rounded-xl border border-slate-800 transition flex items-center justify-center">
+              <!-- Remove from line sequence -->
+              <button onclick="removeStopFromActiveDirection(${idx}, false)" title="Remove stop from line leg sequence" class="p-1.5 bg-slate-950 text-rose-400 hover:bg-rose-950 rounded-xl border border-slate-800 transition flex items-center justify-center">
                 <i class="fa-solid fa-xmark"></i>
               </button>
+
+              <!-- 🚨 Complete System-Wide Physical Purge Button -->
+              <button onclick="purgePhysicalStopCompletely('${stop.id}')" title="🚨 Purge this physical stop completely from all lines & system" class="p-1.5 bg-slate-950 text-rose-500 hover:bg-rose-900 hover:text-white rounded-xl border border-rose-900/60 transition flex items-center justify-center">
+                <i class="fa-solid fa-skull-crossbones"></i>
+              </button>
             </div>
+
             <div class="flex justify-between items-center text-xs text-slate-400 px-1 pt-1.5 border-t border-slate-800/80">
               <span class="flex items-center gap-2">
                 <span class="font-medium">${stop.category || 'Transit Stop'}</span>
@@ -1429,7 +1607,7 @@
       }
     }
 
-    // SYNCHRONIZED DUAL-DIRECTION STOP DELETION LOGIC (v11.0)
+    // SYNCHRONIZED DUAL-DIRECTION STOP DELETION LOGIC
     function removeStopFromActiveDirection(idx, forceBoth = false) {
       const activeRoute = routes.find(r => r.id === activeRouteId);
       if (!activeRoute) return;
@@ -1447,12 +1625,10 @@
       const isInBothLegs = otherSeq.includes(removedStopId);
 
       if (forceBoth || (addStopScope === 'both' && isInBothLegs)) {
-        // Remove stop from both Outbound and Inbound sequences
         activeRoute.outboundStopIds = activeRoute.outboundStopIds.filter(id => id !== removedStopId);
         activeRoute.inboundStopIds = activeRoute.inboundStopIds.filter(id => id !== removedStopId);
         showToast(`Removed "${stopName}" from BOTH Outbound & Inbound legs`, "info");
       } else {
-        // Remove strictly from current leg
         currentSeq.splice(idx, 1);
         showToast(`Removed "${stopName}" from ${activeDir} leg ONLY`, "info");
       }
@@ -1628,7 +1804,7 @@
 
     // LOCAL STORAGE & EXPORTS
     function saveToLocalStorage() {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify({ stops, routes, activeRouteId, addStopScope, isFocusModeOnly, customStopCounter }));
+      localStorage.setItem(STORAGE_KEY, JSON.stringify({ stops, routes, activeRouteId, addStopScope, isFocusModeOnly, inactiveOpacity, customStopCounter }));
     }
 
     function loadFromLocalStorage() {
@@ -1641,16 +1817,17 @@
           if (parsed.activeRouteId) activeRouteId = parsed.activeRouteId;
           if (parsed.addStopScope) addStopScope = parsed.addStopScope;
           if (parsed.isFocusModeOnly !== undefined) isFocusModeOnly = parsed.isFocusModeOnly;
+          if (parsed.inactiveOpacity !== undefined) inactiveOpacity = parsed.inactiveOpacity;
           if (parsed.customStopCounter) customStopCounter = parsed.customStopCounter;
         } catch (e) { console.warn("Failed loading local state:", e); }
       }
     }
 
     function exportProjectJSON() {
-      const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify({ stops, routes, activeRouteId, addStopScope }, null, 2));
+      const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify({ stops, routes, activeRouteId, addStopScope, inactiveOpacity }, null, 2));
       const link = document.createElement('a');
       link.setAttribute("href", dataStr);
-      link.setAttribute("download", `mtd_workspace_v11_0_${Date.now()}.json`);
+      link.setAttribute("download", `mtd_workspace_v12_0_${Date.now()}.json`);
       document.body.appendChild(link);
       link.click();
       link.remove();
@@ -1669,6 +1846,10 @@
             routes = parsed.routes;
             if (parsed.activeRouteId) activeRouteId = parsed.activeRouteId;
             if (parsed.addStopScope) addStopScope = parsed.addStopScope;
+            if (parsed.inactiveOpacity !== undefined) {
+              inactiveOpacity = parsed.inactiveOpacity;
+              updateInactiveOpacity(inactiveOpacity);
+            }
             renderAllRoutesSidebarList();
             renderStopsManagerSection();
             renderAllStopsOnMap();
@@ -1733,6 +1914,7 @@
       loadFromLocalStorage();
       initSidebarResizer();
       initLeafletMap();
+      updateInactiveOpacity(inactiveOpacity);
       renderAllRoutesSidebarList();
       renderStopsManagerSection();
       renderAllStopsOnMap();
