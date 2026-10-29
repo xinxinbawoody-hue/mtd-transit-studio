@@ -834,11 +834,75 @@
       };
 
       stops.push(newStop);
-      addStopToActiveRoute(newStop.id, false);
+      addStopToActiveRoute(newStop.id, false, newStop.lat, newStop.lng);
       renderAllStopsOnMap();
       renderStopsManagerSection();
       pushHistorySnapshot();
-      showToast(`Added stop "${autoName}"`, "success");
+      
+      const activeRoute = routes.find(r => r.id === activeRouteId);
+      const insertedPos = activeRoute ? activeRoute.stopIds.indexOf(newStop.id) + 1 : 1;
+      showToast(`Added "${autoName}" at position #${insertedPos}`, "success");
+    }
+
+    function addStopToActiveRoute(stopId, doSnapshot = true, targetLat = null, targetLng = null) {
+      const activeRoute = routes.find(r => r.id === activeRouteId);
+      if (activeRoute) {
+        let insertIdx = activeRoute.stopIds.length;
+        if (targetLat !== null && targetLng !== null) {
+          insertIdx = findBestInsertionIndex(activeRoute, targetLat, targetLng);
+        } else {
+          const stopObj = stops.find(s => s.id === stopId);
+          if (stopObj) {
+            insertIdx = findBestInsertionIndex(activeRoute, stopObj.lat, stopObj.lng);
+          }
+        }
+
+        activeRoute.stopIds.splice(insertIdx, 0, stopId);
+        renderStopsManagerSection();
+        renderRoutesOnMap();
+        renderAllStopsOnMap();
+        if (doSnapshot) pushHistorySnapshot();
+      }
+    }
+
+    // SMART MID-ROUTE STOP INSERTION DETOUR ALGORITHM
+    function findBestInsertionIndex(route, lat, lng) {
+      const routeStops = route.stopIds.map(sid => stops.find(s => s.id === sid)).filter(Boolean);
+      if (routeStops.length < 2) return routeStops.length;
+
+      let bestIndex = routeStops.length;
+      let minDetour = Infinity;
+
+      // Evaluate detour distance for inserting between adjacent stops S_i and S_i+1
+      for (let i = 0; i < routeStops.length - 1; i++) {
+        const s1 = routeStops[i];
+        const s2 = routeStops[i + 1];
+        const d1 = calcDistMiles(s1.lat, s1.lng, lat, lng);
+        const d2 = calcDistMiles(lat, lng, s2.lat, s2.lng);
+        const dOriginal = calcDistMiles(s1.lat, s1.lng, s2.lat, s2.lng);
+        const detour = d1 + d2 - dOriginal;
+
+        if (detour < minDetour) {
+          minDetour = detour;
+          bestIndex = i + 1;
+        }
+      }
+
+      // Check distance to extend at the end
+      const lastStop = routeStops[routeStops.length - 1];
+      const endDist = calcDistMiles(lastStop.lat, lastStop.lng, lat, lng);
+      if (endDist < minDetour) {
+        bestIndex = routeStops.length;
+      }
+
+      // Check distance to prepending at the start
+      const firstStop = routeStops[0];
+      const startDist = calcDistMiles(lat, lng, firstStop.lat, firstStop.lng);
+      if (startDist < minDetour && startDist < endDist) {
+        bestIndex = 0;
+      }
+
+      return bestIndex;
     }
 
     // DRAG AND DROP STOP REORDERING HANDLERS
@@ -1177,6 +1241,14 @@
       }
 
       let outboundMeters = route.roadDistanceMeters || 0;
+      // Immediate Haversine fallback if OSRM response is pending
+      if (!outboundMeters) {
+        const routeStops = route.stopIds.map(sid => stops.find(s => s.id === sid)).filter(Boolean);
+        for (let i = 0; i < routeStops.length - 1; i++) {
+          outboundMeters += calcDistMiles(routeStops[i].lat, routeStops[i].lng, routeStops[i+1].lat, routeStops[i+1].lng) * 1609.34;
+        }
+      }
+
       let returnMeters = route.isBidirectional ? (route.returnDistanceMeters || outboundMeters) : 0;
 
       const totalDistMeters = outboundMeters + returnMeters;
