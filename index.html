@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="zh-CN" class="dark">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>MTD Route Studio - Urbana-Champaign Transit Network Planner</title>
+  <title>MTD Route Studio - Urbana-Champaign Transit Planner v5.5</title>
   
   <!-- Leaflet CSS & JS -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
@@ -20,8 +20,9 @@
             illini: {
               navy: '#13294B',
               orange: '#E84A27',
-              darkNavy: '#0A1628',
-              lightBlue: '#1E3A8A'
+              darkBg: '#0b0f19',
+              panel: '#111827',
+              card: '#1f2937'
             }
           }
         }
@@ -34,25 +35,35 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 
   <style>
-    body { font-family: 'Inter', sans-serif; }
-    #map { height: 100%; width: 100%; z-index: 1; }
-
-    /* Glassmorphism Sidebar */
-    .glass-panel {
-      background: rgba(19, 41, 75, 0.96);
-      backdrop-filter: blur(16px);
-      -webkit-backdrop-filter: blur(16px);
-      border-right: 1px solid rgba(255, 255, 255, 0.12);
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background-color: #0b0f19;
+      color: #f3f4f6;
     }
 
-    /* Custom Scrollbars */
-    ::-webkit-scrollbar { width: 6px; height: 6px; }
-    ::-webkit-scrollbar-track { background: #080d1a; }
-    ::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
-    ::-webkit-scrollbar-thumb:hover { background: #475569; }
+    #map {
+      height: 100%;
+      width: 100%;
+      z-index: 1;
+      background-color: #0f172a;
+    }
 
-    /* Active Stop Markers on Map */
-    .stop-marker-badge {
+    /* Minimalist Glass Sidebar */
+    .glass-sidebar {
+      background: rgba(17, 24, 39, 0.95);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border-right: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    /* Scrollbar styling */
+    ::-webkit-scrollbar { width: 5px; height: 5px; }
+    ::-webkit-scrollbar-track { background: #0b0f19; }
+    ::-webkit-scrollbar-thumb { background: #374151; border-radius: 4px; }
+    ::-webkit-scrollbar-thumb:hover { background: #4b5563; }
+
+    /* Clean Map Stop Badge */
+    .stop-badge-icon {
       display: flex;
       align-items: center;
       justify-content: center;
@@ -60,42 +71,43 @@
       font-weight: 800;
       font-size: 11px;
       border-radius: 50%;
-      border: 2.5px solid #ffffff;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.5);
-      transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      border: 2px solid #ffffff;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.4);
+      transition: transform 0.15s ease-out;
       cursor: pointer;
     }
-    .stop-marker-badge:hover { transform: scale(1.22); z-index: 999; }
+    .stop-badge-icon:hover {
+      transform: scale(1.25);
+      z-index: 999;
+    }
 
-    /* Hub Badge Icon */
-    .hub-star-badge {
+    .hub-star {
       position: absolute;
-      top: -4px;
-      right: -4px;
-      background: #FFC72C;
+      top: -3px;
+      right: -3px;
+      background: #f59e0b;
       color: #000;
       border-radius: 50%;
-      width: 12px;
-      height: 12px;
-      font-size: 8px;
+      width: 11px;
+      height: 11px;
+      font-size: 7px;
       display: flex;
       align-items: center;
       justify-content: center;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.4);
+      box-shadow: 0 1px 3px rgba(0,0,0,0.5);
     }
 
-    /* Map Crosshair Cursor */
+    /* Crosshair for map stop insertion */
     .map-crosshair { cursor: crosshair !important; }
 
-    /* Drag and Drop Stop Card Animations */
+    /* Drag & Drop Reorder Cards */
     .stop-card {
-      transition: all 0.2s cubic-bezier(0.2, 0, 0, 1);
+      transition: transform 0.15s ease, border-color 0.15s ease, opacity 0.15s ease;
     }
     .stop-card.dragging {
-      opacity: 0.35;
-      background: rgba(232, 74, 39, 0.2);
+      opacity: 0.3;
+      background: rgba(232, 74, 39, 0.15);
       border: 2px dashed #E84A27;
-      transform: scale(0.97);
     }
     .stop-card.drag-over-top {
       border-top: 3px solid #E84A27 !important;
@@ -104,53 +116,40 @@
       border-bottom: 3px solid #E84A27 !important;
     }
 
-    /* Toast Notification Slide Animation */
-    .toast-slide-in {
-      animation: toastIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+    /* Toast Slide Animation */
+    .toast-anim {
+      animation: toastIn 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
     }
     @keyframes toastIn {
-      from { transform: translateY(20px); opacity: 0; }
+      from { transform: translateY(16px); opacity: 0; }
       to { transform: translateY(0); opacity: 1; }
     }
   </style>
 </head>
-<body class="bg-slate-950 text-slate-100 flex flex-col h-screen overflow-hidden">
+<body class="flex flex-col h-screen overflow-hidden text-slate-100 select-none">
 
-  <!-- APP HEADER -->
-  <header class="bg-illini-navy border-b border-slate-800 text-white px-4 py-2.5 flex items-center justify-between shrink-0 h-[62px] z-30 shadow-xl">
+  <!-- TOP HEADER BAR -->
+  <header class="bg-slate-900 border-b border-slate-800 px-4 py-2 flex items-center justify-between shrink-0 h-[56px] z-30 shadow-md">
     <div class="flex items-center space-x-3">
-      <div class="bg-illini-orange p-2 rounded-xl text-white font-black flex items-center justify-center w-10 h-10 shadow-md">
-        <i class="fa-solid fa-bus text-xl"></i>
+      <div class="bg-illini-orange text-white rounded-lg w-9 h-9 flex items-center justify-center font-black shadow-md">
+        <i class="fa-solid fa-bus text-lg"></i>
       </div>
       <div>
-        <h1 class="font-extrabold text-base sm:text-lg tracking-wide flex items-center gap-2 leading-none">
-          MTD ROUTE STUDIO <span class="bg-illini-orange/20 text-illini-orange text-[11px] font-bold px-2 py-0.5 rounded border border-illini-orange/40">v5.0 Clean Map</span>
+        <h1 class="font-bold text-sm sm:text-base tracking-wide flex items-center gap-2 leading-tight text-white">
+          MTD ROUTE STUDIO <span class="bg-illini-orange/20 text-illini-orange text-[10px] font-extrabold px-2 py-0.5 rounded border border-illini-orange/30">v5.5 Minimal</span>
         </h1>
-        <p class="text-[11px] text-slate-300 mt-0.5 flex items-center gap-1.5">
-          <span class="w-2 h-2 rounded-full bg-emerald-400 inline-block animate-pulse"></span>
-          <span>Urbana-Champaign OSRM Real-Street Engine</span>
-        </p>
+        <p class="text-[11px] text-slate-400">Urbana-Champaign Transit Planner</p>
       </div>
     </div>
 
-    <!-- Map Cleanliness & View Mode Controller -->
-    <div class="hidden lg:flex items-center bg-slate-900/90 border border-slate-800 rounded-2xl p-1 text-xs">
-      <button id="view-mode-focus" onclick="setMapFocusMode(true)" class="px-3 py-1.5 rounded-xl font-bold transition flex items-center gap-1.5 bg-illini-orange text-white shadow">
-        <i class="fa-solid fa-eye"></i> 专注当前线路 (Focus Active)
-      </button>
-      <button id="view-mode-all" onclick="setMapFocusMode(false)" class="px-3 py-1.5 rounded-xl font-bold transition flex items-center gap-1.5 text-slate-400 hover:text-white">
-        <i class="fa-solid fa-globe"></i> 全景显示 (Show All Lines)
-      </button>
-    </div>
-
-    <!-- Live System Fleet Analytics Header Widget -->
-    <div class="hidden md:flex items-center gap-5 bg-slate-900/80 px-4 py-1.5 rounded-2xl border border-slate-800 text-xs">
+    <!-- Live System Fleet Analytics -->
+    <div class="hidden md:flex items-center gap-6 bg-slate-950 px-4 py-1.5 rounded-xl border border-slate-800 text-xs">
       <div class="flex items-center gap-2">
         <i class="fa-solid fa-route text-illini-orange"></i>
         <span class="text-slate-400">全网里程:</span>
-        <span id="header-total-dist" class="font-bold text-white">0.0 mi</span>
+        <span id="header-total-dist" class="font-bold text-slate-100">0.0 mi</span>
       </div>
-      <div class="w-px h-4 bg-slate-800"></div>
+      <div class="w-px h-3.5 bg-slate-800"></div>
       <div class="flex items-center gap-2">
         <i class="fa-solid fa-bus-simple text-emerald-400"></i>
         <span class="text-slate-400">全网总配车:</span>
@@ -158,103 +157,106 @@
       </div>
     </div>
 
-    <!-- Header Undo/Redo & Line Creator -->
-    <div class="flex items-center space-x-2">
-      <div class="flex items-center bg-slate-900 border border-slate-800 rounded-xl p-1 shadow-inner">
-        <button id="undo-btn" onclick="undo()" title="Undo (Ctrl+Z)" disabled class="px-2.5 py-1 text-slate-400 hover:text-white disabled:opacity-30 disabled:hover:text-slate-400 text-xs font-bold rounded-lg transition flex items-center gap-1">
+    <!-- Action Buttons & Undo/Redo -->
+    <div class="flex items-center gap-2">
+      <div class="flex items-center bg-slate-950 border border-slate-800 rounded-lg p-1">
+        <button id="undo-btn" onclick="undo()" title="撤回 (Ctrl+Z)" disabled class="px-2 py-1 text-slate-400 hover:text-white disabled:opacity-30 disabled:hover:text-slate-400 text-xs font-bold rounded transition flex items-center gap-1">
           <i class="fa-solid fa-rotate-left"></i> <span class="hidden sm:inline">撤回</span>
         </button>
-        <div class="w-px h-4 bg-slate-800 my-auto"></div>
-        <button id="redo-btn" onclick="redo()" title="Redo (Ctrl+Y)" disabled class="px-2.5 py-1 text-slate-400 hover:text-white disabled:opacity-30 disabled:hover:text-slate-400 text-xs font-bold rounded-lg transition flex items-center gap-1">
+        <div class="w-px h-3.5 bg-slate-800 my-auto"></div>
+        <button id="redo-btn" onclick="redo()" title="重做 (Ctrl+Y)" disabled class="px-2 py-1 text-slate-400 hover:text-white disabled:opacity-30 disabled:hover:text-slate-400 text-xs font-bold rounded transition flex items-center gap-1">
           <i class="fa-solid fa-rotate-right"></i> <span class="hidden sm:inline">重做</span>
         </button>
       </div>
 
-      <button onclick="addNewRoute()" class="bg-illini-orange hover:bg-orange-600 text-white text-xs px-3 py-2 rounded-xl font-bold transition flex items-center gap-1.5 shadow-md">
+      <button onclick="addNewRoute()" class="bg-illini-orange hover:bg-orange-600 text-white text-xs px-3 py-1.5 rounded-lg font-bold transition flex items-center gap-1.5 shadow">
         <i class="fa-solid fa-plus"></i>
         <span>新建线路</span>
       </button>
     </div>
   </header>
 
-  <!-- MAIN CONTAINER -->
+  <!-- MAIN LAYOUT WORKSPACE -->
   <div class="flex-1 flex overflow-hidden relative">
 
-    <!-- LEFT SIDEBAR WORKSPACE -->
-    <aside id="sidebar-container" class="w-full md:w-[460px] glass-panel flex flex-col z-20 shrink-0 shadow-2xl">
+    <!-- LEFT SIDEBAR: BUS LINES & STOPS MANAGER -->
+    <aside class="w-full md:w-[420px] glass-sidebar flex flex-col z-20 shrink-0 shadow-2xl">
       
-      <!-- NAVIGATION TABS -->
-      <div class="bg-slate-950/80 p-2 border-b border-slate-800 grid grid-cols-4 gap-1 text-[11px] font-semibold">
-        <button id="tab-btn-routes" onclick="switchTab('routes')" class="py-2 px-1 rounded-lg text-center transition-all bg-illini-orange text-white font-bold shadow">
-          <i class="fa-solid fa-bus block text-sm mb-0.5"></i> 🚌 线路与车站
-        </button>
-        <button id="tab-btn-presets" onclick="switchTab('presets')" class="py-2 px-1 rounded-lg text-center transition-all text-slate-400 hover:text-slate-200 hover:bg-slate-800">
-          <i class="fa-solid fa-building-columns block text-sm mb-0.5"></i> 🏛️ UIUC 地标
-        </button>
-        <button id="tab-btn-analytics" onclick="switchTab('analytics')" class="py-2 px-1 rounded-lg text-center transition-all text-slate-400 hover:text-slate-200 hover:bg-slate-800">
-          <i class="fa-solid fa-chart-line block text-sm mb-0.5"></i> 📊 配车测算
-        </button>
-        <button id="tab-btn-export" onclick="switchTab('export')" class="py-2 px-1 rounded-lg text-center transition-all text-slate-400 hover:text-slate-200 hover:bg-slate-800">
-          <i class="fa-solid fa-file-export block text-sm mb-0.5"></i> 💾 项目导出
-        </button>
+      <!-- NAVIGATION HEADER / TABS -->
+      <div class="bg-slate-950 p-2 border-b border-slate-800 flex items-center justify-between text-xs">
+        <div class="flex gap-1">
+          <button id="tab-btn-main" onclick="switchSidebarTab('main')" class="px-3 py-1.5 rounded-lg font-bold bg-illini-orange text-white shadow">
+            <i class="fa-solid fa-layer-group"></i> 线路与车站
+          </button>
+          <button id="tab-btn-analytics" onclick="switchSidebarTab('analytics')" class="px-3 py-1.5 rounded-lg font-bold text-slate-400 hover:text-white hover:bg-slate-800 transition">
+            <i class="fa-solid fa-chart-line"></i> 运营测算
+          </button>
+          <button id="tab-btn-export" onclick="switchSidebarTab('export')" class="px-3 py-1.5 rounded-lg font-bold text-slate-400 hover:text-white hover:bg-slate-800 transition">
+            <i class="fa-solid fa-download"></i> 导出项目
+          </button>
+        </div>
       </div>
 
-      <!-- TAB 1: ALL BUS LINES & STOPS MANAGER -->
-      <div id="tab-content-routes" class="flex-1 flex flex-col overflow-hidden">
+      <!-- MAIN TAB: LINES LIST + ACTIVE LINE STOPS -->
+      <div id="tab-content-main" class="flex-1 flex flex-col overflow-hidden">
         
         <!-- SECTION 1: ALL BUS LINES LIST (全网公交线路列表) -->
-        <div class="p-3.5 border-b border-slate-800 bg-slate-950/80 space-y-2.5 shrink-0 max-h-[48%] overflow-y-auto">
+        <div class="p-3 border-b border-slate-800 bg-slate-950/70 shrink-0 max-h-[42%] overflow-y-auto space-y-2">
           <div class="flex items-center justify-between">
             <span class="text-[11px] font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
-              <i class="fa-solid fa-list-check text-illini-orange"></i> 所有公交线路列表 (<span id="routes-count-badge">0</span>)
+              <i class="fa-solid fa-bus text-illini-orange"></i> 所有公交线路 (<span id="routes-count-label">0</span>)
             </span>
-            <button onclick="addNewRoute()" class="text-[10px] text-illini-orange hover:underline font-bold">+ 新增线路</button>
+            <button onclick="addNewRoute()" class="text-[11px] text-illini-orange hover:underline font-bold">+ 新建线路</button>
           </div>
 
-          <!-- All Bus Lines Cards Container -->
-          <div id="all-routes-list" class="space-y-2">
-            <!-- Dynamically populated -->
+          <!-- All Lines Cards Container -->
+          <div id="all-routes-container" class="space-y-1.5">
+            <!-- Dynamically Rendered -->
+          </div>
+        </div>
+
+        <!-- QUICK PRESET LANDMARKS CHIPS -->
+        <div class="p-2.5 bg-slate-900/80 border-b border-slate-800 space-y-1.5 shrink-0">
+          <div class="text-[10px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1">
+            <i class="fa-solid fa-building-columns text-sky-400"></i> UIUC 快捷预设加站:
+          </div>
+          <div class="flex flex-wrap gap-1.5" id="presets-chips-container">
+            <!-- Dynamically Populated Chips -->
           </div>
         </div>
 
         <!-- SECTION 2: ACTIVE LINE STOPS MANAGER (当前选定线路车站管理) -->
         <div class="flex-1 flex flex-col overflow-hidden bg-slate-950/40">
           
-          <div class="p-3 border-b border-slate-800 bg-slate-900/60 space-y-2">
+          <div class="p-2.5 border-b border-slate-800 bg-slate-900/80 space-y-2">
             <div class="flex items-center justify-between">
               <div class="flex items-center gap-2">
                 <span id="active-line-pill" class="w-3 h-3 rounded-full bg-illini-orange border border-white"></span>
                 <span id="active-line-title" class="font-extrabold text-xs text-white">Line 130 - Silver Express</span>
               </div>
-              <span id="active-line-stops-count" class="text-[10px] text-slate-400 font-mono">0 个车站</span>
+              <span id="active-line-stops-badge" class="text-[10px] text-slate-400 font-mono">0 个车站</span>
             </div>
 
-            <!-- Direction Toggle & Action Toolbar -->
-            <div class="grid grid-cols-2 gap-2 text-xs">
-              <button id="mode-btn-oneway" onclick="setRoutingMode(false)" class="py-1.5 px-2 rounded-lg font-bold transition flex items-center justify-center gap-1.5 border border-slate-700 bg-slate-900 text-slate-400">
-                <i class="fa-solid fa-arrow-right"></i> 单向环线
-              </button>
-              <button id="mode-btn-bidirectional" onclick="setRoutingMode(true)" class="py-1.5 px-2 rounded-lg font-bold transition flex items-center justify-center gap-1.5 border border-illini-orange bg-illini-orange/20 text-white">
-                <i class="fa-solid fa-arrows-left-right"></i> 往返双向 ↔️
-              </button>
-            </div>
+            <!-- Direction Toggle & Map Add Button -->
+            <div class="flex items-center gap-2 text-xs">
+              <div class="flex bg-slate-950 p-0.5 rounded-lg border border-slate-800 flex-1">
+                <button id="btn-mode-oneway" onclick="setRoutingMode(false)" class="flex-1 py-1 rounded text-[11px] font-bold transition text-slate-400">
+                  单向环线
+                </button>
+                <button id="btn-mode-bidi" onclick="setRoutingMode(true)" class="flex-1 py-1 rounded text-[11px] font-bold transition bg-illini-orange text-white shadow">
+                  往返双向 ↔️
+                </button>
+              </div>
 
-            <div class="flex items-center justify-between text-xs gap-2 pt-1">
-              <button onclick="toggleContinuousMapClickMode()" id="map-click-toggle-btn" class="flex-1 bg-illini-orange hover:bg-orange-600 text-white font-bold py-1.5 px-3 rounded-xl transition flex items-center justify-center gap-1.5 shadow">
-                <i class="fa-solid fa-plus-circle"></i> <span id="map-click-btn-text">📍 点击地图插站</span>
-              </button>
-              <button onclick="reverseCurrentRouteStops()" title="反转站点顺序" class="bg-slate-900 hover:bg-slate-800 border border-slate-700 text-slate-200 px-2.5 py-1.5 rounded-xl transition">
-                <i class="fa-solid fa-right-left text-sky-400"></i>
-              </button>
-              <button onclick="clearCurrentRouteStops()" title="清空该线站点" class="bg-slate-900 hover:bg-rose-950 text-rose-300 border border-slate-800 px-2.5 py-1.5 rounded-xl transition">
-                <i class="fa-solid fa-trash-can text-rose-400"></i>
+              <button onclick="toggleMapClickMode()" id="map-add-toggle-btn" class="bg-illini-orange hover:bg-orange-600 text-white font-bold py-1.5 px-3 rounded-lg text-xs transition flex items-center gap-1.5 shadow">
+                <i class="fa-solid fa-plus-circle"></i> <span id="map-add-btn-text">📍 地图插站</span>
               </button>
             </div>
           </div>
 
           <!-- Active Route Reorderable Stops List -->
-          <div class="flex-1 overflow-y-auto p-3 space-y-2">
-            <div id="stops-card-container" class="space-y-2">
+          <div class="flex-1 overflow-y-auto p-2.5 space-y-1.5">
+            <div id="stops-cards-container" class="space-y-1.5">
               <!-- JS Populated Cards -->
             </div>
           </div>
@@ -263,33 +265,19 @@
 
       </div>
 
-      <!-- TAB 2: UIUC & LINCOLN AVE PRESETS -->
-      <div id="tab-content-presets" class="hidden flex-1 overflow-y-auto p-4 space-y-4">
-        <div>
-          <h2 class="text-sm font-bold text-white flex items-center gap-2">
-            <i class="fa-solid fa-building-columns text-illini-orange"></i> UIUC & Lincoln Ave 经典站点
-          </h2>
-          <p class="text-xs text-slate-400 mt-1">点击任意预设站点直接追加到当前选中的线路：</p>
-        </div>
-
-        <div id="presets-grid" class="grid grid-cols-1 gap-2">
-          <!-- JS Populated -->
-        </div>
-      </div>
-
-      <!-- TAB 3: OPERATIONAL ANALYTICS -->
+      <!-- ANALYTICS TAB -->
       <div id="tab-content-analytics" class="hidden flex-1 overflow-y-auto p-4 space-y-4">
         <div>
-          <h2 class="text-sm font-bold text-white flex items-center gap-2">
-            <i class="fa-solid fa-chart-line text-emerald-400"></i> 线路配车与运营测算
+          <h2 class="text-xs font-bold text-white flex items-center gap-2">
+            <i class="fa-solid fa-chart-line text-emerald-400"></i> 线路发车与配车测算
           </h2>
-          <p class="text-xs text-slate-400 mt-1">调整发车间隔 (Headway) 与运行参数：</p>
+          <p class="text-[11px] text-slate-400 mt-1">调整当前选中线路的发车频率参数：</p>
         </div>
 
-        <div class="bg-slate-950/80 p-3.5 rounded-2xl border border-slate-800 space-y-3">
+        <div class="bg-slate-900 p-3 rounded-xl border border-slate-800 space-y-3">
           <div class="flex items-center justify-between">
             <span class="text-xs font-bold text-slate-200">发车间隔 (Headway)</span>
-            <span id="headway-value-badge" class="bg-illini-orange/20 text-illini-orange font-mono font-bold text-xs px-2 py-0.5 rounded border border-illini-orange/40">15 分钟</span>
+            <span id="headway-label" class="bg-illini-orange/20 text-illini-orange font-mono font-bold text-xs px-2 py-0.5 rounded border border-illini-orange/40">15 分钟</span>
           </div>
           <input type="range" min="5" max="60" step="5" value="15" id="headway-slider" oninput="updateHeadway(this.value)" class="w-full accent-illini-orange cursor-pointer">
           <div class="flex justify-between text-[10px] text-slate-400 font-mono">
@@ -300,97 +288,88 @@
           </div>
         </div>
 
-        <div class="bg-slate-950/80 p-3.5 rounded-2xl border border-slate-800 space-y-2">
-          <span class="text-xs font-bold text-slate-200">当前线路运营汇总</span>
-          <div class="text-xs space-y-1.5 pt-1 text-slate-300">
-            <div class="flex justify-between"><span>马路行驶里程:</span><b id="analytics-dist" class="text-white">0.00 mi</b></div>
-            <div class="flex justify-between"><span>单趟/往返时间:</span><b id="analytics-cycle" class="text-sky-400">0 mins</b></div>
-            <div class="flex justify-between"><span>建议最低配车数:</span><b id="analytics-fleet" class="text-illini-orange text-sm font-black">0 辆</b></div>
+        <div class="bg-slate-900 p-3 rounded-xl border border-slate-800 space-y-2 text-xs">
+          <span class="font-bold text-slate-200">当前线路指标</span>
+          <div class="space-y-1.5 pt-1 text-slate-300">
+            <div class="flex justify-between"><span>马路行驶里程:</span><b id="calc-dist" class="text-white">0.00 mi</b></div>
+            <div class="flex justify-between"><span>往返循环耗时:</span><b id="calc-time" class="text-sky-400">0 mins</b></div>
+            <div class="flex justify-between"><span>最低配车需求:</span><b id="calc-buses" class="text-illini-orange font-black text-sm">0 辆</b></div>
           </div>
         </div>
       </div>
 
-      <!-- TAB 4: PROJECT EXPORT & IMPORT -->
-      <div id="tab-content-export" class="hidden flex-1 overflow-y-auto p-4 space-y-4">
-        <div>
-          <h2 class="text-sm font-bold text-white flex items-center gap-2">
-            <i class="fa-solid fa-file-export text-sky-400"></i> 数据备份与 GIS 导出
-          </h2>
-          <p class="text-xs text-slate-400 mt-1">导出或恢复你的公交网络规划项目：</p>
-        </div>
+      <!-- EXPORT TAB -->
+      <div id="tab-content-export" class="hidden flex-1 overflow-y-auto p-4 space-y-3">
+        <h2 class="text-xs font-bold text-white flex items-center gap-2">
+          <i class="fa-solid fa-download text-sky-400"></i> 工程文件备份与导出
+        </h2>
 
-        <div class="grid grid-cols-1 gap-2">
-          <button onclick="exportProjectJSON()" class="bg-slate-900 hover:bg-slate-800 border border-slate-700 text-white p-3 rounded-xl text-xs font-semibold flex items-center justify-between transition">
-            <span class="flex items-center gap-2"><i class="fa-solid fa-floppy-disk text-sky-400"></i> 导出完整工程 (.json)</span>
-            <i class="fa-solid fa-download text-slate-400"></i>
-          </button>
+        <button onclick="exportProjectJSON()" class="w-full bg-slate-900 hover:bg-slate-800 border border-slate-700 text-white p-2.5 rounded-xl text-xs font-semibold flex items-center justify-between transition">
+          <span class="flex items-center gap-2"><i class="fa-solid fa-floppy-disk text-sky-400"></i> 导出完整工程 (.json)</span>
+          <i class="fa-solid fa-download text-slate-400"></i>
+        </button>
 
-          <label class="bg-slate-900 hover:bg-slate-800 border border-slate-700 text-white p-3 rounded-xl text-xs font-semibold flex items-center justify-between transition cursor-pointer">
-            <span class="flex items-center gap-2"><i class="fa-solid fa-folder-open text-emerald-400"></i> 导入工程文件 (.json)</span>
-            <input type="file" accept=".json" onchange="importProjectJSON(event)" class="hidden">
-            <i class="fa-solid fa-upload text-slate-400"></i>
-          </label>
+        <label class="w-full bg-slate-900 hover:bg-slate-800 border border-slate-700 text-white p-2.5 rounded-xl text-xs font-semibold flex items-center justify-between transition cursor-pointer">
+          <span class="flex items-center gap-2"><i class="fa-solid fa-folder-open text-emerald-400"></i> 导入工程文件 (.json)</span>
+          <input type="file" accept=".json" onchange="importProjectJSON(event)" class="hidden">
+          <i class="fa-solid fa-upload text-slate-400"></i>
+        </label>
 
-          <button onclick="exportGeoJSON()" class="bg-slate-900 hover:bg-slate-800 border border-slate-700 text-white p-3 rounded-xl text-xs font-semibold flex items-center justify-between transition">
-            <span class="flex items-center gap-2"><i class="fa-solid fa-map-location-dot text-illini-orange"></i> 导出 GeoJSON 矢量图层</span>
-            <i class="fa-solid fa-download text-slate-400"></i>
-          </button>
-        </div>
+        <button onclick="exportGeoJSON()" class="w-full bg-slate-900 hover:bg-slate-800 border border-slate-700 text-white p-2.5 rounded-xl text-xs font-semibold flex items-center justify-between transition">
+          <span class="flex items-center gap-2"><i class="fa-solid fa-map-location-dot text-illini-orange"></i> 导出 GeoJSON 矢量图层</span>
+          <i class="fa-solid fa-download text-slate-400"></i>
+        </button>
       </div>
 
-      <!-- SIDEBAR FOOTER -->
-      <div class="p-3 bg-slate-950 border-t border-slate-800 text-center text-[11px] text-slate-400 flex items-center justify-between shrink-0">
-        <span>MTD Route Studio v5.0</span>
+      <!-- FOOTER -->
+      <div class="p-2.5 bg-slate-950 border-t border-slate-800 text-[11px] text-slate-400 flex items-center justify-between shrink-0">
+        <span>MTD Route Studio v5.5</span>
         <span id="footer-system-summary" class="text-emerald-400 font-mono font-bold">全网所需总车数: 0 辆</span>
       </div>
     </aside>
 
-    <!-- MAIN LEAFLET MAP CANVAS -->
-    <main class="flex-1 relative bg-slate-950">
+    <!-- MAP CANVAS -->
+    <main class="flex-1 relative bg-slate-900">
       <div id="map"></div>
 
-      <!-- ACTIVE MAP CLICKING BANNER -->
-      <div id="map-click-banner" class="hidden absolute top-4 left-1/2 -translate-x-1/2 z-[1000] bg-illini-orange text-white text-xs font-extrabold px-5 py-2.5 rounded-full shadow-2xl flex items-center gap-3 animate-bounce border-2 border-white/20">
-        <span class="w-2.5 h-2.5 rounded-full bg-white animate-ping"></span>
+      <!-- FLOATING MAP BANNER FOR CONTINUOUS CLICK MODE -->
+      <div id="map-click-banner" class="hidden absolute top-4 left-1/2 -translate-x-1/2 z-[1000] bg-illini-orange text-white text-xs font-extrabold px-4 py-2 rounded-full shadow-2xl flex items-center gap-2 animate-bounce border border-white/30">
+        <span class="w-2 h-2 rounded-full bg-white animate-ping"></span>
         <span>👉 点击地图任意马路（如 Lincoln Ave）插入站点（右键/双击标记可删除）</span>
-        <button onclick="toggleContinuousMapClickMode(false)" class="bg-black/30 hover:bg-black/50 text-white rounded-full w-5 h-5 flex items-center justify-center text-[11px] transition">✕</button>
+        <button onclick="toggleMapClickMode(false)" class="bg-black/30 hover:bg-black/50 text-white rounded-full w-4 h-4 flex items-center justify-center text-[10px] ml-1">✕</button>
       </div>
 
       <!-- TOAST NOTIFICATIONS CONTAINER -->
-      <div id="toast-container" class="absolute top-16 right-4 z-[1001] flex flex-col gap-2 pointer-events-none"></div>
+      <div id="toast-container" class="absolute top-14 right-4 z-[1001] flex flex-col gap-2 pointer-events-none"></div>
     </main>
 
   </div>
 
-  <!-- JAVASCRIPT LOGIC -->
   <script>
-    // PRESET LANDMARKS & LINCOLN CORRIDOR STOPS
+    // PRESET LANDMARKS & LINCOLN CORRIDOR STOPS (NO raw coordinate strings in names!)
     const PRESET_STOPS = [
-      { id: 'LINCOLN_GREEN', name: 'Lincoln & Green St', lat: 40.11032, lng: -88.2195, category: 'Lincoln Corridor', isHub: true },
-      { id: 'LINCOLN_SPRINGFIELD', name: 'Lincoln & Springfield Ave', lat: 40.1125, lng: -88.2195, category: 'Lincoln Corridor', isHub: false },
-      { id: 'LINCOLN_FLORIDA', name: 'Lincoln & Florida (PAR)', lat: 40.0998, lng: -88.2195, category: 'Lincoln Corridor', isHub: true },
-      { id: 'UNION', name: 'Illini Union (Green St)', lat: 40.11032, lng: -88.22720, category: 'Core Campus', isHub: true },
-      { id: 'ISR', name: 'ISR (Illinois St Residence)', lat: 40.1108, lng: -88.2248, category: 'Campus Housing', isHub: false },
-      { id: 'SIEBEL', name: 'Siebel Center for CS', lat: 40.1138, lng: -88.2249, category: 'Engineering Quad', isHub: false },
-      { id: 'ECE', name: 'ECE Building / Wright St', lat: 40.1150, lng: -88.2280, category: 'Engineering Quad', isHub: false },
-      { id: 'ARC', name: 'ARC Recreation Center', lat: 40.1012, lng: -88.2360, category: 'Campus Sports', isHub: false },
-      { id: 'IKENBERRY', name: 'Ikenberry Commons (SDRP)', lat: 40.1035, lng: -88.2355, category: 'Campus Housing', isHub: false },
-      { id: 'IT', name: 'Illinois Terminal (Champaign)', lat: 40.1162, lng: -88.2435, category: 'City Transit Hub', isHub: true },
-      { id: 'URBANA_SQ', name: 'Downtown Urbana (Main St)', lat: 40.1105, lng: -88.2072, category: 'City Hub', isHub: true },
-      { id: 'CARLE', name: 'Carle Foundation Hospital', lat: 40.1195, lng: -88.2212, category: 'Medical Hub', isHub: true }
+      { id: 'LINCOLN_GREEN', name: 'Lincoln & Green St', lat: 40.11032, lng: -88.2195, isHub: true },
+      { id: 'LINCOLN_SPRINGFIELD', name: 'Lincoln & Springfield Ave', lat: 40.1125, lng: -88.2195, isHub: false },
+      { id: 'LINCOLN_FLORIDA', name: 'Lincoln & Florida (PAR)', lat: 40.0998, lng: -88.2195, isHub: true },
+      { id: 'UNION', name: 'Illini Union (Green St)', lat: 40.11032, lng: -88.22720, isHub: true },
+      { id: 'ISR', name: 'ISR Residence Hall', lat: 40.1108, lng: -88.2248, isHub: false },
+      { id: 'SIEBEL', name: 'Siebel Center for CS', lat: 40.1138, lng: -88.2249, isHub: false },
+      { id: 'ECE', name: 'ECE Building (Wright St)', lat: 40.1150, lng: -88.2280, isHub: false },
+      { id: 'IKENBERRY', name: 'Ikenberry Commons (SDRP)', lat: 40.1035, lng: -88.2355, isHub: false },
+      { id: 'IT', name: 'Illinois Terminal', lat: 40.1162, lng: -88.2435, isHub: true }
     ];
 
     const DEFAULT_ROUTES = [
       {
         id: 'line-silver',
         code: '130',
-        name: 'Silver Express (Lincoln Ave)',
+        name: 'Silver Express (Lincoln)',
         color: '#E84A27',
         visible: true,
         isBidirectional: true,
         headway: 15,
         speedMph: 13.0,
-        stopIds: ['LINCOLN_FLORIDA', 'LINCOLN_GREEN', 'LINCOLN_SPRINGFIELD', 'SIEBEL', 'CARLE'],
+        stopIds: ['LINCOLN_FLORIDA', 'LINCOLN_GREEN', 'LINCOLN_SPRINGFIELD', 'SIEBEL'],
         routeGeometry: null,
         returnGeometry: null,
         roadDistanceMeters: 0,
@@ -400,12 +379,12 @@
         id: 'line-illini',
         code: '220',
         name: 'Illini Campus Circulator',
-        color: '#00875A',
+        color: '#10B981',
         visible: true,
         isBidirectional: true,
         headway: 10,
         speedMph: 12.0,
-        stopIds: ['IT', 'ECE', 'SIEBEL', 'ISR', 'UNION', 'IKENBERRY', 'ARC'],
+        stopIds: ['IT', 'ECE', 'SIEBEL', 'ISR', 'UNION', 'IKENBERRY'],
         routeGeometry: null,
         returnGeometry: null,
         roadDistanceMeters: 0,
@@ -413,73 +392,74 @@
       }
     ];
 
-    // State Variables
+    // Global State
     let stops = [...PRESET_STOPS];
     let routes = JSON.parse(JSON.stringify(DEFAULT_ROUTES));
     let activeRouteId = 'line-silver';
-    let isFocusModeOnly = true; // Clean map mode
     let customStopCounter = 1;
 
-    // Drag-and-Drop & History State
-    let draggedIndex = null;
+    // Undo / Redo Stack
     let historyStack = [];
     let historyIndex = -1;
     let isRestoringHistory = false;
 
+    // Leaflet map variables
     let map = null;
     let markersMap = {};
     let routePolylinesMap = {};
     let isClickToAddMode = false;
+    let draggedIndex = null;
 
-    const STORAGE_KEY = 'mtd_studio_v50_state';
+    const STORAGE_KEY = 'mtd_studio_v55_state';
 
     window.onload = function() {
       loadFromLocalStorage();
       initLeafletMap();
       pushHistorySnapshot(true);
 
-      renderAllRoutesSidebarList();
+      renderAllRoutesList();
       renderStopsManagerSection();
+      renderPresetsChips();
       renderAllStopsOnMap();
       renderRoutesOnMap();
-      renderPresetsTab();
       updateAnalyticsTab();
       setupKeyboardShortcuts();
+
+      window.addEventListener('resize', () => { if (map) map.invalidateSize(); });
     };
 
-    // LEAFLET MAP ENGINE INITIALIZATION WITH HD NO-BLOCK TILE LAYERS
+    // LEAFLET MAP INITIALIZATION WITH HIGH-RELIABILITY NO-BLOCK CARTO & ESRI TILES
     function initLeafletMap() {
       map = L.map('map', { zoomControl: true, attributionControl: false }).setView([40.1097, -88.2272], 14);
 
-      // High-Definition Tile Layers (No-Block Policy API Providers)
+      // High-Reliability Map Tile Layers (No-Block Policy Compliant)
+      const cartoLight = L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', { maxZoom: 19, subdomains: 'abcd' });
       const cartoVoyager = L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', { maxZoom: 19, subdomains: 'abcd' });
       const esriStreet = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}', { maxZoom: 19 });
-      const cartoPositron = L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', { maxZoom: 19, subdomains: 'abcd' });
-      const esriSatellite = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { maxZoom: 19 });
 
-      cartoVoyager.addTo(map);
+      cartoLight.addTo(map);
 
       const baseLayers = {
-        "🎨 Carto Voyager (高清彩图)": cartoVoyager,
-        "🛣️ Esri Street Map (地貌街景)": esriStreet,
-        "🏳️ Carto Light (极简高对比)": cartoPositron,
-        "🛰️ Esri Satellite (卫星影像)": esriSatellite
+        "🏳️ CARTO Light (极简白底图)": cartoLight,
+        "🎨 CARTO Voyager (彩色街道)": cartoVoyager,
+        "🛣️ Esri Street Map (地貌全图)": esriStreet
       };
 
       L.control.layers(baseLayers, null, { position: 'topright' }).addTo(map);
 
-      // Map Click Event for Continuous Add Mode
       map.on('click', function(e) {
         if (isClickToAddMode) {
           handleMapClickAddStop(e.latlng.lat, e.latlng.lng);
         }
       });
+
+      setTimeout(() => { if (map) map.invalidateSize(); }, 300);
     }
 
-    // UNDO / REDO HISTORY STACK
+    // UNDO / REDO HISTORY SYSTEM
     function pushHistorySnapshot(isInitial = false) {
       if (isRestoringHistory) return;
-      const snapshot = JSON.stringify({ stops, routes, activeRouteId, isFocusModeOnly, customStopCounter });
+      const snapshot = JSON.stringify({ stops, routes, activeRouteId, customStopCounter });
 
       if (historyStack.length > 0 && historyStack[historyIndex] === snapshot) return;
 
@@ -515,18 +495,17 @@
         stops = data.stops;
         routes = data.routes;
         activeRouteId = data.activeRouteId;
-        if (data.isFocusModeOnly !== undefined) isFocusModeOnly = data.isFocusModeOnly;
         if (data.customStopCounter) customStopCounter = data.customStopCounter;
 
-        renderAllRoutesSidebarList();
+        renderAllRoutesList();
         renderStopsManagerSection();
+        renderPresetsChips();
         renderAllStopsOnMap();
         renderRoutesOnMap();
-        renderPresetsTab();
         updateAnalyticsTab();
         saveToLocalStorage();
       } catch (e) {
-        console.error("Failed to restore history:", e);
+        console.error("Failed to restore state:", e);
       } finally {
         isRestoringHistory = false;
         updateUndoRedoUI();
@@ -546,7 +525,7 @@
       });
     }
 
-    // OSRM REAL-ROAD ROUTING ENGINE
+    // OSRM ROUTING ENGINE WITH STRAIGHT-LINE FALLBACK
     async function fetchOsrmRoute(coords) {
       if (!coords || coords.length < 2) return null;
       const coordString = coords.map(c => `${c[1]},${c[0]}`).join(';');
@@ -554,7 +533,7 @@
 
       try {
         const res = await fetch(url);
-        if (!res.ok) throw new Error("OSRM API error");
+        if (!res.ok) throw new Error("OSRM server error");
         const data = await res.json();
         if (data.routes && data.routes.length > 0) {
           const r = data.routes[0];
@@ -564,46 +543,43 @@
           };
         }
       } catch (err) {
-        console.warn("OSRM fallback:", err);
+        console.warn("OSRM fallback to straight line:", err);
       }
 
-      // Straight-line fallback
-      let straightDist = 0;
+      // Fallback straight line
+      let dist = 0;
       for (let i = 0; i < coords.length - 1; i++) {
-        straightDist += calcDistMiles(coords[i][0], coords[i][1], coords[i+1][0], coords[i+1][1]) * 1609.34;
+        dist += calcDistMiles(coords[i][0], coords[i][1], coords[i+1][0], coords[i+1][1]) * 1609.34;
       }
-      return { latLngs: coords, distanceMeters: straightDist };
+      return { latLngs: coords, distanceMeters: dist };
     }
 
-    // CLEAN MAP MARKER RENDERING (ONLY RENDER FULL BADGES FOR ACTIVE LINE STOPS)
+    // MAP MARKER RENDERER (Clean: Only Active Line Shows Number Badges)
     function renderAllStopsOnMap() {
       Object.values(markersMap).forEach(m => map.removeLayer(m));
       markersMap = {};
 
       const activeRoute = routes.find(r => r.id === activeRouteId);
-      const activeSequence = activeRoute ? activeRoute.stopIds : [];
+      const activeSeq = activeRoute ? activeRoute.stopIds : [];
 
-      // Determine which stops to render
       stops.forEach(stop => {
-        const seqIdx = activeSequence.indexOf(stop.id);
+        const seqIdx = activeSeq.indexOf(stop.id);
         const isInActive = seqIdx !== -1;
 
-        // If in Focus Mode, ONLY render markers that belong to the active line!
-        if (isFocusModeOnly && !isInActive) return;
+        if (!isInActive) return; // Only show markers for active line stops to keep map clean!
 
-        const color = isInActive ? (activeRoute ? activeRoute.color : '#13294B') : '#64748B';
-        const label = isInActive ? (seqIdx + 1) : '';
-
-        const starHtml = stop.isHub ? `<span class="hub-star-badge"><i class="fa-solid fa-star"></i></span>` : '';
+        const color = activeRoute ? activeRoute.color : '#E84A27';
+        const label = seqIdx + 1;
+        const starHtml = stop.isHub ? `<span class="hub-star"><i class="fa-solid fa-star"></i></span>` : '';
 
         const icon = L.divIcon({
-          html: `<div class="stop-marker-badge relative" style="background-color: ${color}; width:28px; height:28px;">
-                  ${label || `<i class="fa-solid fa-bus" style="font-size:10px;"></i>`}
+          html: `<div class="stop-badge-icon relative" style="background-color: ${color}; width:26px; height:26px;">
+                  ${label}
                   ${starHtml}
                  </div>`,
           className: '',
-          iconSize: [28, 28],
-          iconAnchor: [14, 14]
+          iconSize: [26, 26],
+          iconAnchor: [13, 13]
         });
 
         const marker = L.marker([stop.lat, stop.lng], { icon: icon, draggable: true }).addTo(map);
@@ -615,10 +591,9 @@
           renderRoutesOnMap();
           renderStopsManagerSection();
           pushHistorySnapshot();
-          showToast(`已移动站点 "${stop.name}"`, "info");
+          showToast(`已更新站点 "${stop.name}" 位置`, "info");
         });
 
-        // Fast Right-Click / Double-Click Delete
         marker.on('contextmenu', (e) => { L.DomEvent.stopPropagation(e); deleteStop(stop.id); });
         marker.on('dblclick', (e) => { L.DomEvent.stopPropagation(e); deleteStop(stop.id); });
 
@@ -626,7 +601,7 @@
       });
     }
 
-    // CLEAN ROUTE POLYLINE RENDERING
+    // MAP ROUTE POLYLINE RENDERER
     async function renderRoutesOnMap() {
       Object.values(routePolylinesMap).forEach(layers => {
         if (Array.isArray(layers)) layers.forEach(l => map.removeLayer(l));
@@ -642,106 +617,78 @@
         if (routeStops.length >= 2) {
           const outboundCoords = routeStops.map(s => [s.lat, s.lng]);
           const isSelected = route.id === activeRouteId;
-
-          // If in Focus mode and not active, skip rendering or render muted
-          if (isFocusModeOnly && !isSelected) continue;
-
           const layersList = [];
 
           // Outbound Leg
-          const osrmOutbound = await fetchOsrmRoute(outboundCoords);
-          if (osrmOutbound) {
-            route.routeGeometry = osrmOutbound.latLngs;
-            route.roadDistanceMeters = osrmOutbound.distanceMeters;
+          const osrmOut = await fetchOsrmRoute(outboundCoords);
+          if (osrmOut) {
+            route.routeGeometry = osrmOut.latLngs;
+            route.roadDistanceMeters = osrmOut.distanceMeters;
 
-            const poly = L.polyline(osrmOutbound.latLngs, {
+            const poly = L.polyline(osrmOut.latLngs, {
               color: route.color,
-              weight: isSelected ? 6.5 : 3.0,
-              opacity: isSelected ? 0.95 : 0.35
+              weight: isSelected ? 6.0 : 3.0,
+              opacity: isSelected ? 0.95 : 0.40
             }).addTo(map);
 
             poly.on('click', () => setActiveRoute(route.id));
             layersList.push(poly);
           }
 
-          // Return Leg if Bidirectional
+          // Return Leg
           if (route.isBidirectional && outboundCoords.length >= 2) {
             const returnCoords = [...outboundCoords].reverse();
-            const osrmReturn = await fetchOsrmRoute(returnCoords);
+            const osrmRet = await fetchOsrmRoute(returnCoords);
 
-            if (osrmReturn) {
-              route.returnGeometry = osrmReturn.latLngs;
-              route.returnDistanceMeters = osrmReturn.distanceMeters;
+            if (osrmRet) {
+              route.returnGeometry = osrmRet.latLngs;
+              route.returnDistanceMeters = osrmRet.distanceMeters;
 
-              const returnPoly = L.polyline(osrmReturn.latLngs, {
+              const returnPoly = L.polyline(osrmRet.latLngs, {
                 color: route.color,
-                weight: isSelected ? 4.5 : 2.0,
-                opacity: isSelected ? 0.80 : 0.25,
-                dashArray: '6, 8'
+                weight: isSelected ? 4.0 : 2.0,
+                opacity: isSelected ? 0.80 : 0.30,
+                dashArray: '5, 7'
               }).addTo(map);
 
               returnPoly.on('click', () => setActiveRoute(route.id));
               layersList.push(returnPoly);
             }
-          } else {
-            route.returnGeometry = null;
-            route.returnDistanceMeters = 0;
           }
 
           routePolylinesMap[route.id] = layersList;
-        } else {
-          route.routeGeometry = null;
-          route.returnGeometry = null;
-          route.roadDistanceMeters = 0;
-          route.returnDistanceMeters = 0;
         }
       }
 
       updateAnalyticsTab();
     }
 
-    function setMapFocusMode(isFocus) {
-      isFocusModeOnly = isFocus;
-      document.getElementById('view-mode-focus').className = isFocusModeOnly ?
-        "px-3 py-1.5 rounded-xl font-bold transition flex items-center gap-1.5 bg-illini-orange text-white shadow" :
-        "px-3 py-1.5 rounded-xl font-bold transition flex items-center gap-1.5 text-slate-400 hover:text-white";
-
-      document.getElementById('view-mode-all').className = !isFocusModeOnly ?
-        "px-3 py-1.5 rounded-xl font-bold transition flex items-center gap-1.5 bg-illini-orange text-white shadow" :
-        "px-3 py-1.5 rounded-xl font-bold transition flex items-center gap-1.5 text-slate-400 hover:text-white";
-
-      renderAllStopsOnMap();
-      renderRoutesOnMap();
-      showToast(isFocusModeOnly ? "👁️ 专注模式：仅显示当前线路站点" : "🌐 全景模式：显示全网线路", "info");
-    }
-
     // CONTINUOUS MAP CLICK ADD STOP MODE
-    function toggleContinuousMapClickMode(forcedState) {
+    function toggleMapClickMode(forcedState) {
       isClickToAddMode = (forcedState !== undefined) ? forcedState : !isClickToAddMode;
       const banner = document.getElementById('map-click-banner');
       const mapEl = document.getElementById('map');
-      const btnText = document.getElementById('map-click-btn-text');
+      const btnText = document.getElementById('map-add-btn-text');
 
       if (isClickToAddMode) {
         banner.classList.remove('hidden');
         if (mapEl) mapEl.classList.add('map-crosshair');
-        if (btnText) btnText.innerText = '退出加站';
-        showToast("连续加站模式：点击地图任意马路落针！", "warning");
+        if (btnText) btnText.innerText = '退出插站';
+        showToast("已开启地图插站模式：点击马路任意位置落针！", "warning");
       } else {
         banner.classList.add('hidden');
         if (mapEl) mapEl.classList.remove('map-crosshair');
-        if (btnText) btnText.innerText = '📍 点击地图插站';
+        if (btnText) btnText.innerText = '📍 地图插站';
       }
     }
 
     function handleMapClickAddStop(lat, lng) {
-      const autoName = `站点 #${customStopCounter++} (${lat.toFixed(4)}, ${lng.toFixed(4)})`;
+      const cleanName = `站点 #${customStopCounter++}`; // Clean name, NO raw lat/lng strings!
       const newStop = {
         id: 'stop-' + Date.now(),
-        name: autoName,
+        name: cleanName,
         lat: Number(lat.toFixed(5)),
         lng: Number(lng.toFixed(5)),
-        category: '自定义站点',
         isHub: false
       };
 
@@ -750,10 +697,10 @@
       renderAllStopsOnMap();
       renderStopsManagerSection();
       pushHistorySnapshot();
-      showToast(`已插入新站点 "${autoName}"`, "success");
+      showToast(`已新建 "${cleanName}"`, "success");
     }
 
-    // DRAG AND DROP STOP REORDERING HANDLERS
+    // DRAG AND DROP STOP CARD REORDERING
     function handleDragStart(e, index) {
       draggedIndex = index;
       e.dataTransfer.effectAllowed = 'move';
@@ -789,7 +736,7 @@
       renderRoutesOnMap();
       renderAllStopsOnMap();
       pushHistorySnapshot();
-      showToast("已调整站点顺序 🚏", "info");
+      showToast("已更新车站顺序", "info");
     }
 
     function handleDragEnd(e) {
@@ -797,12 +744,11 @@
       e.target.classList.remove('dragging');
     }
 
-    // ALL ROUTES LIST MANAGER (TOP SIDEBAR SECTION)
-    function renderAllRoutesSidebarList() {
-      const container = document.getElementById('all-routes-list');
-      const countBadge = document.getElementById('routes-count-badge');
-      if (countBadge) countBadge.innerText = routes.length;
-
+    // RENDER BUS LINES LIST (TOP SIDEBAR SECTION)
+    function renderAllRoutesList() {
+      const container = document.getElementById('all-routes-container');
+      const label = document.getElementById('routes-count-label');
+      if (label) label.innerText = routes.length;
       if (!container) return;
 
       container.innerHTML = routes.map(r => {
@@ -810,53 +756,53 @@
         const metrics = calculateRouteMetrics(r);
 
         return `
-          <div class="p-2.5 rounded-xl border text-xs transition-all space-y-2 ${isSelected ? 'bg-slate-900 border-illini-orange shadow-lg' : 'bg-slate-950/60 border-slate-800 hover:border-slate-700'}">
+          <div class="p-2 rounded-lg border text-xs transition-all space-y-1.5 ${isSelected ? 'bg-slate-900 border-illini-orange shadow' : 'bg-slate-950/80 border-slate-800 hover:border-slate-700'}">
             <div class="flex items-center justify-between">
               <div class="flex items-center gap-2 cursor-pointer flex-1" onclick="setActiveRoute('${r.id}')">
-                <span class="w-3.5 h-3.5 rounded-full border border-white shrink-0" style="background-color: ${r.color};"></span>
-                <span class="font-extrabold ${isSelected ? 'text-illini-orange' : 'text-white'}">Line ${r.code} - ${r.name}</span>
+                <span class="w-3 h-3 rounded-full border border-white shrink-0" style="background-color: ${r.color};"></span>
+                <span class="font-bold ${isSelected ? 'text-illini-orange' : 'text-slate-200'}">Line ${r.code} - ${r.name}</span>
               </div>
               <div class="flex items-center gap-1">
-                <button onclick="toggleRouteVisibility('${r.id}')" title="显示/隐藏线路" class="p-1 text-xs ${r.visible ? 'text-emerald-400' : 'text-slate-600'} hover:text-white">
+                <button onclick="toggleRouteVisibility('${r.id}')" title="显示/隐藏" class="p-1 text-xs ${r.visible ? 'text-emerald-400' : 'text-slate-600'} hover:text-white">
                   <i class="fa-solid ${r.visible ? 'fa-eye' : 'fa-eye-slash'}"></i>
                 </button>
-                <button onclick="deleteRoute('${r.id}')" title="删除线路" class="p-1 text-xs text-rose-400 hover:bg-rose-950 rounded">
+                <button onclick="deleteRoute('${r.id}')" title="删除线路" class="p-1 text-xs text-rose-400 hover:bg-rose-950/50 rounded">
                   <i class="fa-solid fa-trash-can"></i>
                 </button>
               </div>
             </div>
 
-            <div class="flex items-center justify-between text-[10px] text-slate-400 pt-1 border-t border-slate-800/60">
-              <span class="bg-slate-800 px-2 py-0.5 rounded text-slate-300 font-mono">${r.isBidirectional ? '↔️ 往返双向' : '➡️ 单向环线'}</span>
-              <span>里程: <b class="text-white">${metrics.totalDistMiles.toFixed(1)} mi</b></span>
-              <span>建议配车: <b class="text-emerald-400 font-bold">${metrics.busesNeeded} 辆</b></span>
+            <div class="flex items-center justify-between text-[10px] text-slate-400 font-mono">
+              <span>${r.isBidirectional ? '↔️ 双向往返' : '➡️ 单向环线'}</span>
+              <span>里程: <b class="text-slate-200">${metrics.totalDistMiles.toFixed(1)} mi</b></span>
+              <span>配车: <b class="text-emerald-400 font-extrabold">${metrics.busesNeeded} 辆</b></span>
             </div>
           </div>
         `;
       }).join('');
     }
 
-    // ACTIVE STOPS MANAGER (BOTTOM SIDEBAR SECTION)
+    // RENDER ACTIVE LINE STOPS (BOTTOM SIDEBAR SECTION)
     function renderStopsManagerSection() {
       const activeRoute = routes.find(r => r.id === activeRouteId) || routes[0];
       if (!activeRoute) return;
 
       document.getElementById('active-line-pill').style.backgroundColor = activeRoute.color;
       document.getElementById('active-line-title').innerText = `Line ${activeRoute.code} - ${activeRoute.name}`;
-      document.getElementById('active-line-stops-count').innerText = `${activeRoute.stopIds.length} 个车站`;
+      document.getElementById('active-line-stops-badge').innerText = `${activeRoute.stopIds.length} 个车站`;
 
-      // Direction Mode buttons styling
-      const btnOneway = document.getElementById('mode-btn-oneway');
-      const btnBidi = document.getElementById('mode-btn-bidirectional');
+      const btnOneway = document.getElementById('btn-mode-oneway');
+      const btnBidi = document.getElementById('btn-mode-bidi');
+
       if (activeRoute.isBidirectional) {
-        btnOneway.className = "py-1.5 px-2 rounded-lg font-bold transition flex items-center justify-center gap-1.5 border border-slate-700 bg-slate-900 text-slate-400";
-        btnBidi.className = "py-1.5 px-2 rounded-lg font-bold transition flex items-center justify-center gap-1.5 border border-illini-orange bg-illini-orange/20 text-white";
+        btnOneway.className = "flex-1 py-1 rounded text-[11px] font-bold transition text-slate-400 hover:text-white";
+        btnBidi.className = "flex-1 py-1 rounded text-[11px] font-bold transition bg-illini-orange text-white shadow";
       } else {
-        btnOneway.className = "py-1.5 px-2 rounded-lg font-bold transition flex items-center justify-center gap-1.5 border border-illini-orange bg-illini-orange/20 text-white";
-        btnBidi.className = "py-1.5 px-2 rounded-lg font-bold transition flex items-center justify-center gap-1.5 border border-slate-700 bg-slate-900 text-slate-400";
+        btnOneway.className = "flex-1 py-1 rounded text-[11px] font-bold transition bg-illini-orange text-white shadow";
+        btnBidi.className = "flex-1 py-1 rounded text-[11px] font-bold transition text-slate-400 hover:text-white";
       }
 
-      const cardContainer = document.getElementById('stops-card-container');
+      const cardContainer = document.getElementById('stops-cards-container');
       const cardsHtml = activeRoute.stopIds.map((sid, idx) => {
         const stop = stops.find(s => s.id === sid);
         if (!stop) return '';
@@ -868,40 +814,52 @@
             ondragleave="handleDragLeave(event)"
             ondrop="handleDrop(event, ${idx})"
             ondragend="handleDragEnd(event)"
-            class="stop-card bg-slate-950 border border-slate-800 hover:border-slate-700 p-2 rounded-xl text-xs space-y-1.5 shadow cursor-grab active:cursor-grabbing">
+            class="stop-card bg-slate-900 border border-slate-800 hover:border-slate-700 p-2 rounded-lg text-xs space-y-1 shadow cursor-grab active:cursor-grabbing">
             <div class="flex items-center gap-2">
-              <div class="text-slate-500 hover:text-slate-300 text-sm font-black px-0.5"><i class="fa-solid fa-grip-vertical"></i></div>
-              <span class="bg-slate-800 text-illini-orange border border-illini-orange/30 font-mono w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-extrabold shrink-0">
+              <div class="text-slate-500 hover:text-slate-300 text-xs px-0.5"><i class="fa-solid fa-grip-vertical"></i></div>
+              <span class="bg-slate-800 text-illini-orange border border-illini-orange/30 font-mono w-4 h-4 rounded-full flex items-center justify-center text-[10px] font-black shrink-0">
                 ${idx + 1}
               </span>
-              <input type="text" value="${stop.name}" oninput="updateStopName('${stop.id}', this.value)" class="flex-1 bg-slate-900 border border-slate-700 focus:border-illini-orange text-white font-bold text-xs rounded-lg px-2 py-1 focus:outline-none">
+              <input type="text" value="${stop.name}" oninput="updateStopName('${stop.id}', this.value)" class="flex-1 bg-slate-950 border border-slate-800 focus:border-illini-orange text-white font-bold text-xs rounded px-2 py-0.5 outline-none">
               
-              <button onclick="toggleMajorHub('${stop.id}')" title="切换枢纽站" class="p-1 bg-slate-900 ${stop.isHub ? 'text-amber-400' : 'text-slate-500'} rounded-lg border border-slate-800">
+              <button onclick="flyToStop('${stop.id}')" title="在地图定位" class="p-1 text-slate-400 hover:text-sky-400">
+                <i class="fa-solid fa-crosshairs"></i>
+              </button>
+              <button onclick="toggleMajorHub('${stop.id}')" title="切换枢纽站" class="p-1 ${stop.isHub ? 'text-amber-400' : 'text-slate-500 hover:text-slate-300'}">
                 <i class="fa-solid fa-star"></i>
               </button>
-              <button onclick="removeStopFromRoute(${idx})" title="从本线移除" class="p-1 bg-slate-900 text-rose-400 hover:bg-rose-950 rounded-lg border border-slate-800">
+              <button onclick="removeStopFromRoute(${idx})" title="移出本线" class="p-1 text-rose-400 hover:text-rose-300">
                 <i class="fa-solid fa-xmark"></i>
               </button>
             </div>
-            <div class="flex justify-between text-[10px] text-slate-400 px-1">
-              <span>坐标: ${stop.lat.toFixed(4)}, ${stop.lng.toFixed(4)}</span>
-              <span>${stop.isHub ? '⭐ 枢纽站 (停靠120秒)' : '普通站 (20秒)'}</span>
+            <div class="flex justify-between text-[10px] text-slate-400 px-1 font-mono">
+              <span>${stop.isHub ? '⭐ 换乘枢纽站 (120s)' : '普通停靠站 (20s)'}</span>
             </div>
           </div>
         `;
       }).join('');
 
       cardContainer.innerHTML = cardsHtml.length ? cardsHtml : `
-        <div class="text-xs text-slate-400 italic p-6 text-center border border-dashed border-slate-800 rounded-2xl bg-slate-950/40">
-          Line ${activeRoute.code} 当前无车站。<br>点击 <b>"📍 点击地图插站"</b> 即可在地图上绘制线路！
+        <div class="text-xs text-slate-400 italic p-5 text-center border border-dashed border-slate-800 rounded-xl bg-slate-950/40">
+          Line ${activeRoute.code} 暂无车站。<br>点击 <b>"📍 地图插站"</b> 或使用上方预设按钮！
         </div>
       `;
     }
 
-    // ROUTE ACTIONS
+    function renderPresetsChips() {
+      const container = document.getElementById('presets-chips-container');
+      if (!container) return;
+      container.innerHTML = stops.slice(0, 7).map(s => `
+        <button onclick="addStopToActiveRoute('${s.id}')" class="bg-slate-950 hover:bg-slate-800 border border-slate-800 hover:border-illini-orange text-slate-200 text-[10px] font-semibold px-2 py-1 rounded-md transition flex items-center gap-1">
+          <i class="fa-solid fa-plus text-illini-orange"></i> ${s.name}
+        </button>
+      `).join('');
+    }
+
+    // ACTIONS
     function setActiveRoute(routeId) {
       activeRouteId = routeId;
-      renderAllRoutesSidebarList();
+      renderAllRoutesList();
       renderStopsManagerSection();
       renderRoutesOnMap();
       renderAllStopsOnMap();
@@ -912,7 +870,7 @@
       const r = routes.find(x => x.id === routeId);
       if (r) {
         r.visible = !r.visible;
-        renderAllRoutesSidebarList();
+        renderAllRoutesList();
         renderRoutesOnMap();
         pushHistorySnapshot();
       }
@@ -925,7 +883,7 @@
       }
       routes = routes.filter(r => r.id !== routeId);
       if (activeRouteId === routeId) activeRouteId = routes[0].id;
-      renderAllRoutesSidebarList();
+      renderAllRoutesList();
       renderStopsManagerSection();
       renderRoutesOnMap();
       renderAllStopsOnMap();
@@ -935,13 +893,13 @@
 
     function addNewRoute() {
       const newId = 'line-' + Date.now();
-      const palette = ['#E84A27', '#13294B', '#00875A', '#00A3A6', '#FFC72C', '#967ADC', '#D9381E'];
+      const palette = ['#E84A27', '#10B981', '#3B82F6', '#8B5CF6', '#F59E0B', '#EC4899'];
       const pickedColor = palette[Math.floor(Math.random() * palette.length)];
 
       const newRoute = {
         id: newId,
         code: `${Math.floor(Math.random() * 80 + 10)}`,
-        name: '自定义新线路',
+        name: '自定义线路',
         color: pickedColor,
         visible: true,
         isBidirectional: true,
@@ -956,10 +914,9 @@
 
       routes.push(newRoute);
       setActiveRoute(newId);
-      switchTab('routes');
-      if (!isClickToAddMode) toggleContinuousMapClickMode(true);
+      if (!isClickToAddMode) toggleMapClickMode(true);
       pushHistorySnapshot();
-      showToast(`已创建新线路 Line ${newRoute.code}！`, "success");
+      showToast(`已创建 Line ${newRoute.code}！`, "success");
     }
 
     function addStopToActiveRoute(stopId, doSnapshot = true) {
@@ -984,27 +941,10 @@
       }
     }
 
-    function reverseCurrentRouteStops() {
-      const activeRoute = routes.find(r => r.id === activeRouteId);
-      if (activeRoute && activeRoute.stopIds.length > 1) {
-        activeRoute.stopIds.reverse();
-        renderStopsManagerSection();
-        renderRoutesOnMap();
-        renderAllStopsOnMap();
-        pushHistorySnapshot();
-        showToast("已反转站点行驶顺序 🔄", "info");
-      }
-    }
-
-    function clearCurrentRouteStops() {
-      const activeRoute = routes.find(r => r.id === activeRouteId);
-      if (activeRoute) {
-        activeRoute.stopIds = [];
-        renderStopsManagerSection();
-        renderRoutesOnMap();
-        renderAllStopsOnMap();
-        pushHistorySnapshot();
-        showToast("已清空当前线路的车站", "info");
+    function flyToStop(stopId) {
+      const stop = stops.find(s => s.id === stopId);
+      if (stop && map) {
+        map.flyTo([stop.lat, stop.lng], 16, { duration: 1 });
       }
     }
 
@@ -1012,6 +952,7 @@
       const stop = stops.find(s => s.id === stopId);
       if (stop) {
         stop.name = newName;
+        renderPresetsChips();
         pushHistorySnapshot();
       }
     }
@@ -1024,7 +965,7 @@
       renderStopsManagerSection();
       updateAnalyticsTab();
       pushHistorySnapshot();
-      showToast(`"${stop.name}" -> ${stop.isHub ? '⭐ 枢纽站 (120s)' : '普通站 (20s)'}`, "info");
+      showToast(`"${stop.name}" -> ${stop.isHub ? '⭐ 枢纽站' : '普通站'}`, "info");
     }
 
     function deleteStop(stopId) {
@@ -1033,15 +974,16 @@
       renderAllStopsOnMap();
       renderRoutesOnMap();
       renderStopsManagerSection();
+      renderPresetsChips();
       pushHistorySnapshot();
-      showToast("已被彻底删除", "info");
+      showToast("已彻底删除该站点", "info");
     }
 
     function setRoutingMode(isBidi) {
       const activeRoute = routes.find(r => r.id === activeRouteId);
       if (activeRoute) {
         activeRoute.isBidirectional = isBidi;
-        renderAllRoutesSidebarList();
+        renderAllRoutesList();
         renderStopsManagerSection();
         renderRoutesOnMap();
         pushHistorySnapshot();
@@ -1052,13 +994,13 @@
       const activeRoute = routes.find(r => r.id === activeRouteId);
       if (activeRoute) {
         activeRoute.headway = Number(val);
-        document.getElementById('headway-value-badge').innerText = `${val} 分钟`;
+        document.getElementById('headway-label').innerText = `${val} 分钟`;
         updateAnalyticsTab();
         pushHistorySnapshot();
       }
     }
 
-    // CALCULATIONS & METRICS
+    // CALCULATIONS
     function calcDistMiles(lat1, lon1, lat2, lon2) {
       const R = 3958.8;
       const dLat = (lat2 - lat1) * Math.PI / 180;
@@ -1098,11 +1040,10 @@
       const activeRoute = routes.find(r => r.id === activeRouteId);
       const m = calculateRouteMetrics(activeRoute);
 
-      document.getElementById('analytics-dist').innerText = `${m.totalDistMiles.toFixed(2)} mi`;
-      document.getElementById('analytics-cycle').innerText = `${m.roundTripMins} mins`;
-      document.getElementById('analytics-fleet').innerText = `${m.busesNeeded} 辆`;
+      document.getElementById('calc-dist').innerText = `${m.totalDistMiles.toFixed(2)} mi`;
+      document.getElementById('calc-time').innerText = `${m.roundTripMins} mins`;
+      document.getElementById('calc-buses').innerText = `${m.busesNeeded} 辆`;
 
-      // Aggregate 全网总里程与总配车
       let networkDist = 0;
       let networkFleet = 0;
       routes.forEach(r => {
@@ -1116,43 +1057,24 @@
       document.getElementById('footer-system-summary').innerText = `全网所需总车数: ${networkFleet} 辆`;
     }
 
-    // TAB SWITCHER & PRESETS RENDERER
-    function switchTab(tabKey) {
-      ['routes', 'presets', 'analytics', 'export'].forEach(t => {
+    // TAB SWITCHER
+    function switchSidebarTab(tabKey) {
+      ['main', 'analytics', 'export'].forEach(t => {
         const btn = document.getElementById(`tab-btn-${t}`);
         const content = document.getElementById(`tab-content-${t}`);
         if (t === tabKey) {
-          btn.className = 'py-2 px-1 rounded-lg text-center transition-all bg-illini-orange text-white font-bold shadow';
+          btn.className = 'px-3 py-1.5 rounded-lg font-bold bg-illini-orange text-white shadow';
           content.classList.remove('hidden');
         } else {
-          btn.className = 'py-2 px-1 rounded-lg text-center transition-all text-slate-400 hover:text-slate-200 hover:bg-slate-800';
+          btn.className = 'px-3 py-1.5 rounded-lg font-bold text-slate-400 hover:text-white hover:bg-slate-800 transition';
           content.classList.add('hidden');
         }
       });
     }
 
-    function renderPresetsTab() {
-      const grid = document.getElementById('presets-grid');
-      if (!grid) return;
-      grid.innerHTML = stops.map(s => `
-        <button onclick="addStopToActiveRoute('${s.id}')" class="bg-slate-900/80 hover:bg-slate-800 border border-slate-800 p-2.5 rounded-xl text-left flex items-center justify-between transition group">
-          <div class="flex items-center gap-2.5">
-            <div class="w-7 h-7 rounded-lg bg-illini-orange/20 text-illini-orange flex items-center justify-center font-bold text-xs border border-illini-orange/30">
-              <i class="fa-solid fa-location-dot"></i>
-            </div>
-            <div>
-              <div class="text-xs font-bold text-white group-hover:text-illini-orange transition">${s.name}</div>
-              <div class="text-[10px] text-slate-400">${s.category || 'Transit Stop'}</div>
-            </div>
-          </div>
-          <span class="text-xs font-bold text-illini-orange">+ 追加</span>
-        </button>
-      `).join('');
-    }
-
     // LOCAL STORAGE & EXPORTS
     function saveToLocalStorage() {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify({ stops, routes, activeRouteId, isFocusModeOnly, customStopCounter }));
+      localStorage.setItem(STORAGE_KEY, JSON.stringify({ stops, routes, activeRouteId, customStopCounter }));
     }
 
     function loadFromLocalStorage() {
@@ -1163,7 +1085,6 @@
           if (parsed.stops) stops = parsed.stops;
           if (parsed.routes) routes = parsed.routes;
           if (parsed.activeRouteId) activeRouteId = parsed.activeRouteId;
-          if (parsed.isFocusModeOnly !== undefined) isFocusModeOnly = parsed.isFocusModeOnly;
           if (parsed.customStopCounter) customStopCounter = parsed.customStopCounter;
         } catch (e) { console.warn("Failed loading saved state:", e); }
       }
@@ -1177,7 +1098,7 @@
       document.body.appendChild(link);
       link.click();
       link.remove();
-      showToast("已成功导出 JSON 项目工程文件", "success");
+      showToast("已导出完整的 JSON 工程文件", "success");
     }
 
     function importProjectJSON(event) {
@@ -1191,15 +1112,15 @@
             stops = parsed.stops;
             routes = parsed.routes;
             if (parsed.activeRouteId) activeRouteId = parsed.activeRouteId;
-            renderAllRoutesSidebarList();
+            renderAllRoutesList();
             renderStopsManagerSection();
+            renderPresetsChips();
             renderAllStopsOnMap();
             renderRoutesOnMap();
-            renderPresetsTab();
             pushHistorySnapshot();
-            showToast("成功导入项目工程数据！", "success");
+            showToast("导入项目成功！", "success");
           }
-        } catch (err) { showToast("无效的 JSON 工程文件格式", "warning"); }
+        } catch (err) { showToast("解析工程文件失败", "warning"); }
       };
       reader.readAsText(file);
     }
@@ -1237,14 +1158,14 @@
       const toast = document.createElement('div');
       const bg = type === 'success' ? 'bg-emerald-600 border-emerald-400' :
                  type === 'warning' ? 'bg-amber-600 border-amber-400' : 'bg-slate-800 border-slate-600';
-      toast.className = `${bg} text-white text-xs font-semibold px-4 py-2.5 rounded-xl border shadow-2xl pointer-events-auto toast-slide-in flex items-center gap-2`;
+      toast.className = `${bg} text-white text-xs font-semibold px-3 py-2 rounded-xl border shadow-xl pointer-events-auto toast-anim flex items-center gap-2`;
       toast.innerHTML = `<i class="fa-solid fa-circle-info"></i> <span>${msg}</span>`;
       container.appendChild(toast);
       setTimeout(() => {
         toast.style.opacity = '0';
-        toast.style.transition = 'opacity 0.3s ease';
-        setTimeout(() => toast.remove(), 300);
-      }, 3000);
+        toast.style.transition = 'opacity 0.25s ease';
+        setTimeout(() => toast.remove(), 250);
+      }, 2500);
     }
   </script>
 </body>
