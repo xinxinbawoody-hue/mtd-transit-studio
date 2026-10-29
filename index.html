@@ -37,7 +37,7 @@
     body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; }
     #map { height: 100%; width: 100%; z-index: 1; }
 
-    /* Glassmorphism Sidebar Panel */
+    /* Glassmorphism Sidebar Panel - Spacious Layout */
     .glass-panel {
       background: rgba(19, 41, 75, 0.96);
       backdrop-filter: blur(16px);
@@ -84,7 +84,7 @@
       box-shadow: 0 2px 4px rgba(0,0,0,0.4);
     }
 
-    /* MAP CLICK ADD MODE - DISABLE POINTER EVENTS ON EXISTING LAYERS TO PREVENT COLLISIONS */
+    /* MAP CLICK ADD MODE */
     .map-crosshair { cursor: crosshair !important; }
     .map-add-mode .leaflet-marker-pane,
     .map-add-mode .leaflet-overlay-pane {
@@ -121,16 +121,16 @@
 <body class="bg-slate-950 text-slate-100 flex flex-col h-screen overflow-hidden select-none">
 
   <!-- APP HEADER -->
-  <header class="bg-illini-navy border-b border-slate-800 text-white px-4 py-2.5 flex items-center justify-between shrink-0 h-[62px] z-30 shadow-xl">
-    <div class="flex items-center space-x-3">
-      <div class="bg-illini-orange p-2 rounded-xl text-white font-black flex items-center justify-center w-10 h-10 shadow-md">
-        <i class="fa-solid fa-bus text-xl"></i>
+  <header class="bg-illini-navy border-b border-slate-800 text-white px-6 py-3 flex items-center justify-between shrink-0 h-[68px] z-30 shadow-xl">
+    <div class="flex items-center space-x-3.5">
+      <div class="bg-illini-orange p-2 rounded-xl text-white font-black flex items-center justify-center w-11 h-11 shadow-md">
+        <i class="fa-solid fa-bus text-2xl"></i>
       </div>
       <div>
         <h1 class="font-extrabold text-base sm:text-lg tracking-wide flex items-center gap-2 leading-none">
-          MTD ROUTE STUDIO <span class="bg-illini-orange/20 text-illini-orange text-[11px] font-bold px-2 py-0.5 rounded border border-illini-orange/40">v6.5 English</span>
+          MTD ROUTE STUDIO <span class="bg-illini-orange/20 text-illini-orange text-[11px] font-bold px-2.5 py-0.5 rounded-full border border-illini-orange/40">v7.1 English</span>
         </h1>
-        <p class="text-[11px] text-slate-300 mt-0.5 flex items-center gap-1.5">
+        <p class="text-xs text-slate-300 mt-1 flex items-center gap-2">
           <span class="w-2 h-2 rounded-full bg-emerald-400 inline-block animate-pulse"></span>
           <span>Champaign-Urbana Transit Network Planner</span>
         </p>
@@ -138,48 +138,48 @@
     </div>
 
     <!-- View Mode Switcher -->
-    <div class="hidden lg:flex items-center bg-slate-900/90 border border-slate-800 rounded-2xl p-1 text-xs">
-      <button id="view-mode-focus" onclick="setMapFocusMode(true)" class="px-3 py-1.5 rounded-xl font-bold transition flex items-center gap-1.5 bg-illini-orange text-white shadow">
+    <div class="hidden lg:flex items-center bg-slate-900/90 border border-slate-800 rounded-2xl p-1.5 text-xs gap-1">
+      <button id="view-mode-focus" onclick="setMapFocusMode(true)" class="px-3.5 py-1.5 rounded-xl font-bold transition flex items-center gap-1.5 bg-illini-orange text-white shadow">
         <i class="fa-solid fa-eye"></i> Focus Active Line
       </button>
-      <button id="view-mode-all" onclick="setMapFocusMode(false)" class="px-3 py-1.5 rounded-xl font-bold transition flex items-center gap-1.5 text-slate-400 hover:text-white">
+      <button id="view-mode-all" onclick="setMapFocusMode(false)" class="px-3.5 py-1.5 rounded-xl font-bold transition flex items-center gap-1.5 text-slate-400 hover:text-white">
         <i class="fa-solid fa-globe"></i> Show All Lines
       </button>
     </div>
 
     <!-- System Fleet Analytics Widget -->
-    <div class="hidden md:flex items-center gap-5 bg-slate-900/80 px-4 py-1.5 rounded-2xl border border-slate-800 text-xs">
+    <div class="hidden md:flex items-center gap-6 bg-slate-900/80 px-5 py-2 rounded-2xl border border-slate-800 text-xs">
       <div class="flex items-center gap-2">
-        <i class="fa-solid fa-route text-illini-orange"></i>
+        <i class="fa-solid fa-route text-illini-orange text-sm"></i>
         <span class="text-slate-400">Total Distance:</span>
         <span id="header-total-dist" class="font-bold text-white">0.0 mi</span>
       </div>
       <div class="w-px h-4 bg-slate-800"></div>
       <div class="flex items-center gap-2">
-        <i class="fa-solid fa-bus-simple text-emerald-400"></i>
+        <i class="fa-solid fa-bus-simple text-emerald-400 text-sm"></i>
         <span class="text-slate-400">Total Fleet:</span>
         <span id="header-total-buses" class="font-extrabold text-emerald-400">0 buses</span>
       </div>
     </div>
 
     <!-- Header Action Buttons -->
-    <div class="flex items-center space-x-2">
-      <button onclick="exportProjectJSON()" class="bg-slate-900 hover:bg-slate-800 text-sky-400 border border-slate-700 text-xs px-3 py-2 rounded-xl font-bold transition flex items-center gap-1.5 shadow">
+    <div class="flex items-center space-x-2.5">
+      <button onclick="exportProjectJSON()" class="bg-slate-900 hover:bg-slate-800 text-sky-400 border border-slate-700 text-xs px-3.5 py-2 rounded-xl font-bold transition flex items-center gap-2 shadow">
         <i class="fa-solid fa-floppy-disk"></i>
         <span class="hidden sm:inline">Export JSON</span>
       </button>
 
       <div class="flex items-center bg-slate-900 border border-slate-800 rounded-xl p-1 shadow-inner">
-        <button id="undo-btn" onclick="undo()" title="Undo (Ctrl+Z)" disabled class="px-2.5 py-1 text-slate-400 hover:text-white disabled:opacity-30 disabled:hover:text-slate-400 text-xs font-bold rounded-lg transition flex items-center gap-1">
+        <button id="undo-btn" onclick="undo()" title="Undo (Ctrl+Z)" disabled class="px-3 py-1.5 text-slate-400 hover:text-white disabled:opacity-30 disabled:hover:text-slate-400 text-xs font-bold rounded-lg transition flex items-center gap-1.5">
           <i class="fa-solid fa-rotate-left"></i> <span class="hidden sm:inline">Undo</span>
         </button>
         <div class="w-px h-4 bg-slate-800 my-auto"></div>
-        <button id="redo-btn" onclick="redo()" title="Redo (Ctrl+Y)" disabled class="px-2.5 py-1 text-slate-400 hover:text-white disabled:opacity-30 disabled:hover:text-slate-400 text-xs font-bold rounded-lg transition flex items-center gap-1">
+        <button id="redo-btn" onclick="redo()" title="Redo (Ctrl+Y)" disabled class="px-3 py-1.5 text-slate-400 hover:text-white disabled:opacity-30 disabled:hover:text-slate-400 text-xs font-bold rounded-lg transition flex items-center gap-1.5">
           <i class="fa-solid fa-rotate-right"></i> <span class="hidden sm:inline">Redo</span>
         </button>
       </div>
 
-      <button onclick="addNewRoute()" class="bg-illini-orange hover:bg-orange-600 text-white text-xs px-3 py-2 rounded-xl font-bold transition flex items-center gap-1.5 shadow-md">
+      <button onclick="addNewRoute()" class="bg-illini-orange hover:bg-orange-600 text-white text-xs px-4 py-2 rounded-xl font-bold transition flex items-center gap-2 shadow-md">
         <i class="fa-solid fa-plus"></i>
         <span>+ New Line</span>
       </button>
@@ -189,22 +189,22 @@
   <!-- MAIN CONTAINER -->
   <div class="flex-1 flex overflow-hidden relative">
 
-    <!-- LEFT SIDEBAR WORKSPACE -->
+    <!-- LEFT SIDEBAR WORKSPACE - SPACIOUS 460PX WIDTH -->
     <aside id="sidebar-container" class="w-full md:w-[460px] glass-panel flex flex-col z-20 shrink-0 shadow-2xl">
       
       <!-- NAVIGATION TABS -->
-      <div class="bg-slate-950/80 p-2 border-b border-slate-800 grid grid-cols-4 gap-1 text-[11px] font-semibold">
-        <button id="tab-btn-routes" onclick="switchTab('routes')" class="py-2 px-1 rounded-lg text-center transition-all bg-illini-orange text-white font-bold shadow">
-          <i class="fa-solid fa-bus block text-sm mb-0.5"></i> Routes & Stops
+      <div class="bg-slate-950/80 p-2.5 border-b border-slate-800 grid grid-cols-4 gap-1.5 text-xs font-semibold">
+        <button id="tab-btn-routes" onclick="switchTab('routes')" class="py-2.5 px-1.5 rounded-xl text-center transition-all bg-illini-orange text-white font-bold shadow">
+          <i class="fa-solid fa-bus block text-base mb-1"></i> Routes & Stops
         </button>
-        <button id="tab-btn-presets" onclick="switchTab('presets')" class="py-2 px-1 rounded-lg text-center transition-all text-slate-400 hover:text-slate-200 hover:bg-slate-800">
-          <i class="fa-solid fa-building-columns block text-sm mb-0.5"></i> Presets
+        <button id="tab-btn-presets" onclick="switchTab('presets')" class="py-2.5 px-1.5 rounded-xl text-center transition-all text-slate-400 hover:text-slate-200 hover:bg-slate-800">
+          <i class="fa-solid fa-building-columns block text-base mb-1"></i> Presets
         </button>
-        <button id="tab-btn-analytics" onclick="switchTab('analytics')" class="py-2 px-1 rounded-lg text-center transition-all text-slate-400 hover:text-slate-200 hover:bg-slate-800">
-          <i class="fa-solid fa-chart-line block text-sm mb-0.5"></i> Analytics
+        <button id="tab-btn-analytics" onclick="switchTab('analytics')" class="py-2.5 px-1.5 rounded-xl text-center transition-all text-slate-400 hover:text-slate-200 hover:bg-slate-800">
+          <i class="fa-solid fa-chart-line block text-base mb-1"></i> Analytics
         </button>
-        <button id="tab-btn-export" onclick="switchTab('export')" class="py-2 px-1 rounded-lg text-center transition-all text-slate-400 hover:text-slate-200 hover:bg-slate-800">
-          <i class="fa-solid fa-file-export block text-sm mb-0.5"></i> Export & Import
+        <button id="tab-btn-export" onclick="switchTab('export')" class="py-2.5 px-1.5 rounded-xl text-center transition-all text-slate-400 hover:text-slate-200 hover:bg-slate-800">
+          <i class="fa-solid fa-file-export block text-base mb-1"></i> Export & Import
         </button>
       </div>
 
@@ -212,48 +212,48 @@
       <div id="tab-content-routes" class="flex-1 flex flex-col overflow-hidden">
         
         <!-- TOP SECTION: ALL BUS LINES LIST -->
-        <div class="p-3 border-b border-slate-800 bg-slate-950/80 space-y-2 shrink-0 max-h-[35%] overflow-y-auto">
+        <div class="p-4 border-b border-slate-800 bg-slate-950/80 space-y-3 shrink-0 max-h-[38%] overflow-y-auto">
           <div class="flex items-center justify-between">
-            <span class="text-[11px] font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
-              <i class="fa-solid fa-list-check text-illini-orange"></i> All Bus Lines (<span id="routes-count-badge">0</span>)
+            <span class="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center gap-2">
+              <i class="fa-solid fa-list-check text-illini-orange text-sm"></i> All Bus Lines (<span id="routes-count-badge">0</span>)
             </span>
-            <button onclick="addNewRoute()" class="text-[10px] text-illini-orange hover:underline font-bold">+ Add Line</button>
+            <button onclick="addNewRoute()" class="text-xs text-illini-orange hover:underline font-bold">+ Add Line</button>
           </div>
 
           <!-- All Lines Cards -->
-          <div id="all-routes-list" class="space-y-1.5">
+          <div id="all-routes-list" class="space-y-2">
             <!-- Dynamically populated -->
           </div>
         </div>
 
         <!-- MIDDLE SECTION: QUICK CAMPUS PRESET CHIPS -->
-        <div class="p-2.5 border-b border-slate-800 bg-slate-900/80 shrink-0">
-          <div class="text-[10px] font-bold uppercase text-slate-400 mb-1.5 flex items-center gap-1">
-            <i class="fa-solid fa-graduation-cap text-sky-400"></i> Quick Campus Presets (Click to Append)
+        <div class="p-3 border-b border-slate-800 bg-slate-900/80 shrink-0 space-y-2">
+          <div class="text-xs font-bold uppercase text-slate-400 flex items-center gap-1.5">
+            <i class="fa-solid fa-graduation-cap text-sky-400"></i> Quick Campus Presets (Auto Mid-Route Insertion)
           </div>
-          <div class="flex items-center gap-1.5 overflow-x-auto pb-1 text-xs no-scrollbar">
-            <button onclick="addPresetToActive('LINCOLN_GREEN')" class="bg-slate-950 hover:bg-illini-orange/20 border border-slate-700 hover:border-illini-orange text-white px-2.5 py-1 rounded-lg shrink-0 transition font-medium text-[11px]">
+          <div class="flex items-center gap-2 overflow-x-auto pb-1 text-xs no-scrollbar">
+            <button onclick="addPresetToActive('p1')" class="bg-slate-950 hover:bg-illini-orange/20 border border-slate-700 hover:border-illini-orange text-white px-3 py-1.5 rounded-xl shrink-0 transition font-medium text-xs">
               + Lincoln & Green
             </button>
-            <button onclick="addPresetToActive('LINCOLN_SPRINGFIELD')" class="bg-slate-950 hover:bg-illini-orange/20 border border-slate-700 hover:border-illini-orange text-white px-2.5 py-1 rounded-lg shrink-0 transition font-medium text-[11px]">
+            <button onclick="addPresetToActive('p2')" class="bg-slate-950 hover:bg-illini-orange/20 border border-slate-700 hover:border-illini-orange text-white px-3 py-1.5 rounded-xl shrink-0 transition font-medium text-xs">
               + Lincoln & Springfield
             </button>
-            <button onclick="addPresetToActive('LINCOLN_FLORIDA')" class="bg-slate-950 hover:bg-illini-orange/20 border border-slate-700 hover:border-illini-orange text-white px-2.5 py-1 rounded-lg shrink-0 transition font-medium text-[11px]">
+            <button onclick="addPresetToActive('p3')" class="bg-slate-950 hover:bg-illini-orange/20 border border-slate-700 hover:border-illini-orange text-white px-3 py-1.5 rounded-xl shrink-0 transition font-medium text-xs">
               + Lincoln & Florida
             </button>
-            <button onclick="addPresetToActive('UNION')" class="bg-slate-950 hover:bg-illini-orange/20 border border-slate-700 hover:border-illini-orange text-white px-2.5 py-1 rounded-lg shrink-0 transition font-medium text-[11px]">
+            <button onclick="addPresetToActive('p4')" class="bg-slate-950 hover:bg-illini-orange/20 border border-slate-700 hover:border-illini-orange text-white px-3 py-1.5 rounded-xl shrink-0 transition font-medium text-xs">
               + Illini Union
             </button>
-            <button onclick="addPresetToActive('ISR')" class="bg-slate-950 hover:bg-illini-orange/20 border border-slate-700 hover:border-illini-orange text-white px-2.5 py-1 rounded-lg shrink-0 transition font-medium text-[11px]">
+            <button onclick="addPresetToActive('p5')" class="bg-slate-950 hover:bg-illini-orange/20 border border-slate-700 hover:border-illini-orange text-white px-3 py-1.5 rounded-xl shrink-0 transition font-medium text-xs">
               + ISR
             </button>
-            <button onclick="addPresetToActive('SIEBEL')" class="bg-slate-950 hover:bg-illini-orange/20 border border-slate-700 hover:border-illini-orange text-white px-2.5 py-1 rounded-lg shrink-0 transition font-medium text-[11px]">
+            <button onclick="addPresetToActive('p6')" class="bg-slate-950 hover:bg-illini-orange/20 border border-slate-700 hover:border-illini-orange text-white px-3 py-1.5 rounded-xl shrink-0 transition font-medium text-xs">
               + Siebel CS
             </button>
-            <button onclick="addPresetToActive('ECE')" class="bg-slate-950 hover:bg-illini-orange/20 border border-slate-700 hover:border-illini-orange text-white px-2.5 py-1 rounded-lg shrink-0 transition font-medium text-[11px]">
+            <button onclick="addPresetToActive('p7')" class="bg-slate-950 hover:bg-illini-orange/20 border border-slate-700 hover:border-illini-orange text-white px-3 py-1.5 rounded-xl shrink-0 transition font-medium text-xs">
               + ECE Bldg
             </button>
-            <button onclick="addPresetToActive('IT')" class="bg-slate-950 hover:bg-illini-orange/20 border border-slate-700 hover:border-illini-orange text-white px-2.5 py-1 rounded-lg shrink-0 transition font-medium text-[11px]">
+            <button onclick="addPresetToActive('p8')" class="bg-slate-950 hover:bg-illini-orange/20 border border-slate-700 hover:border-illini-orange text-white px-3 py-1.5 rounded-xl shrink-0 transition font-medium text-xs">
               + Terminal
             </button>
           </div>
@@ -262,44 +262,43 @@
         <!-- BOTTOM SECTION: ACTIVE LINE STOPS MANAGER -->
         <div class="flex-1 flex flex-col overflow-hidden bg-slate-950/40">
           
-          <div class="p-3 border-b border-slate-800 bg-slate-900/60 space-y-2">
+          <div class="p-4 border-b border-slate-800 bg-slate-900/60 space-y-3">
             <div class="flex items-center justify-between">
-              <div class="flex items-center gap-2">
-                <span id="active-line-pill" class="w-3.5 h-3.5 rounded-full bg-illini-orange border border-white"></span>
-                <span id="active-line-title" class="font-extrabold text-xs text-white">Line 130 - Silver Express</span>
+              <div class="flex items-center gap-2.5">
+                <span id="active-line-pill" class="w-4 h-4 rounded-full bg-illini-orange border border-white"></span>
+                <span id="active-line-title" class="font-extrabold text-sm text-white">Line 130 - Silver Express</span>
               </div>
-              <span id="active-line-stops-count" class="text-[10px] text-slate-400 font-mono">0 stops</span>
+              <span id="active-line-stops-count" class="text-xs text-slate-400 font-mono">0 stops</span>
             </div>
 
             <!-- Direction Toggle & Action Toolbar -->
             <div class="grid grid-cols-2 gap-2 text-xs">
-              <button id="mode-btn-oneway" onclick="setRoutingMode(false)" class="py-1.5 px-2 rounded-lg font-bold transition flex items-center justify-center gap-1.5 border border-slate-700 bg-slate-900 text-slate-400">
+              <button id="mode-btn-oneway" onclick="setRoutingMode(false)" class="py-2 px-3 rounded-xl font-bold transition flex items-center justify-center gap-2 border border-slate-700 bg-slate-900 text-slate-400">
                 <i class="fa-solid fa-arrow-right"></i> One-Way Loop
               </button>
-              <button id="mode-btn-bidirectional" onclick="setRoutingMode(true)" class="py-1.5 px-2 rounded-lg font-bold transition flex items-center justify-center gap-1.5 border border-illini-orange bg-illini-orange/20 text-white">
+              <button id="mode-btn-bidirectional" onclick="setRoutingMode(true)" class="py-2 px-3 rounded-xl font-bold transition flex items-center justify-center gap-2 border border-illini-orange bg-illini-orange/20 text-white">
                 <i class="fa-solid fa-arrows-left-right"></i> Bidirectional
               </button>
             </div>
 
             <div class="flex items-center justify-between text-xs gap-2 pt-1">
-              <button onclick="toggleContinuousMapClickMode()" id="map-click-toggle-btn" class="flex-1 bg-illini-orange hover:bg-orange-600 text-white font-bold py-1.5 px-3 rounded-xl transition flex items-center justify-center gap-1.5 shadow">
+              <button onclick="toggleContinuousMapClickMode()" id="map-click-toggle-btn" class="flex-1 bg-illini-orange hover:bg-orange-600 text-white font-bold py-2 px-3 rounded-xl transition flex items-center justify-center gap-2 shadow">
                 <i class="fa-solid fa-plus-circle"></i> <span id="map-click-btn-text">📍 Add Stops on Map</span>
               </button>
 
-              <!-- Single Icon Reverse Button -->
-              <button onclick="reverseCurrentRouteStops()" title="Reverse stop sequence" class="bg-slate-900 hover:bg-slate-800 border border-slate-700 text-sky-400 font-bold px-2.5 py-1.5 rounded-xl transition flex items-center gap-1">
+              <button onclick="reverseCurrentRouteStops()" title="Reverse stop sequence" class="bg-slate-900 hover:bg-slate-800 border border-slate-700 text-sky-400 font-bold px-3 py-2 rounded-xl transition flex items-center gap-1.5">
                 <i class="fa-solid fa-right-left"></i> <span>Reverse Order</span>
               </button>
 
-              <button onclick="clearCurrentRouteStops()" title="Clear stops for this line" class="bg-slate-900 hover:bg-rose-950 text-rose-300 border border-slate-800 px-2.5 py-1.5 rounded-xl transition">
+              <button onclick="clearCurrentRouteStops()" title="Clear stops for this line" class="bg-slate-900 hover:bg-rose-950 text-rose-300 border border-slate-800 px-3 py-2 rounded-xl transition">
                 <i class="fa-solid fa-trash-can text-rose-400"></i>
               </button>
             </div>
           </div>
 
           <!-- Active Route Reorderable Stops List -->
-          <div class="flex-1 overflow-y-auto p-3 space-y-2">
-            <div id="stops-card-container" class="space-y-2">
+          <div class="flex-1 overflow-y-auto p-4 space-y-2.5">
+            <div id="stops-card-container" class="space-y-2.5">
               <!-- JS Populated Cards -->
             </div>
           </div>
@@ -309,148 +308,143 @@
       </div>
 
       <!-- TAB 2: UIUC PRESETS EXPANDED -->
-      <div id="tab-content-presets" class="hidden flex-1 overflow-y-auto p-4 space-y-4">
-        <div>
-          <h2 class="text-sm font-bold text-white flex items-center gap-2">
-            <i class="fa-solid fa-building-columns text-illini-orange"></i> UIUC & Campus Landmarks
-          </h2>
-          <p class="text-xs text-slate-400 mt-1">Click to append preset stops to the active bus line:</p>
-        </div>
-
-        <div id="presets-grid" class="grid grid-cols-1 gap-2">
-          <!-- JS Populated -->
+      <div id="tab-content-presets" class="hidden flex-1 overflow-y-auto p-4 space-y-3">
+        <div class="text-xs text-slate-400 mb-2">Click any standard UIUC campus stop to append or auto-insert into active line:</div>
+        <div id="presets-grid" class="grid grid-cols-1 gap-2.5">
+          <!-- JS Rendered -->
         </div>
       </div>
 
-      <!-- TAB 3: OPERATIONAL ANALYTICS -->
+      <!-- TAB 3: ANALYTICS & FLEET CALCULATION -->
       <div id="tab-content-analytics" class="hidden flex-1 overflow-y-auto p-4 space-y-4">
-        <div>
-          <h2 class="text-sm font-bold text-white flex items-center gap-2">
-            <i class="fa-solid fa-chart-line text-emerald-400"></i> Fleet & Operational Analytics
-          </h2>
-          <p class="text-xs text-slate-400 mt-1">Adjust service headway to estimate total required fleet size:</p>
-        </div>
-
-        <div class="bg-slate-950/80 p-3.5 rounded-2xl border border-slate-800 space-y-3">
-          <div class="flex items-center justify-between">
-            <span class="text-xs font-bold text-slate-200">Service Headway Interval</span>
-            <span id="headway-value-badge" class="bg-illini-orange/20 text-illini-orange font-mono font-bold text-xs px-2 py-0.5 rounded border border-illini-orange/40">15 mins</span>
+        <div class="bg-slate-900/80 border border-slate-800 p-4 rounded-2xl space-y-3">
+          <div class="text-xs font-bold uppercase text-slate-400 flex items-center gap-2">
+            <i class="fa-solid fa-sliders text-illini-orange"></i> Active Line Headway
           </div>
-          <input type="range" min="5" max="60" step="5" value="15" id="headway-slider" oninput="updateHeadway(this.value)" class="w-full accent-illini-orange cursor-pointer">
-          <div class="flex justify-between text-[10px] text-slate-400 font-mono">
-            <span>5m (Peak)</span>
-            <span>15m</span>
-            <span>30m</span>
-            <span>60m</span>
+          <div>
+            <div class="flex justify-between text-xs text-slate-300 mb-1.5">
+              <span>Frequency / Headway:</span>
+              <b id="headway-value-badge" class="text-illini-orange font-bold">15 mins</b>
+            </div>
+            <input type="range" min="5" max="60" step="5" value="15" oninput="updateHeadway(this.value)" class="w-full accent-illini-orange cursor-pointer">
           </div>
         </div>
 
-        <div class="bg-slate-950/80 p-3.5 rounded-2xl border border-slate-800 space-y-2">
-          <span class="text-xs font-bold text-slate-200">Active Line Performance</span>
-          <div class="text-xs space-y-1.5 pt-1 text-slate-300">
-            <div class="flex justify-between"><span>Driving Distance:</span><b id="analytics-dist" class="text-white">0.00 mi</b></div>
-            <div class="flex justify-between"><span>Cycle Round-trip Time:</span><b id="analytics-cycle" class="text-sky-400">0 mins</b></div>
-            <div class="flex justify-between"><span>Minimum Fleet Required:</span><b id="analytics-fleet" class="text-illini-orange text-sm font-black">0 buses</b></div>
+        <div class="bg-slate-900/80 border border-slate-800 p-4 rounded-2xl space-y-3 text-xs">
+          <div class="text-xs font-bold uppercase text-slate-400 flex items-center gap-2">
+            <i class="fa-solid fa-calculator text-emerald-400"></i> Fleet & Operations
+          </div>
+          <div class="space-y-2 text-slate-300">
+            <div class="flex justify-between py-1 border-b border-slate-800">
+              <span>Route Distance:</span>
+              <b id="analytics-dist" class="text-white">0.0 mi</b>
+            </div>
+            <div class="flex justify-between py-1 border-b border-slate-800">
+              <span>Estimated Cycle Time:</span>
+              <b id="analytics-cycle" class="text-sky-400">0 mins</b>
+            </div>
+            <div class="flex justify-between py-1 font-bold text-sm">
+              <span>Required Fleet Size:</span>
+              <b id="analytics-fleet" class="text-emerald-400 text-base">0 buses</b>
+            </div>
           </div>
         </div>
       </div>
 
-      <!-- TAB 4: PROJECT EXPORT & IMPORT -->
+      <!-- TAB 4: EXPORT & IMPORT -->
       <div id="tab-content-export" class="hidden flex-1 overflow-y-auto p-4 space-y-4">
-        <div>
-          <h2 class="text-sm font-bold text-white flex items-center gap-2">
-            <i class="fa-solid fa-file-export text-sky-400"></i> Workspace Backup & Sharing
-          </h2>
-          <p class="text-xs text-slate-400 mt-1">Export or load project files (`.json`) to share transit plans with others:</p>
+        <div class="bg-slate-900/80 border border-slate-800 p-4 rounded-2xl space-y-3">
+          <div class="text-xs font-bold uppercase text-slate-400 flex items-center gap-2">
+            <i class="fa-solid fa-floppy-disk text-sky-400"></i> Workspace Backup & Share
+          </div>
+          <p class="text-xs text-slate-400 leading-relaxed">
+            Export your entire transit network configuration as a JSON file to share with teammates or import into another browser session.
+          </p>
+          <div class="space-y-2 pt-2">
+            <button onclick="exportProjectJSON()" class="w-full bg-illini-orange hover:bg-orange-600 text-white font-bold py-2.5 rounded-xl text-xs transition flex items-center justify-center gap-2 shadow">
+              <i class="fa-solid fa-download"></i> Export Project (.json)
+            </button>
+            <button onclick="document.getElementById('import-file-input').click()" class="w-full bg-slate-800 hover:bg-slate-700 text-white font-bold py-2.5 rounded-xl text-xs transition flex items-center justify-center gap-2 border border-slate-700">
+              <i class="fa-solid fa-upload"></i> Import Project (.json)
+            </button>
+            <input type="file" id="import-file-input" accept=".json" class="hidden" onchange="importProjectJSON(event)">
+          </div>
         </div>
 
-        <div class="grid grid-cols-1 gap-2">
-          <button onclick="exportProjectJSON()" class="bg-slate-900 hover:bg-slate-800 border border-slate-700 text-white p-3 rounded-xl text-xs font-semibold flex items-center justify-between transition">
-            <span class="flex items-center gap-2"><i class="fa-solid fa-floppy-disk text-sky-400"></i> Export Project (.json)</span>
-            <i class="fa-solid fa-download text-slate-400"></i>
-          </button>
-
-          <label class="bg-slate-900 hover:bg-slate-800 border border-slate-700 text-white p-3 rounded-xl text-xs font-semibold flex items-center justify-between transition cursor-pointer">
-            <span class="flex items-center gap-2"><i class="fa-solid fa-folder-open text-emerald-400"></i> Import Project (.json)</span>
-            <input type="file" accept=".json" onchange="importProjectJSON(event)" class="hidden">
-            <i class="fa-solid fa-upload text-slate-400"></i>
-          </label>
-
-          <button onclick="exportGeoJSON()" class="bg-slate-900 hover:bg-slate-800 border border-slate-700 text-white p-3 rounded-xl text-xs font-semibold flex items-center justify-between transition">
-            <span class="flex items-center gap-2"><i class="fa-solid fa-map-location-dot text-illini-orange"></i> Export GeoJSON Layers</span>
-            <i class="fa-solid fa-download text-slate-400"></i>
+        <div class="bg-slate-900/80 border border-slate-800 p-4 rounded-2xl space-y-3">
+          <div class="text-xs font-bold uppercase text-slate-400 flex items-center gap-2">
+            <i class="fa-solid fa-layer-group text-emerald-400"></i> GIS Export
+          </div>
+          <button onclick="exportGeoJSON()" class="w-full bg-slate-800 hover:bg-slate-700 text-white font-bold py-2.5 rounded-xl text-xs transition flex items-center justify-center gap-2 border border-slate-700">
+            <i class="fa-solid fa-map"></i> Export Network (.geojson)
           </button>
         </div>
       </div>
 
-      <!-- SIDEBAR FOOTER -->
-      <div class="p-3 bg-slate-950 border-t border-slate-800 text-center text-[11px] text-slate-400 flex items-center justify-between shrink-0">
-        <span>MTD Route Studio v6.5</span>
-        <span id="footer-system-summary" class="text-emerald-400 font-mono font-bold">Total Fleet: 0 buses</span>
+      <!-- FOOTER STATUS -->
+      <div class="p-3 bg-slate-950 border-t border-slate-800 text-[11px] text-slate-400 flex items-center justify-between">
+        <span>MTD Route Studio v7.1</span>
+        <span id="footer-system-summary">Total Fleet: 0 buses</span>
       </div>
+
     </aside>
 
-    <!-- MAIN LEAFLET MAP CANVAS -->
-    <main class="flex-1 relative bg-slate-950">
-      <div id="map"></div>
+    <!-- MAP CANVAS CONTAINER -->
+    <div id="map" class="flex-1 h-full w-full relative"></div>
 
-      <!-- ACTIVE MAP CLICKING BANNER -->
-      <div id="map-click-banner" class="hidden absolute top-4 left-1/2 -translate-x-1/2 z-[1000] bg-illini-orange text-white text-xs font-extrabold px-5 py-2.5 rounded-full shadow-2xl flex items-center gap-3 animate-bounce border-2 border-white/20">
-        <span class="w-2.5 h-2.5 rounded-full bg-white animate-ping"></span>
-        <span>👉 Click anywhere on streets (e.g. Lincoln Ave) to add stops. (Right-click markers to delete)</span>
-        <button onclick="toggleContinuousMapClickMode(false)" class="bg-black/30 hover:bg-black/50 text-white rounded-full w-5 h-5 flex items-center justify-center text-[11px] transition">✕</button>
-      </div>
-
-      <!-- TOAST NOTIFICATIONS CONTAINER -->
-      <div id="toast-container" class="absolute top-16 right-4 z-[1001] flex flex-col gap-2 pointer-events-none"></div>
-    </main>
+    <!-- FLOATING MAP CLICK BANNER -->
+    <div id="map-click-banner" class="hidden absolute top-4 left-1/2 -translate-x-1/2 bg-illini-navy/95 border-2 border-illini-orange text-white px-5 py-2.5 rounded-full z-[999] shadow-2xl backdrop-blur-md text-xs font-bold flex items-center gap-3">
+      <span><i class="fa-solid fa-crosshairs text-illini-orange animate-spin"></i> Click anywhere on streets to insert stops automatically</span>
+      <button onclick="toggleContinuousMapClickMode(false)" class="bg-illini-orange hover:bg-orange-600 px-3 py-1 rounded-lg text-[11px] shadow">Done</button>
+    </div>
 
   </div>
 
-  <!-- JAVASCRIPT APPLICATION LOGIC -->
+  <!-- TOAST NOTIFICATION CONTAINER -->
+  <div id="toast-container" class="fixed bottom-5 right-5 z-[2000] flex flex-col gap-2 pointer-events-none"></div>
+
+  <!-- JAVASCRIPT LOGIC -->
   <script>
-    // PRESET UIUC & LINCOLN CORRIDOR STOPS
-    const PRESET_STOPS = [
-      { id: 'LINCOLN_GREEN', name: 'Lincoln & Green St', lat: 40.11032, lng: -88.2195, category: 'Lincoln Corridor', isHub: true },
-      { id: 'LINCOLN_SPRINGFIELD', name: 'Lincoln & Springfield Ave', lat: 40.1125, lng: -88.2195, category: 'Lincoln Corridor', isHub: false },
-      { id: 'LINCOLN_FLORIDA', name: 'Lincoln & Florida (PAR)', lat: 40.0998, lng: -88.2195, category: 'Lincoln Corridor', isHub: true },
-      { id: 'UNION', name: 'Illini Union (Green St)', lat: 40.11032, lng: -88.22720, category: 'Core Campus', isHub: true },
-      { id: 'ISR', name: 'ISR (Illinois St Residence)', lat: 40.1108, lng: -88.2248, category: 'Campus Housing', isHub: false },
-      { id: 'SIEBEL', name: 'Siebel Center for CS', lat: 40.1138, lng: -88.2249, category: 'Engineering Quad', isHub: false },
-      { id: 'ECE', name: 'ECE Building / Wright St', lat: 40.1150, lng: -88.2280, category: 'Engineering Quad', isHub: false },
-      { id: 'ARC', name: 'ARC Recreation Center', lat: 40.1012, lng: -88.2360, category: 'Campus Sports', isHub: false },
-      { id: 'IKENBERRY', name: 'Ikenberry Commons (SDRP)', lat: 40.1035, lng: -88.2355, category: 'Campus Housing', isHub: false },
-      { id: 'IT', name: 'Illinois Terminal (Champaign)', lat: 40.1162, lng: -88.2435, category: 'City Transit Hub', isHub: true },
-      { id: 'URBANA_SQ', name: 'Downtown Urbana (Main St)', lat: 40.1105, lng: -88.2072, category: 'City Hub', isHub: true },
-      { id: 'CARLE', name: 'Carle Foundation Hospital', lat: 40.1195, lng: -88.2212, category: 'Medical Hub', isHub: true }
+    const STORAGE_KEY = 'MTD_STUDIO_V7_DATA';
+
+    // DEFAULT UIUC CAMPUS STOPS
+    let stops = [
+      { id: 'p1', name: 'Lincoln & Green St', lat: 40.11032, lng: -88.21950, category: 'UIUC Campus', isHub: true },
+      { id: 'p2', name: 'Lincoln & Springfield Ave', lat: 40.11250, lng: -88.21950, category: 'UIUC Campus', isHub: false },
+      { id: 'p3', name: 'Lincoln & Florida Ave (PAR)', lat: 40.09980, lng: -88.21950, category: 'UIUC Campus', isHub: true },
+      { id: 'p4', name: 'Illini Union (Green St)', lat: 40.11032, lng: -88.22720, category: 'UIUC Quad', isHub: true },
+      { id: 'p5', name: 'ISR Residence Hall', lat: 40.11080, lng: -88.22480, category: 'UIUC Quad', isHub: false },
+      { id: 'p6', name: 'Siebel Center for CS', lat: 40.11380, lng: -88.22490, category: 'Engineering Quad', isHub: false },
+      { id: 'p7', name: 'ECE Building (Wright St)', lat: 40.11500, lng: -88.22800, category: 'Engineering Quad', isHub: false },
+      { id: 'p8', name: 'Illinois Terminal', lat: 40.11620, lng: -88.24350, category: 'Transit Hub', isHub: true }
     ];
 
-    const DEFAULT_ROUTES = [
+    let routes = [
       {
-        id: 'line-silver',
+        id: 'line-1',
         code: '130',
-        name: 'Silver Express (Lincoln Ave)',
+        name: 'Silver Express (Lincoln Corridor)',
         color: '#E84A27',
         visible: true,
         isBidirectional: true,
         headway: 15,
-        speedMph: 13.0,
-        stopIds: ['LINCOLN_FLORIDA', 'LINCOLN_GREEN', 'LINCOLN_SPRINGFIELD', 'SIEBEL', 'CARLE'],
+        speedMph: 12.5,
+        stopIds: ['p3', 'p1', 'p2', 'p6'],
         routeGeometry: null,
         returnGeometry: null,
         roadDistanceMeters: 0,
         returnDistanceMeters: 0
       },
       {
-        id: 'line-illini',
+        id: 'line-2',
         code: '220',
         name: 'Illini Campus Circulator',
-        color: '#00875A',
+        color: '#13294B',
         visible: true,
         isBidirectional: true,
         headway: 10,
-        speedMph: 12.0,
-        stopIds: ['IT', 'ECE', 'SIEBEL', 'ISR', 'UNION', 'IKENBERRY', 'ARC'],
+        speedMph: 11.0,
+        stopIds: ['p4', 'p5', 'p6', 'p7'],
         routeGeometry: null,
         returnGeometry: null,
         roadDistanceMeters: 0,
@@ -458,57 +452,36 @@
       }
     ];
 
-    // Application State Variables
-    let stops = [...PRESET_STOPS];
-    let routes = JSON.parse(JSON.stringify(DEFAULT_ROUTES));
-    let activeRouteId = 'line-silver';
+    let activeRouteId = 'line-1';
     let isFocusModeOnly = true;
+    let isClickToAddMode = false;
     let customStopCounter = 1;
-
-    // Drag-and-Drop & History State
     let draggedIndex = null;
+
     let historyStack = [];
     let historyIndex = -1;
     let isRestoringHistory = false;
 
     let map = null;
     let markersMap = {};
-    let routePolylinesMap = {}; // Layer reference storage to eliminate straight-line flickering
-    let isClickToAddMode = false;
+    let routePolylinesMap = {};
 
-    const STORAGE_KEY = 'mtd_studio_v65_state';
-
-    window.onload = function() {
-      loadFromLocalStorage();
-      initLeafletMap();
-      pushHistorySnapshot(true);
-
-      renderAllRoutesSidebarList();
-      renderStopsManagerSection();
-      renderAllStopsOnMap();
-      renderRoutesOnMap();
-      renderPresetsTab();
-      updateAnalyticsTab();
-      setupKeyboardShortcuts();
-
-      window.addEventListener('resize', () => { if (map) map.invalidateSize(); });
-    };
-
-    // INITIALIZE MAP WITH RELIABLE NO-BLOCK BASEMAP TILES
+    // INITIALIZE MAP WITH ESRI WORLD STREET MAP AS DEFAULT
     function initLeafletMap() {
       map = L.map('map', { zoomControl: true, attributionControl: false }).setView([40.1097, -88.2272], 14);
 
       // Multi-Provider Tiles
-      const cartoVoyager = L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', { maxZoom: 19, subdomains: 'abcd' });
       const esriStreet = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}', { maxZoom: 19 });
+      const cartoVoyager = L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', { maxZoom: 19, subdomains: 'abcd' });
       const cartoPositron = L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', { maxZoom: 19, subdomains: 'abcd' });
       const esriSatellite = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { maxZoom: 19 });
 
-      cartoVoyager.addTo(map);
+      // Default to Esri World Street Map!
+      esriStreet.addTo(map);
 
       const baseLayers = {
+        "🛣️ Esri Street Map (Default)": esriStreet,
         "🎨 Carto Voyager (HD)": cartoVoyager,
-        "🛣️ Esri Street Map": esriStreet,
         "🏳️ Carto Positron Light": cartoPositron,
         "🛰️ Esri Satellite": esriSatellite
       };
@@ -697,7 +670,7 @@
         if (routeStops.length >= 2) {
           const outboundCoords = routeStops.map(s => [s.lat, s.lng]);
 
-          // Fetch OSRM in background without deleting existing line to avoid flicker!
+          // Fetch OSRM in background without deleting existing line to avoid flicker
           fetchOsrmRoute(outboundCoords).then(osrmOutbound => {
             if (!osrmOutbound) return;
             route.routeGeometry = osrmOutbound.latLngs;
@@ -785,12 +758,12 @@
     function setMapFocusMode(isFocus) {
       isFocusModeOnly = isFocus;
       document.getElementById('view-mode-focus').className = isFocusModeOnly ?
-        "px-3 py-1.5 rounded-xl font-bold transition flex items-center gap-1.5 bg-illini-orange text-white shadow" :
-        "px-3 py-1.5 rounded-xl font-bold transition flex items-center gap-1.5 text-slate-400 hover:text-white";
+        "px-3.5 py-1.5 rounded-xl font-bold transition flex items-center gap-1.5 bg-illini-orange text-white shadow" :
+        "px-3.5 py-1.5 rounded-xl font-bold transition flex items-center gap-1.5 text-slate-400 hover:text-white";
 
       document.getElementById('view-mode-all').className = !isFocusModeOnly ?
-        "px-3 py-1.5 rounded-xl font-bold transition flex items-center gap-1.5 bg-illini-orange text-white shadow" :
-        "px-3 py-1.5 rounded-xl font-bold transition flex items-center gap-1.5 text-slate-400 hover:text-white";
+        "px-3.5 py-1.5 rounded-xl font-bold transition flex items-center gap-1.5 bg-illini-orange text-white shadow" :
+        "px-3.5 py-1.5 rounded-xl font-bold transition flex items-center gap-1.5 text-slate-400 hover:text-white";
 
       renderAllStopsOnMap();
       renderRoutesOnMap();
@@ -841,26 +814,32 @@
       
       const activeRoute = routes.find(r => r.id === activeRouteId);
       const insertedPos = activeRoute ? activeRoute.stopIds.indexOf(newStop.id) + 1 : 1;
-      showToast(`Added "${autoName}" at position #${insertedPos}`, "success");
+      showToast(`Inserted "${autoName}" at position #${insertedPos}`, "success");
     }
 
     function addStopToActiveRoute(stopId, doSnapshot = true, targetLat = null, targetLng = null) {
       const activeRoute = routes.find(r => r.id === activeRouteId);
       if (activeRoute) {
-        let insertIdx = activeRoute.stopIds.length;
-        if (targetLat !== null && targetLng !== null) {
-          insertIdx = findBestInsertionIndex(activeRoute, targetLat, targetLng);
-        } else {
+        let cLat = targetLat;
+        let cLng = targetLng;
+        if (cLat === null || cLng === null) {
           const stopObj = stops.find(s => s.id === stopId);
           if (stopObj) {
-            insertIdx = findBestInsertionIndex(activeRoute, stopObj.lat, stopObj.lng);
+            cLat = stopObj.lat;
+            cLng = stopObj.lng;
           }
+        }
+
+        let insertIdx = activeRoute.stopIds.length;
+        if (cLat !== null && cLng !== null && activeRoute.stopIds.length >= 2) {
+          insertIdx = findBestInsertionIndex(activeRoute, cLat, cLng);
         }
 
         activeRoute.stopIds.splice(insertIdx, 0, stopId);
         renderStopsManagerSection();
         renderRoutesOnMap();
         renderAllStopsOnMap();
+        renderAllRoutesSidebarList();
         if (doSnapshot) pushHistorySnapshot();
       }
     }
@@ -873,7 +852,7 @@
       let bestIndex = routeStops.length;
       let minDetour = Infinity;
 
-      // Evaluate detour distance for inserting between adjacent stops S_i and S_i+1
+      // 1. Evaluate detour distance for inserting between adjacent stops S_i and S_i+1
       for (let i = 0; i < routeStops.length - 1; i++) {
         const s1 = routeStops[i];
         const s2 = routeStops[i + 1];
@@ -888,18 +867,17 @@
         }
       }
 
-      // Check distance to extend at the end
-      const lastStop = routeStops[routeStops.length - 1];
-      const endDist = calcDistMiles(lastStop.lat, lastStop.lng, lat, lng);
-      if (endDist < minDetour) {
-        bestIndex = routeStops.length;
-      }
-
-      // Check distance to prepending at the start
+      // 2. Check distance to extend at start or end
       const firstStop = routeStops[0];
       const startDist = calcDistMiles(lat, lng, firstStop.lat, firstStop.lng);
-      if (startDist < minDetour && startDist < endDist) {
+
+      const lastStop = routeStops[routeStops.length - 1];
+      const endDist = calcDistMiles(lastStop.lat, lastStop.lng, lat, lng);
+
+      if (startDist < minDetour * 0.8 && startDist < endDist) {
         bestIndex = 0;
+      } else if (endDist < minDetour * 0.8 && endDist <= startDist) {
+        bestIndex = routeStops.length;
       }
 
       return bestIndex;
@@ -962,24 +940,24 @@
         const metrics = calculateRouteMetrics(r);
 
         return `
-          <div class="p-2 rounded-xl border text-xs transition-all space-y-1.5 ${isSelected ? 'bg-slate-900 border-illini-orange shadow-lg' : 'bg-slate-950/60 border-slate-800 hover:border-slate-700'}">
+          <div class="p-3 rounded-xl border text-xs transition-all space-y-2 ${isSelected ? 'bg-slate-900 border-illini-orange shadow-lg' : 'bg-slate-950/60 border-slate-800 hover:border-slate-700'}">
             <div class="flex items-center justify-between">
-              <div class="flex items-center gap-2 cursor-pointer flex-1" onclick="setActiveRoute('${r.id}')">
-                <span class="w-3.5 h-3.5 rounded-full border border-white shrink-0" style="background-color: ${r.color};"></span>
-                <span class="font-extrabold ${isSelected ? 'text-illini-orange' : 'text-white'}">Line ${r.code} - ${r.name}</span>
+              <div class="flex items-center gap-2.5 cursor-pointer flex-1" onclick="setActiveRoute('${r.id}')">
+                <span class="w-4 h-4 rounded-full border border-white shrink-0 shadow-sm" style="background-color: ${r.color};"></span>
+                <span class="font-extrabold ${isSelected ? 'text-illini-orange' : 'text-white'} text-xs sm:text-sm">Line ${r.code} - ${r.name}</span>
               </div>
-              <div class="flex items-center gap-1">
-                <button onclick="toggleRouteVisibility('${r.id}')" title="Show/Hide route" class="p-1 text-xs ${r.visible ? 'text-emerald-400' : 'text-slate-600'} hover:text-white">
+              <div class="flex items-center gap-1.5">
+                <button onclick="toggleRouteVisibility('${r.id}')" title="Show/Hide route" class="p-1.5 text-xs ${r.visible ? 'text-emerald-400' : 'text-slate-600'} hover:text-white transition">
                   <i class="fa-solid ${r.visible ? 'fa-eye' : 'fa-eye-slash'}"></i>
                 </button>
-                <button onclick="deleteRoute('${r.id}')" title="Delete route" class="p-1 text-xs text-rose-400 hover:bg-rose-950 rounded">
+                <button onclick="deleteRoute('${r.id}')" title="Delete route" class="p-1.5 text-xs text-rose-400 hover:bg-rose-950 rounded-lg transition">
                   <i class="fa-solid fa-trash-can"></i>
                 </button>
               </div>
             </div>
 
-            <div class="flex items-center justify-between text-[10px] text-slate-400 pt-1 border-t border-slate-800/60">
-              <span class="bg-slate-800 px-2 py-0.5 rounded text-slate-300 font-mono">${r.isBidirectional ? '↔️ Bidirectional' : '➡️ One-Way'}</span>
+            <div class="flex items-center justify-between text-xs text-slate-400 pt-1.5 border-t border-slate-800/80">
+              <span class="bg-slate-800/80 px-2.5 py-0.5 rounded-md text-slate-300 font-mono text-[11px]">${r.isBidirectional ? '↔️ Bidirectional' : '➡️ One-Way'}</span>
               <span>Length: <b class="text-white">${metrics.totalDistMiles.toFixed(1)} mi</b></span>
               <span>Fleet: <b class="text-emerald-400 font-bold">${metrics.busesNeeded} buses</b></span>
             </div>
@@ -1000,11 +978,11 @@
       const btnOneway = document.getElementById('mode-btn-oneway');
       const btnBidi = document.getElementById('mode-btn-bidirectional');
       if (activeRoute.isBidirectional) {
-        btnOneway.className = "py-1.5 px-2 rounded-lg font-bold transition flex items-center justify-center gap-1.5 border border-slate-700 bg-slate-900 text-slate-400";
-        btnBidi.className = "py-1.5 px-2 rounded-lg font-bold transition flex items-center justify-center gap-1.5 border border-illini-orange bg-illini-orange/20 text-white";
+        btnOneway.className = "py-2 px-3 rounded-xl font-bold transition flex items-center justify-center gap-2 border border-slate-700 bg-slate-900 text-slate-400";
+        btnBidi.className = "py-2 px-3 rounded-xl font-bold transition flex items-center justify-center gap-2 border border-illini-orange bg-illini-orange/20 text-white";
       } else {
-        btnOneway.className = "py-1.5 px-2 rounded-lg font-bold transition flex items-center justify-center gap-1.5 border border-illini-orange bg-illini-orange/20 text-white";
-        btnBidi.className = "py-1.5 px-2 rounded-lg font-bold transition flex items-center justify-center gap-1.5 border border-slate-700 bg-slate-900 text-slate-400";
+        btnOneway.className = "py-2 px-3 rounded-xl font-bold transition flex items-center justify-center gap-2 border border-illini-orange bg-illini-orange/20 text-white";
+        btnBidi.className = "py-2 px-3 rounded-xl font-bold transition flex items-center justify-center gap-2 border border-slate-700 bg-slate-900 text-slate-400";
       }
 
       const cardContainer = document.getElementById('stops-card-container');
@@ -1019,27 +997,27 @@
             ondragleave="handleDragLeave(event)"
             ondrop="handleDrop(event, ${idx})"
             ondragend="handleDragEnd(event)"
-            class="stop-card bg-slate-950 border border-slate-800 hover:border-slate-700 p-2 rounded-xl text-xs space-y-1.5 shadow cursor-grab active:cursor-grabbing">
-            <div class="flex items-center gap-2">
+            class="stop-card bg-slate-950 border border-slate-800 hover:border-slate-700 p-2.5 rounded-2xl text-xs space-y-2 shadow cursor-grab active:cursor-grabbing">
+            <div class="flex items-center gap-2.5">
               <div class="text-slate-500 hover:text-slate-300 text-sm font-black px-0.5"><i class="fa-solid fa-grip-vertical"></i></div>
-              <span class="bg-slate-800 text-illini-orange border border-illini-orange/30 font-mono w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-extrabold shrink-0">
+              <span class="bg-slate-800 text-illini-orange border border-illini-orange/30 font-mono w-6 h-6 rounded-full flex items-center justify-center text-xs font-extrabold shrink-0">
                 ${idx + 1}
               </span>
-              <input type="text" value="${stop.name}" oninput="updateStopName('${stop.id}', this.value)" class="flex-1 bg-slate-900 border border-slate-700 focus:border-illini-orange text-white font-bold text-xs rounded-lg px-2 py-1 focus:outline-none">
+              <input type="text" value="${stop.name}" oninput="updateStopName('${stop.id}', this.value)" class="flex-1 bg-slate-900 border border-slate-700 focus:border-illini-orange text-white font-bold text-xs rounded-xl px-2.5 py-1.5 focus:outline-none">
               
-              <button onclick="flyToStop('${stop.id}')" title="Locate on map" class="p-1 bg-slate-900 text-sky-400 hover:text-white rounded-lg border border-slate-800">
+              <button onclick="flyToStop('${stop.id}')" title="Locate on map" class="p-1.5 bg-slate-900 text-sky-400 hover:text-white rounded-xl border border-slate-800 transition">
                 <i class="fa-solid fa-crosshairs"></i>
               </button>
-              <button onclick="toggleMajorHub('${stop.id}')" title="Toggle transfer hub status" class="p-1 bg-slate-900 ${stop.isHub ? 'text-amber-400' : 'text-slate-500'} rounded-lg border border-slate-800">
+              <button onclick="toggleMajorHub('${stop.id}')" title="Toggle transfer hub status" class="p-1.5 bg-slate-900 ${stop.isHub ? 'text-amber-400' : 'text-slate-500'} rounded-xl border border-slate-800 transition">
                 <i class="fa-solid fa-star"></i>
               </button>
-              <button onclick="removeStopFromRoute(${idx})" title="Remove from active route" class="p-1 bg-slate-900 text-rose-400 hover:bg-rose-950 rounded-lg border border-slate-800">
+              <button onclick="removeStopFromRoute(${idx})" title="Remove from active route" class="p-1.5 bg-slate-900 text-rose-400 hover:bg-rose-950 rounded-xl border border-slate-800 transition">
                 <i class="fa-solid fa-xmark"></i>
               </button>
             </div>
-            <div class="flex justify-between text-[10px] text-slate-400 px-1">
+            <div class="flex justify-between text-xs text-slate-400 px-1 pt-0.5">
               <span>${stop.category || 'Transit Stop'}</span>
-              <span>${stop.isHub ? '⭐ Major Hub (120s dwell)' : 'Standard Stop (20s dwell)'}</span>
+              <span class="text-[11px]">${stop.isHub ? '⭐ Major Hub (120s dwell)' : 'Standard Stop (20s dwell)'}</span>
             </div>
           </div>
         `;
@@ -1117,19 +1095,10 @@
     }
 
     function addPresetToActive(presetId) {
-      addStopToActiveRoute(presetId);
-      showToast("Added preset stop to active route", "success");
-    }
-
-    function addStopToActiveRoute(stopId, doSnapshot = true) {
-      const activeRoute = routes.find(r => r.id === activeRouteId);
-      if (activeRoute) {
-        activeRoute.stopIds.push(stopId);
-        renderStopsManagerSection();
-        renderRoutesOnMap();
-        renderAllStopsOnMap();
-        if (doSnapshot) pushHistorySnapshot();
-      }
+      const presetStop = stops.find(s => s.id === presetId);
+      if (!presetStop) return;
+      addStopToActiveRoute(presetId, true, presetStop.lat, presetStop.lng);
+      showToast(`Added "${presetStop.name}" to active line`, "success");
     }
 
     function removeStopFromRoute(idx) {
@@ -1295,10 +1264,10 @@
         const btn = document.getElementById(`tab-btn-${t}`);
         const content = document.getElementById(`tab-content-${t}`);
         if (t === tabKey) {
-          btn.className = 'py-2 px-1 rounded-lg text-center transition-all bg-illini-orange text-white font-bold shadow';
+          btn.className = 'py-2.5 px-1.5 rounded-xl text-center transition-all bg-illini-orange text-white font-bold shadow';
           content.classList.remove('hidden');
         } else {
-          btn.className = 'py-2 px-1 rounded-lg text-center transition-all text-slate-400 hover:text-slate-200 hover:bg-slate-800';
+          btn.className = 'py-2.5 px-1.5 rounded-xl text-center transition-all text-slate-400 hover:text-slate-200 hover:bg-slate-800';
           content.classList.add('hidden');
         }
       });
@@ -1309,9 +1278,9 @@
       const grid = document.getElementById('presets-grid');
       if (!grid) return;
       grid.innerHTML = stops.map(s => `
-        <button onclick="addStopToActiveRoute('${s.id}')" class="bg-slate-900/80 hover:bg-slate-800 border border-slate-800 p-2.5 rounded-xl text-left flex items-center justify-between transition group">
+        <button onclick="addPresetToActive('${s.id}')" class="bg-slate-900/80 hover:bg-slate-800 border border-slate-800 p-3 rounded-xl text-left flex items-center justify-between transition group">
           <div class="flex items-center gap-2.5">
-            <div class="w-7 h-7 rounded-lg bg-illini-orange/20 text-illini-orange flex items-center justify-center font-bold text-xs border border-illini-orange/30">
+            <div class="w-8 h-8 rounded-lg bg-illini-orange/20 text-illini-orange flex items-center justify-center font-bold text-xs border border-illini-orange/30">
               <i class="fa-solid fa-location-dot"></i>
             </div>
             <div>
@@ -1319,7 +1288,7 @@
               <div class="text-[10px] text-slate-400">${s.category || 'Transit Stop'}</div>
             </div>
           </div>
-          <span class="text-xs font-bold text-illini-orange">+ Append</span>
+          <span class="text-xs font-bold text-illini-orange">+ Insert</span>
         </button>
       `).join('');
     }
@@ -1421,6 +1390,19 @@
         setTimeout(() => toast.remove(), 300);
       }, 3000);
     }
+
+    // ON LOAD INITIALIZATION
+    window.onload = function() {
+      loadFromLocalStorage();
+      initLeafletMap();
+      renderAllRoutesSidebarList();
+      renderStopsManagerSection();
+      renderAllStopsOnMap();
+      renderRoutesOnMap();
+      renderPresetsTab();
+      setupKeyboardShortcuts();
+      pushHistorySnapshot(true);
+    };
   </script>
 </body>
 </html>
