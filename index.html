@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>MTD Route Studio - Urbana-Champaign Transit Planner v10.0</title>
+  <title>MTD Route Studio - Urbana-Champaign Transit Planner v10.5</title>
 
   <!-- Leaflet CSS & JS -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
@@ -184,7 +184,7 @@
       </div>
       <div>
         <h1 class="font-extrabold text-base sm:text-lg tracking-wide flex items-center gap-2 leading-none">
-          MTD ROUTE STUDIO <span class="bg-illini-orange/20 text-illini-orange text-[11px] font-bold px-2.5 py-0.5 rounded-full border border-illini-orange/40">v10.0</span>
+          MTD ROUTE STUDIO <span class="bg-illini-orange/20 text-illini-orange text-[11px] font-bold px-2.5 py-0.5 rounded-full border border-illini-orange/40">v10.5</span>
         </h1>
         <p class="text-xs text-slate-300 mt-1 flex items-center gap-2">
           <span class="w-2 h-2 rounded-full bg-emerald-400 inline-block animate-pulse"></span>
@@ -295,7 +295,18 @@
             <span id="active-line-stops-count" class="text-xs text-slate-300 font-bold bg-slate-800 px-2.5 py-1 rounded-lg border border-slate-700">0 stops</span>
           </div>
 
-          <!-- STOP INSERTION DIRECTION MODE TOGGLE (NEW FEATURE) -->
+          <!-- STOP DWELL TIME QUICK CONTROL -->
+          <div class="bg-slate-950 p-2 rounded-2xl border border-slate-800 flex items-center justify-between text-xs">
+            <span class="text-slate-400 font-bold flex items-center gap-1.5 text-[11px]">
+              <i class="fa-solid fa-clock text-amber-400"></i> Stop Dwell Time:
+            </span>
+            <div class="flex items-center gap-2">
+              <input type="range" min="5" max="120" step="5" id="dwell-slider-stops" oninput="updateDwellSec(this.value)" class="w-24 accent-amber-400 cursor-pointer">
+              <span id="dwell-display-stops" class="text-white font-bold font-mono text-[11px] bg-slate-900 px-2 py-0.5 rounded border border-slate-700">30s / stop</span>
+            </div>
+          </div>
+
+          <!-- STOP INSERTION DIRECTION MODE TOGGLE -->
           <div class="bg-slate-950 p-2 rounded-2xl border border-slate-800 space-y-1.5">
             <div class="text-[11px] font-bold text-slate-400 flex items-center gap-1.5">
               <i class="fa-solid fa-bullseye text-illini-orange"></i> Stop Insertion Target Scope:
@@ -354,22 +365,34 @@
 
       <!-- TAB 4: ANALYTICS & FLEET CALCULATION -->
       <div id="tab-content-analytics" class="hidden flex-1 overflow-y-auto p-4 space-y-4">
-        <div class="bg-slate-900/80 border border-slate-800 p-4 rounded-2xl space-y-3">
+        <!-- Headway & Dwell Controls -->
+        <div class="bg-slate-900/80 border border-slate-800 p-4 rounded-2xl space-y-4">
           <div class="text-xs font-bold uppercase text-slate-400 flex items-center gap-2">
-            <i class="fa-solid fa-sliders text-illini-orange"></i> Active Line Headway
+            <i class="fa-solid fa-sliders text-illini-orange"></i> Route Operating Parameters
           </div>
+          
           <div>
             <div class="flex justify-between text-xs text-slate-300 mb-1.5">
-              <span>Frequency / Headway:</span>
+              <span>Departure Headway (Frequency):</span>
               <b id="headway-value-badge" class="text-illini-orange font-bold">15 mins</b>
             </div>
             <input type="range" min="5" max="60" step="5" value="15" oninput="updateHeadway(this.value)" class="w-full accent-illini-orange cursor-pointer">
           </div>
+
+          <div class="pt-2 border-t border-slate-800">
+            <div class="flex justify-between text-xs text-slate-300 mb-1.5">
+              <span>Standard Stop Dwell Time (秒/站):</span>
+              <b id="dwell-value-badge" class="text-amber-400 font-bold">30 secs</b>
+            </div>
+            <input type="range" min="5" max="120" step="5" value="30" id="dwell-slider-analytics" oninput="updateDwellSec(this.value)" class="w-full accent-amber-400 cursor-pointer">
+            <div class="text-[11px] text-slate-400 mt-1">Dwell time per bus stop (Hubs automatically receive additional boarding allowance).</div>
+          </div>
         </div>
 
+        <!-- Math Breakdown Card -->
         <div class="bg-slate-900/80 border border-slate-800 p-4 rounded-2xl space-y-3 text-xs">
           <div class="text-xs font-bold uppercase text-slate-400 flex items-center gap-2">
-            <i class="fa-solid fa-calculator text-emerald-400"></i> Operational Fleet Math
+            <i class="fa-solid fa-calculator text-emerald-400"></i> Fleet & Cycle Time Breakdown
           </div>
           <div class="space-y-2 text-slate-300">
             <div class="flex justify-between py-1 border-b border-slate-800">
@@ -381,10 +404,18 @@
               <b id="analytics-inbound-dist" class="text-white">0.0 mi</b>
             </div>
             <div class="flex justify-between py-1 border-b border-slate-800">
-              <span>Total Cycle Time:</span>
-              <b id="analytics-cycle" class="text-sky-400">0 mins</b>
+              <span>Driving Time (Pure):</span>
+              <b id="analytics-travel-time" class="text-sky-400">0 mins</b>
             </div>
-            <div class="flex justify-between py-1 font-bold text-sm">
+            <div class="flex justify-between py-1 border-b border-slate-800">
+              <span>Total Dwell Time:</span>
+              <b id="analytics-dwell-time" class="text-amber-400">0.0 mins</b>
+            </div>
+            <div class="flex justify-between py-1 border-b border-slate-800">
+              <span>Total Cycle Time (incl. +10% buffer):</span>
+              <b id="analytics-cycle" class="text-sky-300 font-bold">0 mins</b>
+            </div>
+            <div class="flex justify-between py-1 font-bold text-sm pt-1">
               <span>Required Fleet Size:</span>
               <b id="analytics-fleet" class="text-emerald-400 text-base">0 buses</b>
             </div>
@@ -424,7 +455,7 @@
 
       <!-- FOOTER STATUS -->
       <div class="p-3 bg-slate-950 border-t border-slate-800 text-[11px] text-slate-400 flex items-center justify-between shrink-0">
-        <span>MTD Route Studio v10.0</span>
+        <span>MTD Route Studio v10.5</span>
         <span id="footer-system-summary">Total Fleet: 0 buses</span>
       </div>
 
@@ -449,8 +480,10 @@
 
   <!-- JAVASCRIPT LOGIC -->
   <script>
-    const STORAGE_KEY = 'MTD_STUDIO_V10_DATA';
+    const STORAGE_KEY = 'MTD_STUDIO_V10_5_DATA';
     const NEARBY_SNAP_RADIUS_MILES = 0.037; // ~60 meters
+
+    let activeTabKey = 'lines';
 
     // DEFAULT GLOBAL UIUC CAMPUS STOPS
     let stops = [
@@ -464,7 +497,7 @@
       { id: 'p8', name: 'Illinois Terminal', lat: 40.11620, lng: -88.24350, category: 'Transit Hub', isHub: true }
     ];
 
-    // ASYMMETRIC BUS LINES DATA STRUCTURE
+    // ASYMMETRIC BUS LINES DATA STRUCTURE WITH CUSTOM DWELL TIME
     let routes = [
       {
         id: 'line-1',
@@ -473,9 +506,10 @@
         color: '#E84A27',
         visible: true,
         isBidirectional: true,
-        activeDirection: 'outbound', // 'outbound' | 'inbound'
+        activeDirection: 'outbound',
         headway: 15,
         speedMph: 12.5,
+        dwellSec: 30, // Custom dwell time in seconds
         outboundStopIds: ['p3', 'p1', 'p2', 'p6'],
         inboundStopIds: ['p6', 'p2', 'p1', 'p3'],
         outboundGeometry: null,
@@ -493,6 +527,7 @@
         activeDirection: 'outbound',
         headway: 10,
         speedMph: 11.0,
+        dwellSec: 25, // Custom dwell time in seconds
         outboundStopIds: ['p4', 'p5', 'p6', 'p7'],
         inboundStopIds: ['p7', 'p6', 'p5', 'p4'],
         outboundGeometry: null,
@@ -609,7 +644,7 @@
       const cartoPositron = L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', { maxZoom: 19, subdomains: 'abcd' });
       const esriSatellite = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { maxZoom: 19 });
 
-      // Default to Esri World Street Map!
+      // Default to Esri World Street Map
       esriStreet.addTo(map);
 
       const baseLayers = {
@@ -630,8 +665,8 @@
       setTimeout(() => { map.invalidateSize(); }, 200);
     }
 
-    // ROUTE SWITCHING FUNCTION
-    function setActiveRoute(id) {
+    // ROUTE SELECTION (WITHOUT FORCING TAB SWITCH BY DEFAULT)
+    function setActiveRoute(id, options = {}) {
       const target = routes.find(r => r.id === id);
       if (!target) return;
 
@@ -641,7 +676,10 @@
       renderAllStopsOnMap();
       renderRoutesOnMap();
       updateAnalyticsTab();
-      showToast(`Switched active route to Line ${target.code} - ${target.name}`, "info");
+
+      if (options.toast !== false) {
+        showToast(`Selected Line ${target.code} - ${target.name}`, "info");
+      }
     }
 
     // UNDO / REDO HISTORY SYSTEM
@@ -787,9 +825,6 @@
           pushHistorySnapshot();
           showToast(`Moved stop "${stop.name}"`, "info");
         });
-
-        marker.on('contextmenu', (e) => { L.DomEvent.stopPropagation(e); deleteStop(stop.id); });
-        marker.on('dblclick', (e) => { L.DomEvent.stopPropagation(e); deleteStop(stop.id); });
 
         markersMap[stop.id] = marker;
       });
@@ -938,7 +973,7 @@
       showToast(isFocusModeOnly ? "👁️ Focus mode: Displaying active line stops" : "🌐 All-network view enabled", "info");
     }
 
-    // SET ADD STOP TARGET SCOPE (BOTH DIRECTIONS VS CURRENT LEG ONLY)
+    // SET ADD STOP TARGET SCOPE
     function setAddStopScope(scope) {
       addStopScope = scope;
       const btnBoth = document.getElementById('scope-btn-both');
@@ -1012,7 +1047,6 @@
       if (!activeRoute) return;
 
       if (addStopScope === 'both' && activeRoute.isBidirectional) {
-        // Insert into OUTBOUND leg
         if (!activeRoute.outboundStopIds.includes(stopId)) {
           let idxOut = activeRoute.outboundStopIds.length;
           if (targetLat !== null && targetLng !== null && activeRoute.outboundStopIds.length >= 2) {
@@ -1021,7 +1055,6 @@
           activeRoute.outboundStopIds.splice(idxOut, 0, stopId);
         }
 
-        // Insert into INBOUND leg
         if (!activeRoute.inboundStopIds.includes(stopId)) {
           let idxIn = activeRoute.inboundStopIds.length;
           if (targetLat !== null && targetLng !== null && activeRoute.inboundStopIds.length >= 2) {
@@ -1032,7 +1065,6 @@
 
         showToast("Added stop to BOTH Outbound & Inbound legs", "success");
       } else {
-        // Insert into ACTIVE DIRECTION ONLY
         const activeDir = activeRoute.activeDirection || 'outbound';
         const targetSeq = activeDir === 'outbound' ? activeRoute.outboundStopIds : activeRoute.inboundStopIds;
 
@@ -1159,6 +1191,7 @@
         activeDirection: 'outbound',
         headway: 15,
         speedMph: 12.0,
+        dwellSec: 30,
         outboundStopIds: ['p3', 'p1'],
         inboundStopIds: ['p1', 'p3'],
         outboundGeometry: null,
@@ -1200,7 +1233,7 @@
       }
     }
 
-    // ALL BUS LINES LIST MANAGER (TAB 1)
+    // ALL BUS LINES LIST MANAGER (TAB 1) - PRESERVES ACTIVE TAB
     function renderAllRoutesSidebarList() {
       const container = document.getElementById('all-routes-list');
       const countBadge = document.getElementById('routes-count-badge');
@@ -1213,13 +1246,19 @@
         const metrics = calculateRouteMetrics(r);
 
         return `
-          <div class="p-3 rounded-2xl border text-xs transition-all space-y-2 ${isSelected ? 'bg-slate-900 border-illini-orange shadow-lg' : 'bg-slate-950/60 border-slate-800 hover:border-slate-700'}">
+          <div class="p-3.5 rounded-2xl border text-xs transition-all space-y-2.5 ${isSelected ? 'bg-slate-900 border-illini-orange shadow-lg' : 'bg-slate-950/60 border-slate-800 hover:border-slate-700'}">
             <div class="flex items-center justify-between">
-              <div class="flex items-center gap-2.5 cursor-pointer flex-1" onclick="setActiveRoute('${r.id}'); switchTab('stops');">
+              <!-- Selecting route updates map without forcing tab jump -->
+              <div class="flex items-center gap-2.5 cursor-pointer flex-1" onclick="setActiveRoute('${r.id}')">
                 <span class="w-4 h-4 rounded-full border border-white shrink-0 shadow-sm" style="background-color: ${r.color};"></span>
                 <span class="font-extrabold ${isSelected ? 'text-illini-orange' : 'text-white'} text-sm">Line ${r.code} - ${r.name}</span>
               </div>
+
               <div class="flex items-center gap-1.5">
+                <!-- Explicit button to jump to Stops Editor -->
+                <button onclick="setActiveRoute('${r.id}'); switchTab('stops');" title="Edit Stops for this line" class="px-2.5 py-1 bg-illini-orange/20 text-illini-orange hover:bg-illini-orange hover:text-white rounded-xl transition font-bold text-[11px] flex items-center gap-1.5 border border-illini-orange/40">
+                  <i class="fa-solid fa-location-dot"></i> 🚏 Edit
+                </button>
                 <button onclick="toggleRouteVisibility('${r.id}')" title="Show/Hide route" class="p-1.5 text-xs ${r.visible ? 'text-emerald-400' : 'text-slate-600'} hover:text-white transition">
                   <i class="fa-solid ${r.visible ? 'fa-eye' : 'fa-eye-slash'}"></i>
                 </button>
@@ -1229,8 +1268,9 @@
               </div>
             </div>
 
-            <div class="flex items-center justify-between text-xs text-slate-400 pt-1.5 border-t border-slate-800/80">
+            <div class="flex items-center justify-between text-xs text-slate-400 pt-2 border-t border-slate-800/80">
               <span class="bg-slate-800/80 px-2 py-0.5 rounded-lg text-slate-300 font-mono text-[11px]">${r.isBidirectional ? '↔️ Bidirectional' : '➡️ One-Way'}</span>
+              <span>Dwell: <b class="text-amber-400">${r.dwellSec || 30}s</b></span>
               <span>Length: <b class="text-white">${metrics.totalDistMiles.toFixed(1)} mi</b></span>
               <span>Fleet: <b class="text-emerald-400 font-bold">${metrics.busesNeeded} buses</b></span>
             </div>
@@ -1247,7 +1287,6 @@
       const activeDir = activeRoute.activeDirection || 'outbound';
       let targetSeq = activeDir === 'outbound' ? activeRoute.outboundStopIds : activeRoute.inboundStopIds;
 
-      // AUTO-POPULATE INBOUND LEGS IF EMPTY
       if (activeDir === 'inbound' && (!targetSeq || targetSeq.length === 0)) {
         if (activeRoute.outboundStopIds && activeRoute.outboundStopIds.length > 0) {
           activeRoute.inboundStopIds = [...activeRoute.outboundStopIds].reverse();
@@ -1260,7 +1299,18 @@
       document.getElementById('active-line-title').innerText = `Line ${activeRoute.code} - ${activeRoute.name}`;
       document.getElementById('active-line-stops-count').innerText = `${targetSeq.length} stops (${activeDir === 'outbound' ? 'Outbound' : 'Inbound'})`;
 
-      // Scope buttons
+      // Update Dwell Slider controls
+      const currentDwell = activeRoute.dwellSec !== undefined ? activeRoute.dwellSec : 30;
+      const sliderStops = document.getElementById('dwell-slider-stops');
+      const displayStops = document.getElementById('dwell-display-stops');
+      if (sliderStops) sliderStops.value = currentDwell;
+      if (displayStops) displayStops.innerText = `${currentDwell}s / stop`;
+
+      const sliderAnalytics = document.getElementById('dwell-slider-analytics');
+      const badgeAnalytics = document.getElementById('dwell-value-badge');
+      if (sliderAnalytics) sliderAnalytics.value = currentDwell;
+      if (badgeAnalytics) badgeAnalytics.innerText = `${currentDwell} secs`;
+
       setAddStopScope(addStopScope);
 
       // Direction Tabs
@@ -1311,7 +1361,7 @@
                 <span class="font-medium">${stop.category || 'Transit Stop'}</span>
                 ${sharingCount > 1 ? `<span class="bg-amber-500/20 text-amber-300 border border-amber-500/40 px-2 py-0.5 rounded-md text-[11px] font-bold flex items-center gap-1"><i class="fa-solid fa-link"></i> Shared (${sharingCount} Lines)</span>` : ''}
               </span>
-              <span class="text-[11px] font-medium">${stop.isHub ? '⭐ Transfer Hub (120s dwell)' : 'Standard Stop (20s dwell)'}</span>
+              <span class="text-[11px] font-medium">${stop.isHub ? `⭐ Transfer Hub (${currentDwell + 60}s dwell)` : `Standard Stop (${currentDwell}s dwell)`}</span>
             </div>
           </div>
         `;
@@ -1323,6 +1373,29 @@
           <div class="text-slate-500">Click <b>"📍 Add Stops on Map"</b> or <b>"Copy & Reverse"</b> to add stops!</div>
         </div>
       `;
+    }
+
+    // UPDATE DWELL TIME PER STOP
+    function updateDwellSec(val) {
+      const activeRoute = routes.find(r => r.id === activeRouteId);
+      if (activeRoute) {
+        activeRoute.dwellSec = Number(val);
+
+        const sliderStops = document.getElementById('dwell-slider-stops');
+        const displayStops = document.getElementById('dwell-display-stops');
+        if (sliderStops) sliderStops.value = val;
+        if (displayStops) displayStops.innerText = `${val}s / stop`;
+
+        const sliderAnalytics = document.getElementById('dwell-slider-analytics');
+        const badgeAnalytics = document.getElementById('dwell-value-badge');
+        if (sliderAnalytics) sliderAnalytics.value = val;
+        if (badgeAnalytics) badgeAnalytics.innerText = `${val} secs`;
+
+        renderAllRoutesSidebarList();
+        renderStopsManagerSection();
+        updateAnalyticsTab();
+        pushHistorySnapshot();
+      }
     }
 
     // DIRECTION TAB ACTIONS & REALTIME MAP STYLING FLIP
@@ -1407,9 +1480,6 @@
       const st = stops.find(s => s.id === stopId);
       if (st && map) {
         map.flyTo([st.lat, st.lng], 16, { duration: 1.0 });
-        if (markersMap[stopId]) {
-          markersMap[stopId].openPopup();
-        }
       }
     }
 
@@ -1429,14 +1499,15 @@
       if (activeRoute) {
         activeRoute.headway = Number(val);
         document.getElementById('headway-value-badge').innerText = `${val} mins`;
+        renderAllRoutesSidebarList();
         updateAnalyticsTab();
         pushHistorySnapshot();
       }
     }
 
-    // OPERATIONAL METRICS CALCULATION
+    // OPERATIONAL METRICS CALCULATION (INCLUDING CUSTOM DWELL TIME MATH)
     function calculateRouteMetrics(route) {
-      if (!route) return { totalDistMiles: 0, outboundMiles: 0, inboundMiles: 0, roundTripMins: 0, busesNeeded: 0 };
+      if (!route) return { totalDistMiles: 0, outboundMiles: 0, inboundMiles: 0, pureTravelMins: 0, totalDwellMins: 0, roundTripMins: 0, busesNeeded: 0 };
 
       const outStops = (route.outboundStopIds || []).map(sid => stops.find(s => s.id === sid)).filter(Boolean);
       let outMeters = route.outboundDistanceMeters || 0;
@@ -1461,23 +1532,26 @@
       const inboundMiles = inMeters * 0.000621371;
       const totalDistMiles = outboundMiles + inboundMiles;
 
-      let dwellMins = 0;
+      const baseDwellSec = route.dwellSec !== undefined ? route.dwellSec : 30;
+
+      let totalDwellSec = 0;
       (route.outboundStopIds || []).forEach(sid => {
         const st = stops.find(s => s.id === sid);
-        if (st) dwellMins += (st.isHub ? 2.0 : 0.33);
+        totalDwellSec += baseDwellSec + (st && st.isHub ? 60 : 0);
       });
       if (route.isBidirectional) {
         (route.inboundStopIds || []).forEach(sid => {
           const st = stops.find(s => s.id === sid);
-          if (st) dwellMins += (st.isHub ? 2.0 : 0.33);
+          totalDwellSec += baseDwellSec + (st && st.isHub ? 60 : 0);
         });
       }
 
+      const totalDwellMins = totalDwellSec / 60;
       const pureTravelMins = (totalDistMiles / (route.speedMph || 12.5)) * 60;
-      const roundTripMins = Math.round((pureTravelMins + dwellMins) * 1.10);
+      const roundTripMins = Math.round((pureTravelMins + totalDwellMins) * 1.10);
       const busesNeeded = Math.max(1, Math.ceil(roundTripMins / (route.headway || 15)));
 
-      return { totalDistMiles, outboundMiles, inboundMiles, roundTripMins, busesNeeded };
+      return { totalDistMiles, outboundMiles, inboundMiles, pureTravelMins, totalDwellMins, roundTripMins, busesNeeded };
     }
 
     function updateAnalyticsTab() {
@@ -1486,6 +1560,8 @@
 
       document.getElementById('analytics-outbound-dist').innerText = `${m.outboundMiles.toFixed(2)} mi`;
       document.getElementById('analytics-inbound-dist').innerText = `${m.inboundMiles.toFixed(2)} mi`;
+      document.getElementById('analytics-travel-time').innerText = `${m.pureTravelMins.toFixed(1)} mins`;
+      document.getElementById('analytics-dwell-time').innerText = `${m.totalDwellMins.toFixed(1)} mins`;
       document.getElementById('analytics-cycle').innerText = `${m.roundTripMins} mins`;
       document.getElementById('analytics-fleet').innerText = `${m.busesNeeded} buses`;
 
@@ -1502,8 +1578,9 @@
       document.getElementById('footer-system-summary').innerText = `Total Fleet: ${networkFleet} buses`;
     }
 
-    // TAB SWITCHER (5 TABS)
+    // TAB SWITCHER
     function switchTab(tabKey) {
+      activeTabKey = tabKey;
       ['lines', 'stops', 'presets', 'analytics', 'export'].forEach(t => {
         const btn = document.getElementById(`tab-btn-${t}`);
         const content = document.getElementById(`tab-content-${t}`);
@@ -1561,7 +1638,7 @@
       const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify({ stops, routes, activeRouteId, addStopScope }, null, 2));
       const link = document.createElement('a');
       link.setAttribute("href", dataStr);
-      link.setAttribute("download", `mtd_workspace_v10_${Date.now()}.json`);
+      link.setAttribute("download", `mtd_workspace_v10_5_${Date.now()}.json`);
       document.body.appendChild(link);
       link.click();
       link.remove();
