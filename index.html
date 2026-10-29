@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>MTD Route Studio - Urbana-Champaign v3.0 Network Edition</title>
+  <title>MTD Route Studio - Urbana-Champaign</title>
   
   <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
@@ -49,7 +49,7 @@
     
     /* Glassmorphism panel styling */
     .glass-panel {
-      background: rgba(15, 23, 42, 0.90);
+      background: rgba(15, 23, 42, 0.92);
       backdrop-filter: blur(14px);
       -webkit-backdrop-filter: blur(14px);
       border: 1px solid rgba(255, 255, 255, 0.12);
@@ -70,7 +70,7 @@
       font-weight: 800;
       font-size: 11px;
       border-radius: 50%;
-      border: 2px solid #ffffff;
+      border: 2.5px solid #ffffff;
       box-shadow: 0 4px 12px rgba(0,0,0,0.5);
       transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
       cursor: grab;
@@ -125,7 +125,7 @@
       </div>
       <div>
         <h1 class="font-extrabold text-base sm:text-lg tracking-wide flex items-center gap-2 leading-none">
-          MTD ROUTE STUDIO <span class="bg-illini-orange/20 text-illini-orange text-[11px] font-bold px-2 py-0.5 rounded border border-illini-orange/40">Urbana-Champaign v3.0</span>
+          MTD ROUTE STUDIO <span class="bg-illini-orange/20 text-illini-orange text-[11px] font-bold px-2 py-0.5 rounded border border-illini-orange/40">Urbana-Champaign</span>
         </h1>
         <p class="text-[11px] text-slate-300 mt-0.5 flex items-center gap-1.5">
           <span id="osrm-status-dot" class="w-2 h-2 rounded-full bg-emerald-400 inline-block animate-pulse"></span>
@@ -137,7 +137,7 @@
     <!-- Header Actions & Quick Utilities -->
     <div class="flex items-center space-x-2.5">
       <div class="hidden lg:flex items-center bg-slate-900/90 border border-slate-800 rounded-xl p-1 text-xs">
-        <span class="text-slate-400 px-2 text-[11px] font-semibold"><i class="fa-solid fa-layer-group text-slate-400 mr-1"></i> Map Base:</span>
+        <span class="text-slate-400 px-2 text-[11px] font-semibold"><i class="fa-solid fa-layer-group text-slate-400 mr-1"></i> Base:</span>
         <select id="header-map-style-select" onchange="changeMapBaseLayer(this.value)" class="bg-slate-800 text-slate-200 rounded-lg px-2 py-1 text-xs font-medium focus:outline-none focus:ring-1 focus:ring-illini-orange border border-slate-700">
           <option value="esriStreet">Esri World Street Map</option>
           <option value="osmStandard">OpenStreetMap Standard</option>
@@ -148,12 +148,12 @@
 
       <button onclick="toggleBuffers()" id="header-buffer-btn" class="bg-slate-800/90 hover:bg-slate-700 text-slate-200 text-xs px-3 py-2 rounded-xl border border-slate-700 transition flex items-center gap-2">
         <i class="fa-solid fa-circle-dot text-emerald-400"></i>
-        <span class="hidden sm:inline font-medium">400m Walk Catchment</span>
+        <span class="hidden sm:inline font-medium">400m Walk Buffer</span>
       </button>
 
       <button onclick="exportProjectJSON()" class="bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs px-3 py-2 rounded-xl border border-slate-700 font-semibold transition flex items-center gap-1.5">
         <i class="fa-solid fa-floppy-disk text-sky-400"></i>
-        <span class="hidden sm:inline">Save JSON Workspace</span>
+        <span class="hidden sm:inline">Save JSON</span>
       </button>
 
       <button onclick="exportGeoJSON()" class="bg-illini-orange hover:bg-orange-600 text-white text-xs px-3.5 py-2 rounded-xl font-bold transition flex items-center gap-1.5 shadow-md">
@@ -167,56 +167,101 @@
   <div class="flex-1 flex overflow-hidden relative">
 
     <!-- LEFT SIDEBAR -->
-    <aside id="sidebar-container" class="w-full md:w-[430px] bg-slate-900/95 border-r border-slate-800 flex flex-col z-20 shrink-0 shadow-2xl">
+    <aside id="sidebar-container" class="w-full md:w-[440px] bg-slate-900/95 border-r border-slate-800 flex flex-col z-20 shrink-0 shadow-2xl">
       
       <!-- NAVIGATION TABS HEADER -->
       <div class="bg-slate-950 p-2 border-b border-slate-800 grid grid-cols-4 gap-1 text-[11px] font-semibold">
-        <button id="tab-btn-studio" onclick="switchTab('studio')" class="py-2 px-1 rounded-lg text-center transition-all bg-illini-orange text-white font-bold shadow">
-          <i class="fa-solid fa-route block text-sm mb-0.5"></i> Lines Editor
+        <button id="tab-btn-stops" onclick="switchTab('stops')" class="py-2 px-1 rounded-lg text-center transition-all bg-illini-orange text-white font-bold shadow">
+          <i class="fa-solid fa-location-dot block text-sm mb-0.5"></i> 🚏 Stops Manager
+        </button>
+        <button id="tab-btn-lines" onclick="switchTab('lines')" class="py-2 px-1 rounded-lg text-center transition-all text-slate-400 hover:text-slate-200 hover:bg-slate-800">
+          <i class="fa-solid fa-route block text-sm mb-0.5"></i> 🚌 Lines Editor
         </button>
         <button id="tab-btn-landmarks" onclick="switchTab('landmarks')" class="py-2 px-1 rounded-lg text-center transition-all text-slate-400 hover:text-slate-200 hover:bg-slate-800">
-          <i class="fa-solid fa-map-location-dot block text-sm mb-0.5"></i> Hubs & Lincoln
-        </button>
-        <button id="tab-btn-timetable" onclick="switchTab('timetable')" class="py-2 px-1 rounded-lg text-center transition-all text-slate-400 hover:text-slate-200 hover:bg-slate-800">
-          <i class="fa-solid fa-clock block text-sm mb-0.5"></i> Timetable
+          <i class="fa-solid fa-map-location-dot block text-sm mb-0.5"></i> 📍 Presets
         </button>
         <button id="tab-btn-project" onclick="switchTab('project')" class="py-2 px-1 rounded-lg text-center transition-all text-slate-400 hover:text-slate-200 hover:bg-slate-800">
-          <i class="fa-solid fa-sliders block text-sm mb-0.5"></i> Project Data
+          <i class="fa-solid fa-chart-pie block text-sm mb-0.5"></i> 📊 Analytics & Data
         </button>
       </div>
 
-      <!-- TAB 1: ROUTE LINES EDITOR -->
-      <div id="tab-content-studio" class="flex-1 flex flex-col overflow-hidden">
+      <!-- TAB 1: DEDICATED STOPS MANAGER (🚏 站点管理) -->
+      <div id="tab-content-stops" class="flex-1 flex flex-col overflow-hidden">
         
-        <!-- Active Route Selector Bar -->
-        <div class="p-3.5 border-b border-slate-800 bg-slate-900 space-y-2.5">
+        <!-- Active Route Quick Switcher & Click-Mode Action -->
+        <div class="p-3.5 border-b border-slate-800 bg-slate-950 space-y-2.5">
           <div class="flex items-center justify-between">
-            <span class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Network Bus Lines</span>
-            <button onclick="addNewRoute()" class="bg-emerald-600 hover:bg-emerald-500 text-white text-xs px-2.5 py-1 rounded-lg font-bold flex items-center gap-1.5 shadow transition">
-              <i class="fa-solid fa-plus"></i> New Line
+            <span class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Active Transit Line</span>
+            <button onclick="toggleMapClickMode()" id="sidebar-map-click-btn" class="bg-illini-orange hover:bg-orange-600 text-white text-xs px-3 py-1.5 rounded-lg font-bold flex items-center gap-1.5 shadow transition">
+              <i class="fa-solid fa-map-pin"></i> <span>📍 Drop Stop on Map</span>
             </button>
           </div>
 
           <!-- Dynamic Route Selector Pills -->
-          <div id="route-pills-list" class="flex items-center gap-2 overflow-x-auto pb-1">
-            <!-- Rendered dynamically by JS -->
+          <div id="stops-tab-route-pills" class="flex items-center gap-2 overflow-x-auto pb-1">
+            <!-- Rendered dynamically -->
           </div>
         </div>
 
-        <!-- Selected Route Editor Panel -->
-        <div id="route-editor-panel" class="flex-1 overflow-y-auto p-4 space-y-4">
-          <!-- Rendered dynamically by JS -->
+        <!-- STOPS MANAGER LIST -->
+        <div class="flex-1 overflow-y-auto p-3.5 space-y-3">
+          <div class="flex items-center justify-between">
+            <span class="text-[11px] font-bold text-slate-400 uppercase tracking-wider" id="stops-manager-count-label">Stops Sequence (0)</span>
+            <span class="text-[10px] text-slate-500 italic">Type in box to rename instantly</span>
+          </div>
+
+          <!-- Container for Stop Cards -->
+          <div id="stops-manager-list" class="space-y-2">
+            <!-- JS populated with inline inputs -->
+          </div>
+
+          <!-- Quick Add Preset Stop Dropdown -->
+          <div class="pt-3 border-t border-slate-800 space-y-1.5">
+            <label class="text-[10px] text-slate-400 font-bold block uppercase tracking-wider">Quick Add Existing Landmark Stop</label>
+            <div class="flex gap-2">
+              <select id="stops-tab-add-select" class="flex-1 bg-slate-950 border border-slate-700 rounded-xl p-2 text-xs text-white focus:outline-none focus:border-illini-orange">
+                <!-- JS Populated -->
+              </select>
+              <button onclick="addStopFromDropdown()" class="bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs px-3.5 rounded-xl border border-slate-700 transition shadow">
+                + Add
+              </button>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- TAB 2: ROUTE LINES EDITOR -->
+      <div id="tab-content-lines" class="hidden flex-1 overflow-y-auto p-4 space-y-4">
+        <div>
+          <h2 class="text-sm font-bold text-white flex items-center gap-2">
+            <i class="fa-solid fa-bus text-illini-orange"></i> Multi-Line Network Manager
+          </h2>
+          <p class="text-xs text-slate-400 mt-1 leading-relaxed">
+            Create and configure multiple CUMTD bus lines simultaneously.
+          </p>
+        </div>
+
+        <div class="flex items-center justify-between bg-slate-950 p-3 rounded-2xl border border-slate-800">
+          <span class="text-xs font-bold text-slate-200">Active Lines</span>
+          <button onclick="addNewRoute()" class="bg-emerald-600 hover:bg-emerald-500 text-white text-xs px-3 py-1.5 rounded-xl font-bold flex items-center gap-1.5 shadow transition">
+            <i class="fa-solid fa-plus"></i> Add New Line
+          </button>
+        </div>
+
+        <div id="lines-editor-config-panel" class="space-y-3">
+          <!-- JS Populated with line configurations -->
         </div>
       </div>
 
-      <!-- TAB 2: LINCOLN AVE & CAMPUS HUBS PRESETS -->
+      <!-- TAB 3: LINCOLN AVE & CAMPUS PRESETS -->
       <div id="tab-content-landmarks" class="hidden flex-1 overflow-y-auto p-4 space-y-4">
         <div>
           <h2 class="text-sm font-bold text-white flex items-center gap-2">
-            <i class="fa-solid fa-location-dot text-illini-orange"></i> Lincoln Ave & UIUC Presets
+            <i class="fa-solid fa-location-dot text-illini-orange"></i> Lincoln Ave & UIUC Landmark Presets
           </h2>
           <p class="text-xs text-slate-400 mt-1 leading-relaxed">
-            Click any campus landmark or Lincoln Ave intersection to attach it to the active line.
+            Click any landmark to attach it directly to the currently active route line.
           </p>
         </div>
 
@@ -246,69 +291,41 @@
         </div>
       </div>
 
-      <!-- TAB 3: AUTOMATED DEPARTURE TIMETABLE GENERATOR -->
-      <div id="tab-content-timetable" class="hidden flex-1 overflow-y-auto p-4 space-y-4">
-        <div>
-          <h2 class="text-sm font-bold text-white flex items-center gap-2">
-            <i class="fa-solid fa-stopwatch text-sky-400"></i> Daily Schedule Generator
-          </h2>
-          <p class="text-xs text-slate-400 mt-1 leading-relaxed">
-            Generate full-day departure schedules for any stop based on configured line headway frequency.
-          </p>
-        </div>
-
-        <div class="bg-slate-950 p-3.5 rounded-2xl border border-slate-800 space-y-3">
-          <div>
-            <label class="text-[10px] text-slate-400 block mb-1">Select Line & Stop</label>
-            <div class="grid grid-cols-2 gap-2">
-              <select id="tt-route-select" onchange="updateTimetableStopDropdown()" class="bg-slate-900 border border-slate-700 text-xs text-white rounded-xl p-2 focus:outline-none">
-                <!-- JS populated -->
-              </select>
-              <select id="tt-stop-select" class="bg-slate-900 border border-slate-700 text-xs text-white rounded-xl p-2 focus:outline-none">
-                <!-- JS populated -->
-              </select>
-            </div>
-          </div>
-
-          <div class="grid grid-cols-2 gap-2">
-            <div>
-              <label class="text-[10px] text-slate-400 block mb-1">Service Start Time</label>
-              <input type="time" id="tt-start-time" value="07:00" class="w-full bg-slate-900 border border-slate-700 text-xs text-white rounded-xl p-2 font-mono">
-            </div>
-            <div>
-              <label class="text-[10px] text-slate-400 block mb-1">Service End Time</label>
-              <input type="time" id="tt-end-time" value="22:00" class="w-full bg-slate-900 border border-slate-700 text-xs text-white rounded-xl p-2 font-mono">
-            </div>
-          </div>
-
-          <button onclick="generateTimetable()" class="w-full bg-illini-orange hover:bg-orange-600 text-white font-bold text-xs py-2.5 rounded-xl transition shadow">
-            Generate Timetable Matrix
-          </button>
-        </div>
-
-        <!-- Output Grid -->
-        <div>
-          <div class="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-2">Estimated Departures Matrix</div>
-          <div id="timetable-output-grid" class="grid grid-cols-4 gap-1.5 font-mono text-xs text-center">
-            <div class="col-span-4 text-slate-500 italic py-4 text-center">Select line and click "Generate Timetable" above.</div>
-          </div>
-        </div>
-      </div>
-
-      <!-- TAB 4: PROJECT MANAGEMENT & EXPORTS -->
+      <!-- TAB 4: ANALYTICS, TIMETABLES & EXPORTS -->
       <div id="tab-content-project" class="hidden flex-1 overflow-y-auto p-4 space-y-4">
         <div>
           <h2 class="text-sm font-bold text-white flex items-center gap-2">
-            <i class="fa-solid fa-database text-emerald-400"></i> Project Workspace & Data
+            <i class="fa-solid fa-database text-emerald-400"></i> Workspace Analytics & GTFS
           </h2>
           <p class="text-xs text-slate-400 mt-1 leading-relaxed">
-            Manage your network project files, auto-save state, and export standardization files.
+            Manage project workspace files, timetables, and standardized transit exports.
           </p>
         </div>
 
-        <!-- Project Load & Save -->
+        <!-- Timetable Generator -->
         <div class="bg-slate-950 p-3.5 rounded-2xl border border-slate-800 space-y-3">
-          <div class="text-xs font-bold text-slate-200">Workspace Management</div>
+          <div class="text-xs font-bold text-slate-200 flex items-center gap-2">
+            <i class="fa-solid fa-clock text-sky-400"></i> Timetable Generator
+          </div>
+          <div class="grid grid-cols-2 gap-2">
+            <select id="tt-route-select" onchange="updateTimetableStopDropdown()" class="bg-slate-900 border border-slate-700 text-xs text-white rounded-xl p-2 focus:outline-none">
+              <!-- JS populated -->
+            </select>
+            <select id="tt-stop-select" class="bg-slate-900 border border-slate-700 text-xs text-white rounded-xl p-2 focus:outline-none">
+              <!-- JS populated -->
+            </select>
+          </div>
+          <button onclick="generateTimetable()" class="w-full bg-illini-orange hover:bg-orange-600 text-white font-bold text-xs py-2 rounded-xl transition shadow">
+            Generate Schedule
+          </button>
+          <div id="timetable-output-grid" class="grid grid-cols-4 gap-1.5 font-mono text-xs text-center pt-2">
+            <!-- Matrix populated -->
+          </div>
+        </div>
+
+        <!-- Workspace Save & Load -->
+        <div class="bg-slate-950 p-3.5 rounded-2xl border border-slate-800 space-y-3">
+          <div class="text-xs font-bold text-slate-200">Workspace Backup</div>
           <div class="grid grid-cols-2 gap-2">
             <button onclick="exportProjectJSON()" class="bg-slate-800 hover:bg-slate-700 border border-slate-700 text-white p-3 rounded-xl text-xs font-semibold flex flex-col items-center justify-center gap-1.5 transition">
               <i class="fa-solid fa-file-export text-sky-400 text-lg"></i>
@@ -324,7 +341,7 @@
 
         <!-- GIS Data Exports -->
         <div class="bg-slate-950 p-3.5 rounded-2xl border border-slate-800 space-y-3">
-          <div class="text-xs font-bold text-slate-200">Standardized Transit Exports</div>
+          <div class="text-xs font-bold text-slate-200">GIS & GTFS Exports</div>
           <div class="grid grid-cols-2 gap-2">
             <button onclick="exportGeoJSON()" class="bg-slate-800 hover:bg-slate-700 border border-slate-700 text-white p-3 rounded-xl text-xs font-semibold flex flex-col items-center justify-center gap-1.5 transition">
               <i class="fa-solid fa-file-geojson text-illini-orange text-lg"></i>
@@ -338,17 +355,17 @@
         </div>
 
         <!-- Network System Reset -->
-        <div class="pt-4 border-t border-slate-800">
+        <div class="pt-2">
           <button onclick="resetSystemToDefault()" class="w-full bg-rose-950/40 hover:bg-rose-900/60 border border-rose-800/60 text-rose-300 font-bold text-xs py-2.5 rounded-xl transition flex items-center justify-center gap-2">
-            <i class="fa-solid fa-rotate-left"></i> Reset Entire Network to Initial State
+            <i class="fa-solid fa-rotate-left"></i> Reset Entire Network
           </button>
         </div>
       </div>
 
       <!-- FOOTER STATUS BAR -->
       <div class="p-3 bg-slate-950 border-t border-slate-800 text-center text-[11px] text-slate-400 flex items-center justify-between shrink-0">
-        <span>MTD Route Studio v3.0</span>
-        <span id="network-summary-mini" class="text-emerald-400 font-mono font-bold">Total Buses: 0</span>
+        <span>MTD Studio Urbana-Champaign</span>
+        <span id="network-summary-mini" class="text-emerald-400 font-mono font-bold">Total Fleet: 0 Buses</span>
       </div>
     </aside>
 
@@ -367,7 +384,7 @@
 
         <button onclick="fitAllRoutesView()" class="glass-panel text-slate-200 hover:text-white px-3 py-2 rounded-xl border border-slate-700/80 text-xs font-semibold flex items-center gap-2 shadow-xl transition">
           <i class="fa-solid fa-expand text-sky-400"></i>
-          <span>Fit Urbana Network</span>
+          <span>Fit Network View</span>
         </button>
 
         <div id="osrm-indicator-badge" class="glass-panel text-slate-300 px-3 py-1.5 rounded-xl border border-slate-700/80 text-[11px] font-semibold flex items-center gap-2 shadow-xl">
@@ -379,7 +396,7 @@
       <!-- ACTIVE MAP-CLICKING MODE BANNER -->
       <div id="map-click-mode-banner" class="hidden absolute top-4 left-1/2 -translate-x-1/2 z-[1000] bg-illini-orange text-white text-xs font-extrabold px-5 py-2.5 rounded-full shadow-2xl flex items-center gap-3 animate-bounce border-2 border-white/20">
         <span class="w-2.5 h-2.5 rounded-full bg-white animate-ping"></span>
-        <span>👉 CLICK ANYWHERE ON MAP (e.g. LINCOLN AVE) TO PLACE A STOP</span>
+        <span>👉 CLICK ANYWHERE ON MAP/STREETS (e.g. LINCOLN AVE) TO PLACE A STOP</span>
         <button onclick="toggleMapClickMode()" class="bg-black/30 hover:bg-black/50 text-white rounded-full w-5 h-5 flex items-center justify-center text-[11px] transition">✕</button>
       </div>
 
@@ -428,7 +445,7 @@
 
   <!-- JAVASCRIPT APPLICATION LOGIC -->
   <script>
-    // --- 1. HIGH-PRECISION PRESET STOPS & LINCOLN AVE CORRIDORS ---
+    // --- 1. PRESET STOPS & LINCOLN AVE CORRIDORS ---
 
     const PRESET_STOPS = [
       // Lincoln Avenue Key Intersections
@@ -439,20 +456,18 @@
       { id: 'LINCOLN_ILLINOIS', name: 'Lincoln & Illinois St', lat: 40.1110, lng: -88.2195, category: 'Lincoln Ave Corridor', icon: 'road', isHub: false },
 
       // Core UIUC Campus & Housing
-      { id: 'UNION', name: 'Illini Union (Green St Centerline)', lat: 40.11032, lng: -88.22720, category: 'Core Campus', icon: 'graduation-cap', isHub: true },
-      { id: 'ISR', name: 'ISR - Illinois Street Residence (Green St)', lat: 40.11032, lng: -88.22500, category: 'Campus Housing', icon: 'bed', isHub: false },
-      { id: 'PAR_FAR', name: 'PAR / FAR Residence Halls (Florida Ave)', lat: 40.0998, lng: -88.2210, category: 'Campus Housing', icon: 'bed', isHub: true },
-      { id: 'IKENBERRY', name: 'Ikenberry Commons (Gregory Dr)', lat: 40.1038, lng: -88.2355, category: 'Campus Housing', icon: 'utensils', isHub: false },
-      { id: 'SIEBEL', name: 'Siebel Center for CS (Goodwin Ave)', lat: 40.1132, lng: -88.2249, category: 'Engineering Quad', icon: 'laptop-code', isHub: false },
-      { id: 'ECE', name: 'ECE Building / Beckman Inst. (Wright St)', lat: 40.1150, lng: -88.2280, category: 'Engineering Quad', icon: 'microchip', isHub: false },
-      { id: 'ARC', name: 'ARC - Activities & Recreation Center', lat: 40.1012, lng: -88.2360, category: 'Campus Sports', icon: 'dumbbell', isHub: false },
-      { id: 'KRANNERT', name: 'Krannert Center (Goodwin Ave)', lat: 40.1080, lng: -88.2225, category: 'Core Campus', icon: 'masks-theater', isHub: false },
+      { id: 'UNION', name: 'Illini Union (Green St)', lat: 40.11032, lng: -88.22720, category: 'Core Campus', icon: 'graduation-cap', isHub: true },
+      { id: 'ISR', name: 'ISR - Illinois Street Residence', lat: 40.11032, lng: -88.22500, category: 'Campus Housing', icon: 'bed', isHub: false },
+      { id: 'PAR_FAR', name: 'PAR / FAR Residence Halls', lat: 40.0998, lng: -88.2210, category: 'Campus Housing', icon: 'bed', isHub: true },
+      { id: 'IKENBERRY', name: 'Ikenberry Commons', lat: 40.1038, lng: -88.2355, category: 'Campus Housing', icon: 'utensils', isHub: false },
+      { id: 'SIEBEL', name: 'Siebel Center for CS', lat: 40.1132, lng: -88.2249, category: 'Engineering Quad', icon: 'laptop-code', isHub: false },
+      { id: 'ECE', name: 'ECE Building / Wright St', lat: 40.1150, lng: -88.2280, category: 'Engineering Quad', icon: 'microchip', isHub: false },
+      { id: 'ARC', name: 'ARC - Recreation Center', lat: 40.1012, lng: -88.2360, category: 'Campus Sports', icon: 'dumbbell', isHub: false },
 
       // City & Transit Hubs
       { id: 'IT', name: 'Illinois Terminal (Downtown Champaign)', lat: 40.1163, lng: -88.2432, category: 'City Transit Hub', icon: 'building-columns', isHub: true },
       { id: 'URBANA_SQ', name: 'Downtown Urbana (Main St)', lat: 40.1110, lng: -88.2072, category: 'City Hub', icon: 'city', isHub: true },
-      { id: 'CARLE', name: 'Carle Foundation Hospital (University Ave)', lat: 40.1182, lng: -88.2120, category: 'Medical Hub', icon: 'hospital', isHub: true },
-      { id: 'RESEARCH_PARK', name: 'UIUC Research Park (First St)', lat: 40.0932, lng: -88.2410, category: 'Tech Park', icon: 'flask', isHub: false }
+      { id: 'CARLE', name: 'Carle Foundation Hospital', lat: 40.1182, lng: -88.2120, category: 'Medical Hub', icon: 'hospital', isHub: true }
     ];
 
     const DEFAULT_ROUTES = [
@@ -480,10 +495,11 @@
       }
     ];
 
-    // State
+    // State Variables
     let stops = [...PRESET_STOPS];
     let routes = JSON.parse(JSON.stringify(DEFAULT_ROUTES));
     let activeRouteId = 'route-23x';
+    let customStopCounter = 1;
     
     let map = null;
     let baseMapLayers = {};
@@ -496,7 +512,6 @@
     let showBuffers = false;
     let isClickToAddMode = false;
 
-    // LocalStorage Key
     const STORAGE_KEY = 'mtd_studio_network_v3_state';
 
     // --- 2. INITIALIZATION & TILE MAP ENGINE ---
@@ -506,7 +521,8 @@
       initMapEngine();
       renderAllStopsOnMap();
       renderRoutesOnMap();
-      renderSidebarUI();
+      renderStopsManagerTab();
+      renderLinesEditorTab();
       renderLandmarksTab();
       updateTimetableStopDropdown();
       updateStatsDashboard();
@@ -541,7 +557,7 @@
       activeBaseLayer = baseMapLayers.esriStreet;
       activeBaseLayer.addTo(map);
 
-      // Click Map Event Listener for adding custom stops
+      // Instant map click listener for zero-popup stop creation
       map.on('click', function(e) {
         if (isClickToAddMode) {
           handleMapClickAddStop(e.latlng.lat, e.latlng.lng);
@@ -600,16 +616,16 @@
       const badgeText = document.getElementById('osrm-badge-text');
 
       if (state === 'active') {
-        dot.className = 'w-2 h-2 rounded-full bg-emerald-400 inline-block animate-pulse';
-        text.innerText = message;
+        if (dot) dot.className = 'w-2 h-2 rounded-full bg-emerald-400 inline-block animate-pulse';
+        if (text) text.innerText = message;
         if (badgeText) badgeText.innerText = 'Road Snapping Active';
       } else if (state === 'processing') {
-        dot.className = 'w-2 h-2 rounded-full bg-amber-400 inline-block animate-ping';
-        text.innerText = message;
+        if (dot) dot.className = 'w-2 h-2 rounded-full bg-amber-400 inline-block animate-ping';
+        if (text) text.innerText = message;
         if (badgeText) badgeText.innerText = 'Snapping Streets...';
       } else {
-        dot.className = 'w-2 h-2 rounded-full bg-rose-400 inline-block';
-        text.innerText = message;
+        if (dot) dot.className = 'w-2 h-2 rounded-full bg-rose-400 inline-block';
+        if (text) text.innerText = message;
         if (badgeText) badgeText.innerText = 'Straight Line Mode';
       }
     }
@@ -640,16 +656,16 @@
         const badgeBg = isInActiveRoute ? (activeRoute ? activeRoute.color : '#13294B') : '#475569';
         const labelText = isInActiveRoute ? (seqIdx + 1) : '';
 
-        const starBadge = stop.isHub ? `<span class="hub-star-badge" title="Major Transfer Hub (2-min Dwell)"><i class="fa-solid fa-star"></i></span>` : '';
+        const starBadge = stop.isHub ? `<span class="hub-star-badge" title="Major Transfer Hub (120s Dwell)"><i class="fa-solid fa-star"></i></span>` : '';
 
         const customIcon = L.divIcon({
-          html: `<div class="stop-marker-badge relative" style="background-color: ${badgeBg}; width: 26px; height: 26px;">
-                  ${labelText || `<i class="fa-solid fa-${stop.icon || 'bus'}" style="font-size: 10px;"></i>`}
+          html: `<div class="stop-marker-badge relative" style="background-color: ${badgeBg}; width: 28px; height: 28px;">
+                  ${labelText || `<i class="fa-solid fa-${stop.icon || 'bus'}" style="font-size: 11px;"></i>`}
                   ${starBadge}
                  </div>`,
           className: '',
-          iconSize: [26, 26],
-          iconAnchor: [13, 13]
+          iconSize: [28, 28],
+          iconAnchor: [14, 14]
         });
 
         // Draggable Marker
@@ -664,26 +680,12 @@
           stop.lng = Number(newPos.lng.toFixed(5));
           
           renderRoutesOnMap();
-          renderSidebarUI();
+          renderStopsManagerTab();
           saveToLocalStorage();
-          showToast(`Moved "${stop.name}" - OSRM road route recalculated!`, 'info');
+          showToast(`Repositioned "${stop.name}" - OSRM road route updated!`, 'info');
         });
 
-        marker.bindPopup(`
-          <div class="p-2 text-slate-900 font-sans">
-            <div class="font-extrabold text-sm text-illini-navy">${stop.name}</div>
-            <div class="text-xs text-slate-500 mb-1">${stop.category || 'Transit Stop'} ${stop.isHub ? '(⭐ Major Hub)' : ''}</div>
-            <div class="text-[10px] text-slate-400 mb-2 font-mono">${stop.lat.toFixed(4)}, ${stop.lng.toFixed(4)}</div>
-            <div class="flex gap-1">
-              <button onclick="addStopToActiveRoute('${stop.id}')" class="bg-illini-orange hover:bg-orange-600 text-white text-xs px-2.5 py-1 rounded font-bold transition flex-1">
-                + Add to Line
-              </button>
-              <button onclick="toggleMajorHub('${stop.id}')" class="bg-amber-100 hover:bg-amber-200 text-amber-800 text-xs px-2 py-1 rounded font-semibold transition">
-                ${stop.isHub ? 'Unmark Hub' : 'Set Hub'}
-              </button>
-            </div>
-          </div>
-        `);
+        marker.bindPopup(buildMarkerPopupHtml(stop));
 
         markersMap[stop.id] = marker;
 
@@ -700,6 +702,24 @@
         bufferCirclesMap[stop.id] = circle;
         if (showBuffers) circle.addTo(map);
       });
+    }
+
+    function buildMarkerPopupHtml(stop) {
+      return `
+        <div class="p-2 text-slate-900 font-sans min-w-[200px]">
+          <div class="font-extrabold text-sm text-illini-navy">${stop.name}</div>
+          <div class="text-xs text-slate-500 mb-1">${stop.category || 'Transit Stop'} ${stop.isHub ? '(⭐ Major Hub)' : ''}</div>
+          <div class="text-[10px] text-slate-400 mb-2 font-mono">${stop.lat.toFixed(4)}, ${stop.lng.toFixed(4)}</div>
+          <div class="flex gap-1">
+            <button onclick="addStopToActiveRoute('${stop.id}')" class="bg-illini-orange hover:bg-orange-600 text-white text-xs px-2.5 py-1 rounded font-bold transition flex-1">
+              + Add to Line
+            </button>
+            <button onclick="toggleMajorHub('${stop.id}')" class="bg-amber-100 hover:bg-amber-200 text-amber-800 text-xs px-2 py-1 rounded font-semibold transition">
+              ${stop.isHub ? 'Unmark Hub' : 'Set Hub'}
+            </button>
+          </div>
+        </div>
+      `;
     }
 
     async function renderRoutesOnMap() {
@@ -764,7 +784,17 @@
       }
     }
 
-    // --- 5. INTERACTIVE MAP-CLICK STOP CREATION ---
+    function flyToStop(stopId) {
+      const stop = stops.find(s => s.id === stopId);
+      if (stop && map) {
+        map.flyTo([stop.lat, stop.lng], 16, { animate: true, duration: 0.8 });
+        if (markersMap[stopId]) {
+          markersMap[stopId].openPopup();
+        }
+      }
+    }
+
+    // --- 5. ZERO-POPUP MAP-CLICK STOP CREATION ---
 
     function toggleMapClickMode() {
       isClickToAddMode = !isClickToAddMode;
@@ -788,16 +818,15 @@
     }
 
     function handleMapClickAddStop(lat, lng) {
-      const defaultName = `Custom Stop (${lat.toFixed(4)}, ${lng.toFixed(4)})`;
-      const stopName = prompt("Enter Transit Stop Name (e.g. Lincoln & Florida):", defaultName);
-      if (!stopName) return;
+      // ZERO POPUPS: Generate auto sequential name instantly
+      const autoName = `Stop #${customStopCounter++} (${lat.toFixed(4)}, ${lng.toFixed(4)})`;
 
       const newStop = {
         id: 'stop-' + Date.now(),
-        name: stopName,
+        name: autoName,
         lat: Number(lat.toFixed(5)),
         lng: Number(lng.toFixed(5)),
-        category: 'Custom User Stop',
+        category: 'Custom Street Stop',
         icon: 'map-pin',
         isHub: false
       };
@@ -805,9 +834,21 @@
       stops.push(newStop);
       addStopToActiveRoute(newStop.id);
       renderAllStopsOnMap();
+      renderStopsManagerTab();
       renderLandmarksTab();
       saveToLocalStorage();
-      showToast(`Added stop "${stopName}" & snapped line to street!`, 'success');
+      showToast(`Added "${autoName}" on street!`, 'success');
+    }
+
+    function updateStopName(stopId, newName) {
+      const stop = stops.find(s => s.id === stopId);
+      if (stop) {
+        stop.name = newName;
+        if (markersMap[stopId]) {
+          markersMap[stopId].setPopupContent(buildMarkerPopupHtml(stop));
+        }
+        saveToLocalStorage();
+      }
     }
 
     function toggleMajorHub(stopId) {
@@ -815,32 +856,33 @@
       if (!stop) return;
       stop.isHub = !stop.isHub;
       renderAllStopsOnMap();
-      renderSidebarUI();
+      renderStopsManagerTab();
       renderLandmarksTab();
       updateStatsDashboard();
       saveToLocalStorage();
-      showToast(`Updated "${stop.name}" -> ${stop.isHub ? '⭐ Major Hub (2-min dwell)' : 'Standard Stop (20-sec dwell)'}`, 'info');
+      showToast(`"${stop.name}" -> ${stop.isHub ? '⭐ Major Hub (120s Dwell)' : 'Standard Stop (20s Dwell)'}`, 'info');
     }
 
-    function renameStop(stopId) {
-      const stop = stops.find(s => s.id === stopId);
-      if (!stop) return;
-      const newName = prompt("Rename Stop:", stop.name);
-      if (newName && newName.trim()) {
-        stop.name = newName.trim();
-        renderAllStopsOnMap();
-        renderSidebarUI();
-        renderLandmarksTab();
-        saveToLocalStorage();
-        showToast(`Renamed stop to "${stop.name}"`, 'info');
-      }
+    function deleteStop(stopId) {
+      stops = stops.filter(s => s.id !== stopId);
+      routes.forEach(r => {
+        r.stopIds = r.stopIds.filter(sid => sid !== stopId);
+      });
+      renderAllStopsOnMap();
+      renderRoutesOnMap();
+      renderStopsManagerTab();
+      renderLinesEditorTab();
+      renderLandmarksTab();
+      saveToLocalStorage();
+      showToast("Stop removed from network", 'info');
     }
 
     // --- 6. ROUTE & NETWORK MANAGEMENT ---
 
     function setActiveRoute(routeId) {
       activeRouteId = routeId;
-      renderSidebarUI();
+      renderStopsManagerTab();
+      renderLinesEditorTab();
       renderRoutesOnMap();
       renderAllStopsOnMap();
       updateStatsDashboard();
@@ -854,7 +896,7 @@
       const newRoute = {
         id: newId,
         code: `${Math.floor(Math.random() * 80 + 10)}`,
-        name: 'New Custom Campus Line',
+        name: 'New Custom Line',
         color: pickedColor,
         headway: 15,
         speedMph: 12.5,
@@ -866,28 +908,42 @@
       routes.push(newRoute);
       setActiveRoute(newId);
       saveToLocalStorage();
-      showToast(`Created new line Line ${newRoute.code}`, 'success');
+      showToast(`Created Line ${newRoute.code}`, 'success');
     }
 
     function deleteActiveRoute() {
       if (routes.length <= 1) {
-        alert("You must keep at least one active route line.");
+        showToast("You must keep at least one active route line.", 'warning');
         return;
       }
       routes = routes.filter(r => r.id !== activeRouteId);
       activeRouteId = routes[0].id;
       setActiveRoute(activeRouteId);
       saveToLocalStorage();
+      showToast("Line deleted", 'info');
     }
 
     function addStopToActiveRoute(stopId) {
       const activeRoute = routes.find(r => r.id === activeRouteId);
       if (activeRoute) {
-        activeRoute.stopIds.push(stopId);
-        renderSidebarUI();
+        if (!activeRoute.stopIds.includes(stopId)) {
+          activeRoute.stopIds.push(stopId);
+        } else {
+          // Allow duplicate stops for loop circuits
+          activeRoute.stopIds.push(stopId);
+        }
+        renderStopsManagerTab();
         renderRoutesOnMap();
         renderAllStopsOnMap();
         saveToLocalStorage();
+      }
+    }
+
+    function addStopFromDropdown() {
+      const select = document.getElementById('stops-tab-add-select');
+      if (select && select.value) {
+        addStopToActiveRoute(select.value);
+        showToast("Stop added to active line", 'success');
       }
     }
 
@@ -895,7 +951,7 @@
       const activeRoute = routes.find(r => r.id === activeRouteId);
       if (activeRoute && activeRoute.stopIds.length > idx) {
         activeRoute.stopIds.splice(idx, 1);
-        renderSidebarUI();
+        renderStopsManagerTab();
         renderRoutesOnMap();
         renderAllStopsOnMap();
         saveToLocalStorage();
@@ -910,33 +966,23 @@
         const temp = activeRoute.stopIds[idx];
         activeRoute.stopIds[idx] = activeRoute.stopIds[targetIdx];
         activeRoute.stopIds[targetIdx] = temp;
-        renderSidebarUI();
+        renderStopsManagerTab();
         renderRoutesOnMap();
         renderAllStopsOnMap();
         saveToLocalStorage();
       }
     }
 
-    function updateRouteField(field, val) {
-      const activeRoute = routes.find(r => r.id === activeRouteId);
-      if (activeRoute) {
-        activeRoute[field] = (field === 'headway' || field === 'speedMph') ? Number(val) : val;
-        renderSidebarUI();
+    function updateRouteField(routeId, field, val) {
+      const route = routes.find(r => r.id === routeId);
+      if (route) {
+        route[field] = (field === 'headway' || field === 'speedMph') ? Number(val) : val;
+        renderStopsManagerTab();
+        renderLinesEditorTab();
         renderRoutesOnMap();
         renderAllStopsOnMap();
         saveToLocalStorage();
       }
-    }
-
-    function deleteCustomStop(stopId) {
-      stops = stops.filter(s => s.id !== stopId);
-      routes.forEach(r => {
-        r.stopIds = r.stopIds.filter(sid => sid !== stopId);
-      });
-      renderAllStopsOnMap();
-      renderRoutesOnMap();
-      renderSidebarUI();
-      saveToLocalStorage();
     }
 
     // --- 7. STATS & FLEET CALCULATIONS ---
@@ -966,7 +1012,7 @@
         }
       }
 
-      // Calculate dwell buffers (2 mins for Major Hubs, 20s for standard stops)
+      // Calculate dwell buffers (120s for Major Hubs, 20s for standard stops)
       let dwellMinutes = 0;
       route.stopIds.forEach(sid => {
         const st = stops.find(s => s.id === sid);
@@ -1008,13 +1054,13 @@
       });
 
       document.getElementById('stat-total-network-fleet').innerText = `${networkFleet} Buses`;
-      document.getElementById('network-summary-mini').innerText = `Total Buses: ${networkFleet}`;
+      document.getElementById('network-summary-mini').innerText = `Total Fleet: ${networkFleet} Buses`;
     }
 
-    // --- 8. SIDEBAR & TAB RENDERERS ---
+    // --- 8. TAB SWITCHER & RENDERERS ---
 
     function switchTab(tabKey) {
-      const tabs = ['studio', 'landmarks', 'timetable', 'project'];
+      const tabs = ['stops', 'lines', 'landmarks', 'project'];
       tabs.forEach(t => {
         const btn = document.getElementById(`tab-btn-${t}`);
         const content = document.getElementById(`tab-content-${t}`);
@@ -1028,146 +1074,166 @@
       });
     }
 
-    function renderSidebarUI() {
-      // 1. Render Route Switcher Pills
-      const pillsContainer = document.getElementById('route-pills-list');
-      pillsContainer.innerHTML = routes.map(r => {
-        const isSelected = r.id === activeRouteId;
-        return `
-          <button onclick="setActiveRoute('${r.id}')" 
-            class="px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-2 whitespace-nowrap border ${isSelected ? 'border-white text-white shadow-lg scale-105' : 'border-transparent text-slate-400 hover:bg-slate-800'}"
-            style="background-color: ${isSelected ? r.color : 'rgba(30,41,59,0.8)'}">
-            <span class="w-2.5 h-2.5 rounded-full" style="background-color: ${r.color}"></span>
-            <span>Line ${r.code}</span>
-          </button>
-        `;
-      }).join('');
+    // TAB 1: RENDER DEDICATED STOPS MANAGER (🚏 站点管理)
+    function renderStopsManagerTab() {
+      // 1. Render Active Line Switcher Pills
+      const pillsContainer = document.getElementById('stops-tab-route-pills');
+      if (pillsContainer) {
+        pillsContainer.innerHTML = routes.map(r => {
+          const isSelected = r.id === activeRouteId;
+          return `
+            <button onclick="setActiveRoute('${r.id}')" 
+              class="px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-2 whitespace-nowrap border ${isSelected ? 'border-white text-white shadow-lg scale-105' : 'border-transparent text-slate-400 hover:bg-slate-800'}"
+              style="background-color: ${isSelected ? r.color : 'rgba(30,41,59,0.8)'}">
+              <span class="w-2.5 h-2.5 rounded-full" style="background-color: ${r.color}"></span>
+              <span>Line ${r.code}</span>
+            </button>
+          `;
+        }).join('');
+      }
 
-      // 2. Render Active Line Editor View
+      // 2. Render Active Line Stops Cards with Inline Editable Inputs
       const activeRoute = routes.find(r => r.id === activeRouteId) || routes[0];
-      const panel = document.getElementById('route-editor-panel');
-      if (!activeRoute) return;
+      const listContainer = document.getElementById('stops-manager-list');
+      const countLabel = document.getElementById('stops-manager-count-label');
 
-      const stopSeqUI = activeRoute.stopIds.map((sid, idx) => {
+      if (!activeRoute || !listContainer) return;
+
+      countLabel.innerText = `Stops Sequence (${activeRoute.stopIds.length})`;
+
+      const cardsHtml = activeRoute.stopIds.map((sid, idx) => {
         const stop = stops.find(s => s.id === sid);
         if (!stop) return '';
+
         return `
-          <div class="flex items-center justify-between bg-slate-900 border border-slate-800 p-2.5 rounded-xl text-xs">
-            <div class="flex items-center gap-2.5 overflow-hidden">
-              <span class="bg-slate-800 text-illini-orange border border-illini-orange/30 font-mono w-5 h-5 rounded-full flex items-center justify-center text-[11px] font-extrabold shrink-0">
+          <div class="bg-slate-950 border border-slate-800 hover:border-slate-700 p-2.5 rounded-xl text-xs space-y-2 shadow transition">
+            <div class="flex items-center gap-2">
+              <span class="bg-slate-800 text-illini-orange border border-illini-orange/30 font-mono w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-extrabold shrink-0">
                 ${idx + 1}
               </span>
-              <div class="truncate">
-                <div class="font-bold text-slate-100 truncate flex items-center gap-1.5">
-                  <span>${stop.name}</span>
-                  ${stop.isHub ? '<i class="fa-solid fa-star text-amber-400 text-[10px]" title="Major Hub (2-min dwell)"></i>' : ''}
-                  <button onclick="renameStop('${stop.id}')" title="Rename Stop" class="text-slate-400 hover:text-illini-orange text-[10px]">
-                    <i class="fa-solid fa-pen"></i>
-                  </button>
-                </div>
-                <div class="text-[10px] text-slate-400 font-mono">${stop.lat.toFixed(4)}, ${stop.lng.toFixed(4)}</div>
-              </div>
-            </div>
-            <div class="flex items-center space-x-1 shrink-0">
-              <button onclick="toggleMajorHub('${stop.id}')" title="Toggle Hub Dwell Status" class="p-1 ${stop.isHub ? 'text-amber-400' : 'text-slate-500 hover:text-amber-400'}">
+
+              <!-- INLINE EDITABLE STOP NAME TEXT FIELD -->
+              <input type="text" value="${stop.name}" 
+                oninput="updateStopName('${stop.id}', this.value)"
+                placeholder="Enter stop name..."
+                class="flex-1 bg-slate-900 border border-slate-700 hover:border-slate-600 focus:border-illini-orange text-white font-bold text-xs rounded-lg px-2 py-1 focus:outline-none transition">
+
+              <!-- FLY TO MAP -->
+              <button onclick="flyToStop('${stop.id}')" title="Locate on Map" class="p-1.5 bg-slate-900 hover:bg-slate-800 text-sky-400 rounded-lg border border-slate-800 transition">
+                <i class="fa-solid fa-crosshairs"></i>
+              </button>
+
+              <!-- TOGGLE MAJOR HUB -->
+              <button onclick="toggleMajorHub('${stop.id}')" title="Toggle Hub Status (120s Dwell)" class="p-1.5 bg-slate-900 hover:bg-slate-800 ${stop.isHub ? 'text-amber-400 border-amber-400/40' : 'text-slate-500'} rounded-lg border border-slate-800 transition">
                 <i class="fa-solid fa-star"></i>
               </button>
-              <button onclick="moveStopInRoute(${idx}, -1)" ${idx === 0 ? 'disabled' : ''} class="p-1 text-slate-400 hover:text-white disabled:opacity-30">
+
+              <!-- MOVE UP / DOWN -->
+              <button onclick="moveStopInRoute(${idx}, -1)" ${idx === 0 ? 'disabled' : ''} title="Move Up" class="p-1.5 bg-slate-900 hover:bg-slate-800 text-slate-300 disabled:opacity-20 rounded-lg border border-slate-800 transition">
                 <i class="fa-solid fa-chevron-up"></i>
               </button>
-              <button onclick="moveStopInRoute(${idx}, 1)" ${idx === activeRoute.stopIds.length - 1 ? 'disabled' : ''} class="p-1 text-slate-400 hover:text-white disabled:opacity-30">
+              <button onclick="moveStopInRoute(${idx}, 1)" ${idx === activeRoute.stopIds.length - 1 ? 'disabled' : ''} title="Move Down" class="p-1.5 bg-slate-900 hover:bg-slate-800 text-slate-300 disabled:opacity-20 rounded-lg border border-slate-800 transition">
                 <i class="fa-solid fa-chevron-down"></i>
               </button>
-              <button onclick="removeStopFromRoute(${idx})" class="p-1 text-rose-400 hover:text-rose-300">
+
+              <!-- DELETE FROM ROUTE -->
+              <button onclick="removeStopFromRoute(${idx})" title="Remove from line" class="p-1.5 bg-slate-900 hover:bg-rose-950 text-rose-400 rounded-lg border border-slate-800 transition">
                 <i class="fa-solid fa-trash-can"></i>
               </button>
             </div>
+
+            <div class="flex items-center justify-between text-[10px] text-slate-400 px-1 pt-0.5">
+              <span>📍 GPS: ${stop.lat.toFixed(4)}, ${stop.lng.toFixed(4)}</span>
+              <span class="font-semibold text-slate-300">${stop.isHub ? '⭐ Hub (120s)' : 'Standard Stop (20s)'}</span>
+            </div>
           </div>
         `;
       }).join('');
 
-      const unaddedStopsOptions = stops
-        .map(s => `<option value="${s.id}">${s.name} (${s.category})</option>`)
-        .join('');
-
-      panel.innerHTML = `
-        <div class="bg-slate-950 p-3.5 rounded-2xl border border-slate-800 space-y-3">
-          <div class="flex items-center justify-between">
-            <span class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Line Configuration</span>
-            <button onclick="deleteActiveRoute()" class="text-xs text-rose-400 hover:underline flex items-center gap-1 font-semibold">
-              <i class="fa-solid fa-trash"></i> Delete Line
-            </button>
-          </div>
-
-          <div class="grid grid-cols-3 gap-2">
-            <div>
-              <label class="text-[10px] text-slate-400 block mb-1">Route Code</label>
-              <input type="text" value="${activeRoute.code}" onchange="updateRouteField('code', this.value)"
-                class="w-full bg-slate-900 border border-slate-700 rounded-xl p-2 text-xs text-white font-bold font-mono focus:border-illini-orange focus:outline-none">
-            </div>
-            <div class="col-span-2">
-              <label class="text-[10px] text-slate-400 block mb-1">Line Designation Name</label>
-              <input type="text" value="${activeRoute.name}" onchange="updateRouteField('name', this.value)"
-                class="w-full bg-slate-900 border border-slate-700 rounded-xl p-2 text-xs text-white font-semibold focus:border-illini-orange focus:outline-none">
-            </div>
-          </div>
-
-          <div class="grid grid-cols-3 gap-2">
-            <div>
-              <label class="text-[10px] text-slate-400 block mb-1">Color Palette</label>
-              <input type="color" value="${activeRoute.color}" onchange="updateRouteField('color', this.value)"
-                class="h-8 w-full bg-transparent cursor-pointer rounded-lg border border-slate-700">
-            </div>
-            <div>
-              <label class="text-[10px] text-slate-400 block mb-1">Headway (Mins)</label>
-              <select onchange="updateRouteField('headway', this.value)" class="w-full bg-slate-900 border border-slate-700 rounded-xl p-2 text-xs text-white focus:outline-none">
-                <option value="5" ${activeRoute.headway == 5 ? 'selected' : ''}>5 Mins</option>
-                <option value="10" ${activeRoute.headway == 10 ? 'selected' : ''}>10 Mins</option>
-                <option value="15" ${activeRoute.headway == 15 ? 'selected' : ''}>15 Mins</option>
-                <option value="20" ${activeRoute.headway == 20 ? 'selected' : ''}>20 Mins</option>
-                <option value="30" ${activeRoute.headway == 30 ? 'selected' : ''}>30 Mins</option>
-              </select>
-            </div>
-            <div>
-              <label class="text-[10px] text-slate-400 block mb-1">Speed (mph)</label>
-              <input type="number" min="5" max="35" step="0.5" value="${activeRoute.speedMph || 12.5}" onchange="updateRouteField('speedMph', this.value)"
-                class="w-full bg-slate-900 border border-slate-700 rounded-xl p-2 text-xs text-white font-semibold focus:outline-none">
-            </div>
-          </div>
-        </div>
-
-        <div class="space-y-2">
-          <div class="flex items-center justify-between">
-            <span class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Stop Sequence (${activeRoute.stopIds.length})</span>
-            <button onclick="toggleMapClickMode()" class="text-[11px] text-illini-orange font-bold hover:underline">
-              + Drop Stop on Map
-            </button>
-          </div>
-
-          <div class="space-y-1.5">
-            ${stopSeqUI.length ? stopSeqUI : '<div class="text-xs text-slate-500 italic p-4 text-center border border-dashed border-slate-800 rounded-xl">No stops assigned. Use map or hubs tab to add stops.</div>'}
-          </div>
-
-          <div class="pt-2">
-            <label class="text-[10px] text-slate-400 block mb-1">Add Existing Stop to Line</label>
-            <div class="flex gap-2">
-              <select id="quick-add-stop-select" class="flex-1 bg-slate-900 border border-slate-700 rounded-xl p-2 text-xs text-white focus:outline-none">
-                ${unaddedStopsOptions}
-              </select>
-              <button onclick="addStopToActiveRoute(document.getElementById('quick-add-stop-select').value)"
-                class="bg-illini-orange hover:bg-orange-600 text-white font-bold text-xs px-3.5 rounded-xl transition shadow">
-                + Add
-              </button>
-            </div>
-          </div>
+      listContainer.innerHTML = cardsHtml.length ? cardsHtml : `
+        <div class="text-xs text-slate-500 italic p-6 text-center border border-dashed border-slate-800 rounded-2xl">
+          No stops assigned to Line ${activeRoute.code}. Click "📍 Drop Stop on Map" or select from presets below.
         </div>
       `;
+
+      // Populate Quick Add Dropdown
+      const addSelect = document.getElementById('stops-tab-add-select');
+      if (addSelect) {
+        addSelect.innerHTML = stops.map(s => `<option value="${s.id}">${s.name} (${s.category})</option>`).join('');
+      }
     }
 
+    // TAB 2: RENDER LINES EDITOR
+    function renderLinesEditorTab() {
+      const panel = document.getElementById('lines-editor-config-panel');
+      if (!panel) return;
+
+      panel.innerHTML = routes.map(r => {
+        const isSelected = r.id === activeRouteId;
+        return `
+          <div class="bg-slate-950 p-3.5 rounded-2xl border ${isSelected ? 'border-illini-orange' : 'border-slate-800'} space-y-3">
+            <div class="flex items-center justify-between">
+              <div class="flex items-center gap-2">
+                <span class="w-3 h-3 rounded-full" style="background-color: ${r.color}"></span>
+                <span class="font-extrabold text-xs text-white">Line ${r.code} - ${r.name}</span>
+              </div>
+              <div class="flex gap-1">
+                <button onclick="setActiveRoute('${r.id}')" class="text-xs font-bold px-2.5 py-1 rounded-lg ${isSelected ? 'bg-illini-orange text-white' : 'bg-slate-800 text-slate-300 hover:bg-slate-700'} transition">
+                  ${isSelected ? 'Active' : 'Select'}
+                </button>
+                <button onclick="deleteActiveRoute()" title="Delete Line" class="text-xs p-1 text-rose-400 hover:text-rose-300">
+                  <i class="fa-solid fa-trash"></i>
+                </button>
+              </div>
+            </div>
+
+            <div class="grid grid-cols-3 gap-2">
+              <div>
+                <label class="text-[10px] text-slate-400 block mb-1">Route Code</label>
+                <input type="text" value="${r.code}" onchange="updateRouteField('${r.id}', 'code', this.value)"
+                  class="w-full bg-slate-900 border border-slate-700 rounded-xl p-2 text-xs text-white font-bold font-mono focus:outline-none">
+              </div>
+              <div class="col-span-2">
+                <label class="text-[10px] text-slate-400 block mb-1">Line Name</label>
+                <input type="text" value="${r.name}" onchange="updateRouteField('${r.id}', 'name', this.value)"
+                  class="w-full bg-slate-900 border border-slate-700 rounded-xl p-2 text-xs text-white font-semibold focus:outline-none">
+              </div>
+            </div>
+
+            <div class="grid grid-cols-3 gap-2">
+              <div>
+                <label class="text-[10px] text-slate-400 block mb-1">Color</label>
+                <input type="color" value="${r.color}" onchange="updateRouteField('${r.id}', 'color', this.value)"
+                  class="h-8 w-full bg-transparent cursor-pointer rounded-lg border border-slate-700">
+              </div>
+              <div>
+                <label class="text-[10px] text-slate-400 block mb-1">Headway</label>
+                <select onchange="updateRouteField('${r.id}', 'headway', this.value)" class="w-full bg-slate-900 border border-slate-700 rounded-xl p-2 text-xs text-white focus:outline-none">
+                  <option value="5" ${r.headway == 5 ? 'selected' : ''}>5 Mins</option>
+                  <option value="10" ${r.headway == 10 ? 'selected' : ''}>10 Mins</option>
+                  <option value="15" ${r.headway == 15 ? 'selected' : ''}>15 Mins</option>
+                  <option value="20" ${r.headway == 20 ? 'selected' : ''}>20 Mins</option>
+                  <option value="30" ${r.headway == 30 ? 'selected' : ''}>30 Mins</option>
+                </select>
+              </div>
+              <div>
+                <label class="text-[10px] text-slate-400 block mb-1">Speed (mph)</label>
+                <input type="number" min="5" max="35" step="0.5" value="${r.speedMph || 12.5}" onchange="updateRouteField('${r.id}', 'speedMph', this.value)"
+                  class="w-full bg-slate-900 border border-slate-700 rounded-xl p-2 text-xs text-white font-semibold focus:outline-none">
+              </div>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    // TAB 3: RENDER LANDMARKS PRESETS
     function renderLandmarksTab() {
       const lincolnGrid = document.getElementById('landmarks-lincoln-grid');
       const campusGrid = document.getElementById('landmarks-campus-grid');
       const cityGrid = document.getElementById('landmarks-city-grid');
+
+      if (!lincolnGrid || !campusGrid || !cityGrid) return;
 
       const lincolnStops = stops.filter(s => s.category.includes('Lincoln'));
       const campusStops = stops.filter(s => (s.category.includes('Campus') || s.category.includes('Engineering')) && !s.category.includes('Lincoln'));
@@ -1184,7 +1250,7 @@
               <div class="text-[10px] text-slate-400">${s.category}</div>
             </div>
           </div>
-          <span class="text-xs font-extrabold text-illini-orange">+</span>
+          <span class="text-xs font-extrabold text-illini-orange">+ Add</span>
         </button>
       `).join('');
 
@@ -1199,7 +1265,7 @@
               <div class="text-[10px] text-slate-400">${s.category}</div>
             </div>
           </div>
-          <span class="text-xs font-extrabold text-illini-orange">+</span>
+          <span class="text-xs font-extrabold text-illini-orange">+ Add</span>
         </button>
       `).join('');
 
@@ -1214,7 +1280,7 @@
               <div class="text-[10px] text-slate-400">${s.category}</div>
             </div>
           </div>
-          <span class="text-xs font-extrabold text-emerald-400">+</span>
+          <span class="text-xs font-extrabold text-emerald-400">+ Add</span>
         </button>
       `).join('');
     }
@@ -1225,6 +1291,8 @@
       const rSelect = document.getElementById('tt-route-select');
       const sSelect = document.getElementById('tt-stop-select');
       
+      if (!rSelect || !sSelect) return;
+
       rSelect.innerHTML = routes.map(r => `<option value="${r.id}">Line ${r.code} (${r.name})</option>`).join('');
 
       const selectedRoute = routes.find(r => r.id === rSelect.value) || routes[0];
@@ -1241,14 +1309,8 @@
       const r = routes.find(rt => rt.id === rId);
       if (!r) return;
 
-      const startTimeStr = document.getElementById('tt-start-time').value || "07:00";
-      const endTimeStr = document.getElementById('tt-end-time').value || "22:00";
-
-      const [sH, sM] = startTimeStr.split(':').map(Number);
-      const [eH, eM] = endTimeStr.split(':').map(Number);
-
-      let currentMins = sH * 60 + sM;
-      const endMins = eH * 60 + eM;
+      let currentMins = 7 * 60; // 07:00 AM
+      const endMins = 22 * 60;   // 10:00 PM
       const headway = r.headway || 15;
 
       const times = [];
@@ -1271,7 +1333,7 @@
     // --- 10. LOCALSTORAGE & PROJECT FILE IMPORT/EXPORT ---
 
     function saveToLocalStorage() {
-      const payload = { stops, routes, activeRouteId };
+      const payload = { stops, routes, activeRouteId, customStopCounter };
       localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
     }
 
@@ -1283,6 +1345,7 @@
           if (parsed.stops) stops = parsed.stops;
           if (parsed.routes) routes = parsed.routes;
           if (parsed.activeRouteId) activeRouteId = parsed.activeRouteId;
+          if (parsed.customStopCounter) customStopCounter = parsed.customStopCounter;
         } catch (e) {
           console.warn('Could not parse saved workspace:', e);
         }
@@ -1314,14 +1377,15 @@
             if (parsed.activeRouteId) activeRouteId = parsed.activeRouteId;
             renderAllStopsOnMap();
             renderRoutesOnMap();
-            renderSidebarUI();
+            renderStopsManagerTab();
+            renderLinesEditorTab();
             renderLandmarksTab();
             updateTimetableStopDropdown();
             saveToLocalStorage();
             showToast("Successfully loaded project workspace JSON!", 'success');
           }
         } catch (err) {
-          alert("Invalid project JSON file format.");
+          showToast("Invalid project JSON file format.", 'warning');
         }
       };
       reader.readAsText(file);
@@ -1330,7 +1394,7 @@
     function exportGeoJSON() {
       const geojson = {
         type: "FeatureCollection",
-        metadata: { app: "MTD Route Studio v3.0", generated: new Date().toISOString() },
+        metadata: { app: "MTD Route Studio", generated: new Date().toISOString() },
         features: []
       };
 
@@ -1407,10 +1471,12 @@
       stops = [...PRESET_STOPS];
       routes = JSON.parse(JSON.stringify(DEFAULT_ROUTES));
       activeRouteId = 'route-23x';
+      customStopCounter = 1;
       localStorage.removeItem(STORAGE_KEY);
       renderAllStopsOnMap();
       renderRoutesOnMap();
-      renderSidebarUI();
+      renderStopsManagerTab();
+      renderLinesEditorTab();
       renderLandmarksTab();
       updateTimetableStopDropdown();
       updateStatsDashboard();
