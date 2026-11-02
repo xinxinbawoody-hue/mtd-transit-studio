@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>MTD Route Studio - Urbana-Champaign Transit Planner v13.0</title>
+  <title>MTD Route Studio - Urbana-Champaign Transit Planner v13.5</title>
 
   <!-- Leaflet CSS & JS -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
@@ -142,9 +142,45 @@
 
     /* MAP CLICK ADD MODE */
     .map-crosshair { cursor: crosshair !important; }
-    .map-add-mode .leaflet-marker-pane,
+    /* In Add Mode, overlay lines pass clicks to map, but markers remain clickable */
     .map-add-mode .leaflet-overlay-pane {
       pointer-events: none !important;
+    }
+
+    /* Dynamic Marker Zoom Scaling (Anti-Cluttering) */
+    .zoom-out .stop-marker-badge {
+      width: 8px !important;
+      height: 8px !important;
+      font-size: 0px !important;
+      border-width: 1px !important;
+      opacity: 0.75;
+      box-shadow: none !important;
+    }
+    .zoom-out .hub-star-badge, 
+    .zoom-out .shared-badge { 
+      display: none !important; 
+    }
+
+    .zoom-mid .stop-marker-badge {
+      width: 16px !important;
+      height: 16px !important;
+      font-size: 9px !important;
+      border-width: 1.5px !important;
+    }
+    .zoom-mid .hub-star-badge, 
+    .zoom-mid .shared-badge {
+      width: 10px !important;
+      height: 10px !important;
+      font-size: 6px !important;
+      top: -3px;
+      right: -3px;
+    }
+
+    .zoom-in .stop-marker-badge {
+      width: 28px !important;
+      height: 28px !important;
+      font-size: 11px !important;
+      border-width: 2.5px !important;
     }
 
     /* Drag and Drop Stop Card Animations */
@@ -201,7 +237,7 @@
       </div>
       <div>
         <h1 class="font-extrabold text-base sm:text-lg tracking-wide flex items-center gap-2 leading-none">
-          MTD ROUTE STUDIO <span class="bg-illini-orange/20 text-illini-orange text-[11px] font-bold px-2.5 py-0.5 rounded-full border border-illini-orange/40">v13.0</span>
+          MTD ROUTE STUDIO <span class="bg-illini-orange/20 text-illini-orange text-[11px] font-bold px-2.5 py-0.5 rounded-full border border-illini-orange/40">v13.5</span>
         </h1>
         <p class="text-xs text-slate-300 mt-1 flex items-center gap-2">
           <span class="w-2 h-2 rounded-full bg-emerald-400 inline-block animate-pulse"></span>
@@ -398,19 +434,25 @@
             </button>
           </div>
 
-          <!-- Action Bar -->
-          <div class="flex items-center justify-between text-xs gap-2">
-            <button onclick="toggleContinuousMapClickMode()" id="map-click-toggle-btn" class="flex-1 bg-illini-orange hover:bg-orange-600 text-white font-bold py-2 px-3 rounded-xl transition flex items-center justify-center gap-2 shadow">
-              <i class="fa-solid fa-plus-circle"></i> <span id="map-click-btn-text">📍 Add Stops on Map</span>
+          <!-- Action Bar with Reverse Order Controls -->
+          <div class="grid grid-cols-1 sm:grid-cols-3 text-xs gap-1.5">
+            <button onclick="toggleContinuousMapClickMode()" id="map-click-toggle-btn" class="sm:col-span-1 bg-illini-orange hover:bg-orange-600 text-white font-bold py-2 px-2.5 rounded-xl transition flex items-center justify-center gap-1.5 shadow">
+              <i class="fa-solid fa-plus-circle"></i> <span id="map-click-btn-text">📍 Add Stops</span>
             </button>
 
-            <button onclick="copyOutboundToInboundReversed()" id="copy-inbound-btn" title="Copy & Reverse Outbound Stops to Inbound" class="bg-slate-900 hover:bg-slate-800 border border-slate-700 text-amber-400 font-bold px-3 py-2 rounded-xl transition flex items-center gap-1.5 text-xs">
-              <i class="fa-solid fa-rotate"></i> <span>Copy & Reverse</span>
+            <button onclick="reverseCurrentLegSequence()" title="Reverse stop order for current direction" class="bg-slate-900 hover:bg-slate-800 border border-slate-700 text-sky-300 font-bold px-2 py-2 rounded-xl transition flex items-center justify-center gap-1.5 text-xs">
+              <i class="fa-solid fa-right-left"></i> <span>Reverse Order</span>
             </button>
 
-            <button onclick="clearCurrentRouteDirectionStops()" title="Clear stops for current direction" class="bg-slate-900 hover:bg-rose-950 text-rose-300 border border-slate-800 px-3 py-2 rounded-xl transition">
-              <i class="fa-solid fa-trash-can text-rose-400"></i>
-            </button>
+            <div class="flex items-center gap-1">
+              <button onclick="copyOutboundToInboundReversed()" title="Copy & Reverse Outbound Stops to Inbound" class="flex-1 bg-slate-900 hover:bg-slate-800 border border-slate-700 text-amber-400 font-bold px-2 py-2 rounded-xl transition flex items-center justify-center gap-1 text-[11px]">
+                <i class="fa-solid fa-rotate"></i> <span>Copy -> In</span>
+              </button>
+
+              <button onclick="clearCurrentRouteDirectionStops()" title="Clear stops for current direction" class="bg-slate-900 hover:bg-rose-950 text-rose-300 border border-slate-800 p-2 rounded-xl transition">
+                <i class="fa-solid fa-trash-can text-rose-400"></i>
+              </button>
+            </div>
           </div>
         </div>
 
@@ -522,7 +564,7 @@
 
       <!-- FOOTER STATUS -->
       <div class="p-3 bg-slate-950 border-t border-slate-800 text-[11px] text-slate-400 flex items-center justify-between shrink-0">
-        <span>MTD Route Studio v13.0</span>
+        <span>MTD Route Studio v13.5</span>
         <span id="footer-system-summary">Total Fleet: 0 buses</span>
       </div>
 
@@ -547,8 +589,8 @@
 
   <!-- JAVASCRIPT LOGIC -->
   <script>
-    const STORAGE_KEY = 'MTD_STUDIO_V13_0_DATA';
-    const NEARBY_SNAP_RADIUS_MILES = 0.037; // ~60 meters
+    const STORAGE_KEY = 'MTD_STUDIO_V13_5_DATA';
+    const NEARBY_SNAP_RADIUS_MILES = 0.0155; // ~25 meters (reduced snap radius for high precision)
 
     let activeTabKey = 'lines';
     let inactiveOpacity = 0.25; // Default inactive background route opacity (5% - 100%)
@@ -771,7 +813,27 @@
         }
       });
 
+      // DYNAMIC ZOOM SCALING LISTENER
+      map.on('zoomend', updateMarkerZoomLevelClass);
+      updateMarkerZoomLevelClass();
+
       setTimeout(() => { map.invalidateSize(); }, 200);
+    }
+
+    // UPDATE MARKER ZOOM LEVEL CSS CLASS
+    function updateMarkerZoomLevelClass() {
+      if (!map) return;
+      const zoom = map.getZoom();
+      const container = map.getContainer();
+      container.classList.remove('zoom-out', 'zoom-mid', 'zoom-in');
+
+      if (zoom < 14) {
+        container.classList.add('zoom-out');
+      } else if (zoom < 16) {
+        container.classList.add('zoom-mid');
+      } else {
+        container.classList.add('zoom-in');
+      }
     }
 
     // ROUTE SELECTION (WITHOUT FORCING TAB SWITCH)
@@ -954,7 +1016,7 @@
       pushHistorySnapshot();
     }
 
-    // MAP STOP MARKER RENDERING WITH INTERACTIVE POPUPS
+    // MAP STOP MARKER RENDERING WITH INTERACTIVE POPUPS & DYNAMIC NUMBERING REVERSAL
     function renderAllStopsOnMap() {
       Object.values(markersMap).forEach(m => map.removeLayer(m));
       markersMap = {};
@@ -978,7 +1040,7 @@
 
         const icon = L.divIcon({
           html: `<div class="stop-marker-badge relative" style="background-color: ${color}; width:30px; height:30px;">
-                  ${label || `<i class="fa-solid fa-bus" style="font-size:11px;"></i>`}
+                  ${label ? `#${label}` : `<i class="fa-solid fa-bus" style="font-size:11px;"></i>`}
                   ${starHtml}
                   ${sharedHtml}
                  </div>`,
@@ -1043,6 +1105,14 @@
         `;
 
         marker.bindPopup(popupHtml, { maxWidth: 260 });
+
+        // DIRECT CLICK ON EXISTING MARKER IN ADD-STOP MODE
+        marker.on('click', function(e) {
+          if (isClickToAddMode) {
+            L.DomEvent.stopPropagation(e);
+            handleMapClickAddStop(stop.lat, stop.lng, stop);
+          }
+        });
 
         marker.on('dragend', function(e) {
           const pos = e.target.getLatLng();
@@ -1219,7 +1289,7 @@
       saveToLocalStorage();
     }
 
-    // MAP CLICK WITH 60M STOP SNAPPING
+    // MAP CLICK WITH STOP SNAPPING MODE TOGGLE
     function toggleContinuousMapClickMode(forcedState) {
       isClickToAddMode = (forcedState !== undefined) ? forcedState : !isClickToAddMode;
       const banner = document.getElementById('map-click-banner');
@@ -1233,36 +1303,41 @@
           mapEl.classList.add('map-add-mode');
         }
         if (btnText) btnText.innerText = 'Exit Add Mode';
-        showToast("Click Mode Active: Auto-snaps to existing stops within 60m", "warning");
+        showToast("Click Mode Active: Auto-snaps to existing stops within 25m", "warning");
       } else {
         banner.classList.add('hidden');
         if (mapEl) {
           mapEl.classList.remove('map-crosshair');
           mapEl.classList.remove('map-add-mode');
         }
-        if (btnText) btnText.innerText = '📍 Add Stops on Map';
+        if (btnText) btnText.innerText = '📍 Add Stops';
+        showToast("Click Mode Deactivated", "info");
       }
     }
 
-    function handleMapClickAddStop(lat, lng) {
-      const nearbyStop = findNearbyExistingStop(lat, lng);
-      let targetStop = null;
+    function handleMapClickAddStop(lat, lng, clickedStopObj = null) {
+      let targetStop = clickedStopObj;
 
-      if (nearbyStop) {
-        targetStop = nearbyStop;
-        showToast(`🧲 Snapped to existing stop: "${nearbyStop.name}"`, "success");
+      if (!targetStop) {
+        const nearbyStop = findNearbyExistingStop(lat, lng);
+        if (nearbyStop) {
+          targetStop = nearbyStop;
+          showToast(`🧲 Snapped to nearby stop (~25m): "${nearbyStop.name}"`, "success");
+        } else {
+          const autoName = `Stop #${customStopCounter++}`;
+          targetStop = {
+            id: 'stop-' + Date.now(),
+            name: autoName,
+            lat: Number(lat.toFixed(5)),
+            lng: Number(lng.toFixed(5)),
+            category: 'Custom Stop',
+            isHub: false
+          };
+          stops.push(targetStop);
+          showToast(`Created new stop: "${autoName}"`, "success");
+        }
       } else {
-        const autoName = `Stop #${customStopCounter++}`;
-        targetStop = {
-          id: 'stop-' + Date.now(),
-          name: autoName,
-          lat: Number(lat.toFixed(5)),
-          lng: Number(lng.toFixed(5)),
-          category: 'Custom Stop',
-          isHub: false
-        };
-        stops.push(targetStop);
-        showToast(`Created new stop: "${autoName}"`, "success");
+        showToast(`🎯 Selected existing stop: "${clickedStopObj.name}"`, "success");
       }
 
       addStopToActiveRoute(targetStop.id, targetStop.lat, targetStop.lng);
@@ -1520,7 +1595,7 @@
       }).join('');
     }
 
-    // DEDICATED STOPS EDITOR (TAB 2) WITH COLLAPSIBLE ACCORDION & STRATEGY SUPPORT
+    // DEDICATED STOPS EDITOR (TAB 2) WITH DYNAMIC NUMBERING & REVERSE ORDER SUPPORT
     function renderStopsManagerSection() {
       const activeRoute = routes.find(r => r.id === activeRouteId) || routes[0];
       if (!activeRoute) return;
@@ -1579,7 +1654,7 @@
             <div class="flex items-center gap-2">
               <div class="text-slate-500 hover:text-slate-300 text-lg font-black px-0.5"><i class="fa-solid fa-grip-vertical"></i></div>
               <span class="bg-slate-800 text-illini-orange border border-illini-orange/40 font-mono w-7 h-7 rounded-full flex items-center justify-center text-xs font-extrabold shrink-0 shadow-sm">
-                ${idx + 1}
+                #${idx + 1}
               </span>
               <input type="text" value="${stop.name}" oninput="updateStopName('${stop.id}', this.value)" class="flex-1 bg-slate-950 border border-slate-700 focus:border-illini-orange text-white font-bold text-xs rounded-xl px-2.5 py-1.5 focus:outline-none min-w-0">
               
@@ -1626,7 +1701,7 @@
             <i class="fa-solid fa-location-dot"></i>
           </div>
           <div class="text-sm font-bold text-slate-300">Clean Slate: No stops in ${activeDir === 'outbound' ? 'Outbound Leg (➡️)' : 'Inbound Leg (⬅️)'}.</div>
-          <div class="text-slate-500 max-w-xs mx-auto leading-relaxed">Click <b>"📍 Add Stops on Map"</b>, select campus <b>"Presets"</b>, or click <b>"Copy & Reverse"</b> to build this line!</div>
+          <div class="text-slate-500 max-w-xs mx-auto leading-relaxed">Click <b>"📍 Add Stops"</b>, select campus <b>"Presets"</b>, or click <b>"Copy -> In"</b> to build this line!</div>
         </div>
       `;
     }
@@ -1654,22 +1729,51 @@
       }
     }
 
-    // DIRECTION TAB ACTIONS & REALTIME MAP STYLING FLIP
+    // DIRECTION SWITCHING WITH AUTO-POPULATE & NUMBER REVERSAL
     function setActiveDirection(dir) {
       const activeRoute = routes.find(r => r.id === activeRouteId);
       if (activeRoute) {
         activeRoute.activeDirection = dir;
 
+        // Auto-clone reversed outbound stops into inbound if empty when switching to inbound
+        if (dir === 'inbound' && (!activeRoute.inboundStopIds || activeRoute.inboundStopIds.length === 0) && activeRoute.outboundStopIds && activeRoute.outboundStopIds.length > 0) {
+          activeRoute.inboundStopIds = [...activeRoute.outboundStopIds].reverse();
+          showToast("🔄 Auto-populated Inbound leg by reversing Outbound sequence!", "info");
+        }
+
         renderStopsManagerSection();
         renderAllStopsOnMap();
         renderRoutesOnMap();
+        pushHistorySnapshot();
       }
+    }
+
+    // REVERSE CURRENT ACTIVE LEG STOP SEQUENCE & MAP MARKERS
+    function reverseCurrentLegSequence() {
+      const activeRoute = routes.find(r => r.id === activeRouteId);
+      if (!activeRoute) return;
+
+      const activeDir = activeRoute.activeDirection || 'outbound';
+      if (activeDir === 'outbound') {
+        if (!activeRoute.outboundStopIds || activeRoute.outboundStopIds.length === 0) return;
+        activeRoute.outboundStopIds.reverse();
+      } else {
+        if (!activeRoute.inboundStopIds || activeRoute.inboundStopIds.length === 0) return;
+        activeRoute.inboundStopIds.reverse();
+      }
+
+      renderStopsManagerSection();
+      renderAllStopsOnMap();
+      renderRoutesOnMap();
+      pushHistorySnapshot();
+      showToast(`🔄 Reversed ${activeDir} leg stop sequence and numbers!`, "success");
     }
 
     function copyOutboundToInboundReversed() {
       const activeRoute = routes.find(r => r.id === activeRouteId);
       if (activeRoute && activeRoute.outboundStopIds && activeRoute.outboundStopIds.length > 0) {
         activeRoute.inboundStopIds = [...activeRoute.outboundStopIds].reverse();
+        activeRoute.activeDirection = 'inbound';
         renderStopsManagerSection();
         renderAllStopsOnMap();
         renderRoutesOnMap();
@@ -1899,7 +2003,7 @@
       const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify({ stops, routes, activeRouteId, addStopScope, insertionStrategy, inactiveOpacity }, null, 2));
       const link = document.createElement('a');
       link.setAttribute("href", dataStr);
-      link.setAttribute("download", `mtd_workspace_v13_0_${Date.now()}.json`);
+      link.setAttribute("download", `mtd_workspace_v13_5_${Date.now()}.json`);
       document.body.appendChild(link);
       link.click();
       link.remove();
